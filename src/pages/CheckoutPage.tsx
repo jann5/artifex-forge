@@ -21,8 +21,8 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold mb-4">Please log in to checkout</h1>
-          <Button onClick={() => navigate("/auth")}>Log In</Button>
+          <h1 className="text-2xl font-bold mb-4">Zaloguj się, aby przejść do kasy</h1>
+          <Button onClick={() => navigate("/auth")}>Zaloguj się</Button>
         </div>
       </div>
     );
@@ -34,7 +34,7 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     if (!cartItems || cartItems.length === 0) {
-      toast.error("Your cart is empty");
+      toast.error("Twój koszyk jest pusty");
       return;
     }
 
@@ -42,7 +42,7 @@ export default function CheckoutPage() {
     try {
       const items = cartItems.map((item) => ({
         productId: item.productId,
-        name: item.product?.name || "Product",
+        name: item.product?.name || "Produkt",
         price: item.product?.price || 0,
         quantity: item.quantity,
         image: item.product?.images?.[0],
@@ -53,12 +53,12 @@ export default function CheckoutPage() {
       if (result.url) {
         window.location.href = result.url;
       } else {
-        toast.error("Failed to create checkout session");
+        toast.error("Nie udało się utworzyć sesji płatności");
         setIsProcessing(false);
       }
     } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error("Failed to process checkout");
+      console.error("Błąd płatności:", error);
+      toast.error("Nie udało się przetworzyć płatności");
       setIsProcessing(false);
     }
   };
@@ -67,14 +67,14 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+        <h1 className="text-3xl font-bold mb-8">Kasa</h1>
 
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
             <div className="bg-card border rounded-lg p-6">
-              <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+              <h2 className="text-xl font-bold mb-4">Podsumowanie Zamówienia</h2>
               {cartItems?.length === 0 ? (
-                <p className="text-muted-foreground">Your cart is empty</p>
+                <p className="text-muted-foreground">Twój koszyk jest pusty</p>
               ) : (
                 <div className="space-y-4">
                   {cartItems?.map((item) => (
@@ -90,7 +90,7 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-medium">{item.product?.name}</h3>
-                        <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                        <p className="text-sm text-muted-foreground">Ilość: {item.quantity}</p>
                         <p className="font-semibold mt-1">
                           {formatCurrency((item.product?.price || 0) * item.quantity)}
                         </p>
@@ -104,19 +104,19 @@ export default function CheckoutPage() {
 
           <div>
             <div className="bg-card border rounded-lg p-6 sticky top-20">
-              <h2 className="text-xl font-bold mb-4">Payment Details</h2>
+              <h2 className="text-xl font-bold mb-4">Szczegóły Płatności</h2>
               <div className="space-y-2 mb-6">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-muted-foreground">Suma częściowa</span>
                   <span>{formatCurrency(total)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Shipping</span>
-                  <span>Free</span>
+                  <span className="text-muted-foreground">Wysyłka</span>
+                  <span>Darmowa</span>
                 </div>
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between text-lg font-bold">
-                    <span>Total</span>
+                    <span>Razem</span>
                     <span>{formatCurrency(total)}</span>
                   </div>
                 </div>
@@ -130,14 +130,14 @@ export default function CheckoutPage() {
                 {isProcessing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
+                    Przetwarzanie...
                   </>
                 ) : (
-                  "Proceed to Payment"
+                  "Przejdź do Płatności"
                 )}
               </Button>
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Secure payment powered by Stripe
+                Bezpieczna płatność obsługiwana przez Stripe
               </p>
             </div>
           </div>

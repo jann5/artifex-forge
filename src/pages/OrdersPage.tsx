@@ -35,8 +35,8 @@ export default function OrdersPage() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold mb-4">Please log in to view your orders</h1>
-          <Button onClick={() => navigate("/auth")}>Log In</Button>
+          <h1 className="text-2xl font-bold mb-4">Zaloguj się, aby zobaczyć swoje zamówienia</h1>
+          <Button onClick={() => navigate("/auth")}>Zaloguj się</Button>
         </div>
       </div>
     );
@@ -76,6 +76,17 @@ export default function OrdersPage() {
     }
   };
 
+  const getStatusText = (status: string) => {
+    const statusMap: Record<string, string> = {
+      pending: "Oczekujące",
+      paid: "Opłacone",
+      shipped: "Wysłane",
+      delivered: "Dostarczone",
+      cancelled: "Anulowane"
+    };
+    return statusMap[status] || status;
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -86,7 +97,7 @@ export default function OrdersPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-4xl font-bold mb-8">My Orders</h1>
+          <h1 className="text-4xl font-bold mb-8">Moje Zamówienia</h1>
 
           {orders === undefined ? (
             <div className="space-y-4">
@@ -98,8 +109,8 @@ export default function OrdersPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Package className="h-16 w-16 text-muted-foreground mb-4 opacity-20" />
-                <p className="text-lg text-muted-foreground mb-4">No orders yet</p>
-                <Button onClick={() => navigate("/products")}>Start Shopping</Button>
+                <p className="text-lg text-muted-foreground mb-4">Brak zamówień</p>
+                <Button onClick={() => navigate("/products")}>Rozpocznij Zakupy</Button>
               </CardContent>
             </Card>
           ) : (
@@ -109,17 +120,17 @@ export default function OrdersPage() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">
-                        Order #{order._id.slice(-8).toUpperCase()}
+                        Zamówienie #{order._id.slice(-8).toUpperCase()}
                       </CardTitle>
                       <Badge className={getStatusColor(order.status)}>
                         <span className="flex items-center gap-1">
                           {getStatusIcon(order.status)}
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          {getStatusText(order.status)}
                         </span>
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(order._creationTime).toLocaleDateString("en-US", {
+                      {new Date(order._creationTime).toLocaleDateString("pl-PL", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
@@ -142,7 +153,7 @@ export default function OrdersPage() {
                           <div className="flex-1">
                             <h4 className="font-medium">{item.name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              Quantity: {item.quantity} × {formatCurrency(item.price)}
+                              Ilość: {item.quantity} × {formatCurrency(item.price)}
                             </p>
                           </div>
                           <div className="text-right">
@@ -153,7 +164,7 @@ export default function OrdersPage() {
                         </div>
                       ))}
                       <div className="flex justify-between items-center pt-2">
-                        <span className="font-semibold">Total</span>
+                        <span className="font-semibold">Razem</span>
                         <span className="text-xl font-bold">
                           {formatCurrency(order.totalAmount)}
                         </span>
@@ -179,23 +190,23 @@ export default function OrdersPage() {
                 <span className="font-display font-bold">Artifex</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Redefining digital manufacturing with a touch of luxury.
+                Redefiniujemy cyfrową produkcję z nutą luksusu.
               </p>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Shop</h4>
+              <h4 className="font-bold mb-4">Sklep</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><button onClick={() => navigate("/products")} className="hover:text-foreground">All Products</button></li>
-                <li><button onClick={() => navigate("/products")} className="hover:text-foreground">Art</button></li>
-                <li><button onClick={() => navigate("/products")} className="hover:text-foreground">Home Decor</button></li>
+                <li><button onClick={() => navigate("/products")} className="hover:text-foreground">Wszystkie Produkty</button></li>
+                <li><button onClick={() => navigate("/products")} className="hover:text-foreground">Sztuka</button></li>
+                <li><button onClick={() => navigate("/products")} className="hover:text-foreground">Dekoracje</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Company</h4>
+              <h4 className="font-bold mb-4">Firma</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/about" className="hover:text-foreground">About Us</a></li>
-                <li><a href="/contact" className="hover:text-foreground">Contact</a></li>
-                <li><a href="/terms" className="hover:text-foreground">Terms</a></li>
+                <li><a href="/about" className="hover:text-foreground">O Nas</a></li>
+                <li><a href="/contact" className="hover:text-foreground">Kontakt</a></li>
+                <li><a href="/terms" className="hover:text-foreground">Regulamin</a></li>
               </ul>
             </div>
             <div>
@@ -203,17 +214,17 @@ export default function OrdersPage() {
               <div className="flex gap-2">
                 <input 
                   type="email" 
-                  placeholder="Enter your email" 
+                  placeholder="Wpisz swój email" 
                   className="flex-1 h-9 rounded-md border bg-background px-3 text-sm"
                 />
                 <button className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium">
-                  Subscribe
+                  Zapisz się
                 </button>
               </div>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Artifex Forge. All rights reserved.
+            © {new Date().getFullYear()} Artifex Forge. Wszelkie prawa zastrzeżone.
           </div>
         </div>
       </footer>

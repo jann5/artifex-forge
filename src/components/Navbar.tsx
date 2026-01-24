@@ -25,16 +25,16 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
           <Link to="/products" className="hover:text-foreground transition-colors">
-            Shop
+            Sklep
           </Link>
           <Link to="/products?category=art" className="hover:text-foreground transition-colors">
-            Art
+            Sztuka
           </Link>
           <Link to="/products?category=decor" className="hover:text-foreground transition-colors">
-            Decor
+            Dekoracje
           </Link>
           <Link to="/about" className="hover:text-foreground transition-colors">
-            About
+            O Nas
           </Link>
         </div>
 
@@ -53,16 +53,21 @@ export function Navbar() {
                   {user?.email}
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/orders">My Orders</Link>
+                  <Link to="/orders">Moje Zamówienia</Link>
                 </DropdownMenuItem>
+                {user?.role === "admin" && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin">Panel Admina</Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => signOut()}>
-                  Sign Out
+                  Wyloguj się
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button variant="ghost" asChild>
-              <Link to="/auth">Sign In</Link>
+              <Link to="/auth">Zaloguj się</Link>
             </Button>
           )}
         </div>

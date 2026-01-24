@@ -39,7 +39,7 @@ export default function ProductPage() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto px-4 py-20 text-center">
-          <h1 className="text-2xl font-bold">Product not found</h1>
+          <h1 className="text-2xl font-bold">Produkt nie znaleziony</h1>
         </div>
       </div>
     );
@@ -47,7 +47,7 @@ export default function ProductPage() {
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
-      toast.error("Please log in to add items to cart");
+      toast.error("Zaloguj się, aby dodać produkty do koszyka");
       return;
     }
 
@@ -56,9 +56,9 @@ export default function ProductPage() {
         productId: product._id, 
         quantity 
       });
-      toast.success("Added to cart");
+      toast.success("Dodano do koszyka");
     } catch (error) {
-      toast.error("Failed to add to cart");
+      toast.error("Nie udało się dodać do koszyka");
     }
   };
 
@@ -112,7 +112,7 @@ export default function ProductPage() {
 
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <span className="font-medium">Quantity</span>
+                <span className="font-medium">Ilość</span>
                 <div className="flex items-center gap-2 border rounded-md p-1">
                   <Button 
                     variant="ghost" 
@@ -137,14 +137,13 @@ export default function ProductPage() {
 
               <div className="flex gap-4">
                 <Button size="lg" className="flex-1 h-14 text-lg" onClick={handleAddToCart}>
-                  <ShoppingBag className="mr-2 h-5 w-5" /> Add to Cart
+                  <ShoppingBag className="mr-2 h-5 w-5" /> Dodaj do Koszyka
                 </Button>
-                {/* Wishlist button could go here */}
               </div>
               
               <div className="text-sm text-muted-foreground pt-4 border-t">
-                <p>Free shipping on orders over $100</p>
-                <p>30-day return policy</p>
+                <p>Darmowa wysyłka przy zamówieniach powyżej 400 zł</p>
+                <p>30-dniowa polityka zwrotów</p>
               </div>
             </div>
           </div>
