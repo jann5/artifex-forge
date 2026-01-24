@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { ROLES } from "./schema";
+import { getCurrentUser } from "./users";
 
 export const list = query({
   args: {
@@ -57,12 +58,13 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.auth.getUserIdentity();
+    const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
-
-    // In a real app, check for admin role here
-    // const dbUser = await ctx.db.query("users").withIndex("email", q => q.eq("email", user.email!)).unique();
-    // if (dbUser?.role !== ROLES.ADMIN) throw new Error("Unauthorized");
+    
+    // Check admin role
+    if (user.role !== ROLES.ADMIN) {
+      throw new Error("Admin access required");
+    }
 
     return await ctx.db.insert("products", args);
   },
@@ -93,10 +95,13 @@ export const update = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.auth.getUserIdentity();
+    const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
     
     // Check admin role
+    if (user.role !== ROLES.ADMIN) {
+      throw new Error("Admin access required");
+    }
     
     await ctx.db.patch(args.id, args.updates);
   },
@@ -105,10 +110,13 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("products") },
   handler: async (ctx, args) => {
-    const user = await ctx.auth.getUserIdentity();
+    const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
     
     // Check admin role
+    if (user.role !== ROLES.ADMIN) {
+      throw new Error("Admin access required");
+    }
 
     await ctx.db.delete(args.id);
   },

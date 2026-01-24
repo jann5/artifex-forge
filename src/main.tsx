@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProductPage from "./pages/ProductPage";
 import AdminPage from "./pages/AdminPage";
+import CheckoutPage from "./pages/CheckoutPage";
 import { Toaster } from "@/components/ui/sonner";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -22,6 +23,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/auth" element={<Auth />} />
           <Route path="/products/:id" element={<ProductPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />

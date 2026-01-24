@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 
 export const list = query({
   args: {},
@@ -67,5 +67,41 @@ export const create = mutation({
     }
 
     return orderId;
+  },
+});
+
+export const createFromStripe = internalMutation({
+  args: {
+    sessionId: v.string(),
+    userId: v.string(),
+    items: v.array(v.any()),
+    totalAmount: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const dbUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("_id"), args.userId))
+      .first();
+
+    if (!dbUser) throw new Error("User not found");
+
+    await ctx.db.insert("orders", {
+      userId: dbUser._id,
+      items: args.items,
+      totalAmount: args.totalAmount,
+      status: "paid",
+      stripeSessionId: args.sessionId,
+      shippingAddress: undefined,
+    });
+
+    // Clear cart
+    const cartItems = await ctx.db
+      .query("cartItems")
+      .withIndex("by_user", (q) => q.eq("userId", dbUser._id))
+      .collect();
+
+    for (const item of cartItems) {
+      await ctx.db.delete(item._id);
+    }
   },
 });
