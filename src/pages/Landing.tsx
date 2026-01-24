@@ -24,7 +24,7 @@ export default function Landing() {
               transition={{ duration: 0.5 }}
               className="text-5xl md:text-7xl font-bold tracking-tight mb-6"
             >
-              Minimalist luxury meets <span className="text-primary/80">digital craftsmanship</span>.
+              Minimalistyczny luksus spotyka <span className="text-primary/80">cyfrowe rzemiosło</span>.
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -32,8 +32,8 @@ export default function Landing() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-xl text-muted-foreground mb-8 max-w-xl"
             >
-              Discover a curated collection of premium 3D printed goods. 
-              Where art meets engineering in every layer.
+              Odkryj wyselekcjonowaną kolekcję premium produktów drukowanych 3D. 
+              Gdzie sztuka spotyka inżynierię w każdej warstwie.
             </motion.p>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -43,11 +43,11 @@ export default function Landing() {
             >
               <Button size="lg" className="h-12 px-8 text-base" asChild>
                 <Link to="/products">
-                  Shop Collection <ArrowRight className="ml-2 h-4 w-4" />
+                  Zobacz Kolekcję <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-8 text-base">
-                Our Story
+                Nasza Historia
               </Button>
             </motion.div>
           </div>
@@ -66,23 +66,23 @@ export default function Landing() {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="p-6 rounded-2xl bg-background border shadow-sm">
               <Box className="h-10 w-10 text-primary mb-4" />
-              <h3 className="text-xl font-bold mb-2">Premium Materials</h3>
+              <h3 className="text-xl font-bold mb-2">Materiały Premium</h3>
               <p className="text-muted-foreground">
-                We use only the highest quality filaments and resins for durability and finish.
+                Używamy tylko najwyższej jakości filamentów i żywic dla trwałości i wykończenia.
               </p>
             </div>
             <div className="p-6 rounded-2xl bg-background border shadow-sm">
               <Layers className="h-10 w-10 text-primary mb-4" />
-              <h3 className="text-xl font-bold mb-2">Precision Printed</h3>
+              <h3 className="text-xl font-bold mb-2">Precyzyjny Druk</h3>
               <p className="text-muted-foreground">
-                Calibrated to the micron. Every layer is inspected for perfection.
+                Kalibrowane do mikrona. Każda warstwa jest sprawdzana pod kątem perfekcji.
               </p>
             </div>
             <div className="p-6 rounded-2xl bg-background border shadow-sm">
               <Zap className="h-10 w-10 text-primary mb-4" />
-              <h3 className="text-xl font-bold mb-2">Fast Shipping</h3>
+              <h3 className="text-xl font-bold mb-2">Szybka Wysyłka</h3>
               <p className="text-muted-foreground">
-                From our print farm to your doorstep in record time.
+                Z naszej drukarni do Twoich drzwi w rekordowym czasie.
               </p>
             </div>
           </div>
@@ -94,11 +94,11 @@ export default function Landing() {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Featured Exhibits</h2>
-              <p className="text-muted-foreground">Curated selections for your space.</p>
+              <h2 className="text-3xl font-bold mb-2">Wyróżnione Produkty</h2>
+              <p className="text-muted-foreground">Wyselekcjonowane wybory dla Twojej przestrzeni.</p>
             </div>
             <Button variant="ghost" asChild>
-              <Link to="/products">View All <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              <Link to="/products">Zobacz Wszystkie <ArrowRight className="ml-2 h-4 w-4" /></Link>
             </Button>
           </div>
 
@@ -110,7 +110,7 @@ export default function Landing() {
                   id={product._id}
                   name={product.name}
                   price={product.price}
-                  image={product.images[0] || "https://placehold.co/400x500/f3f4f6/1f2937?text=Product"}
+                  image={product.images[0] || "https://placehold.co/400x500/f3f4f6/1f2937?text=Produkt"}
                   category={product.category}
                 />
               ))
@@ -140,23 +140,23 @@ export default function Landing() {
                 <span className="font-display font-bold">Artifex</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Redefining digital manufacturing with a touch of luxury.
+                Redefiniujemy cyfrową produkcję z nutą luksusu.
               </p>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Shop</h4>
+              <h4 className="font-bold mb-4">Sklep</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/products" className="hover:text-foreground">All Products</Link></li>
-                <li><Link to="/products?category=art" className="hover:text-foreground">Art</Link></li>
-                <li><Link to="/products?category=decor" className="hover:text-foreground">Home Decor</Link></li>
+                <li><Link to="/products" className="hover:text-foreground">Wszystkie Produkty</Link></li>
+                <li><Link to="/products?category=art" className="hover:text-foreground">Sztuka</Link></li>
+                <li><Link to="/products?category=decor" className="hover:text-foreground">Dekoracje</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Company</h4>
+              <h4 className="font-bold mb-4">Firma</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/about" className="hover:text-foreground">About Us</Link></li>
-                <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
-                <li><Link to="/terms" className="hover:text-foreground">Terms</Link></li>
+                <li><Link to="/about" className="hover:text-foreground">O Nas</Link></li>
+                <li><Link to="/contact" className="hover:text-foreground">Kontakt</Link></li>
+                <li><Link to="/terms" className="hover:text-foreground">Regulamin</Link></li>
               </ul>
             </div>
             <div>
@@ -164,15 +164,15 @@ export default function Landing() {
               <div className="flex gap-2">
                 <input 
                   type="email" 
-                  placeholder="Enter your email" 
+                  placeholder="Wpisz swój email" 
                   className="flex-1 h-9 rounded-md border bg-background px-3 text-sm"
                 />
-                <Button size="sm">Subscribe</Button>
+                <Button size="sm">Zapisz się</Button>
               </div>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Artifex Forge. All rights reserved.
+            © {new Date().getFullYear()} Artifex Forge. Wszelkie prawa zastrzeżone.
           </div>
         </div>
       </footer>

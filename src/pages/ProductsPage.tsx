@@ -35,24 +35,24 @@ export default function ProductsPage() {
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-2">Our Collection</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-2">Nasza Kolekcja</h1>
               <p className="text-muted-foreground text-lg">
-                Explore our curated selection of premium 3D printed goods
+                Odkryj naszą wyselekcjonowaną kolekcję premium produktów drukowanych 3D
               </p>
             </div>
             
             <div className="flex items-center gap-4">
-              <label className="text-sm font-medium">Filter by:</label>
+              <label className="text-sm font-medium">Filtruj:</label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Categories" />
+                  <SelectValue placeholder="Wszystkie Kategorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="art">Art</SelectItem>
-                  <SelectItem value="decor">Home Decor</SelectItem>
-                  <SelectItem value="functional">Functional</SelectItem>
-                  <SelectItem value="accessories">Accessories</SelectItem>
+                  <SelectItem value="all">Wszystkie Kategorie</SelectItem>
+                  <SelectItem value="art">Sztuka</SelectItem>
+                  <SelectItem value="decor">Dekoracje</SelectItem>
+                  <SelectItem value="functional">Funkcjonalne</SelectItem>
+                  <SelectItem value="accessories">Akcesoria</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -70,7 +70,7 @@ export default function ProductsPage() {
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">No products found in this category.</p>
+              <p className="text-muted-foreground text-lg">Brak produktów w tej kategorii.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -80,7 +80,7 @@ export default function ProductsPage() {
                   id={product._id}
                   name={product.name}
                   price={product.price}
-                  image={product.images[0] || "https://placehold.co/400x500/f3f4f6/1f2937?text=Product"}
+                  image={product.images[0] || "https://placehold.co/400x500/f3f4f6/1f2937?text=Produkt"}
                   category={product.category}
                 />
               ))}
@@ -101,23 +101,23 @@ export default function ProductsPage() {
                 <span className="font-display font-bold">Artifex</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Redefining digital manufacturing with a touch of luxury.
+                Redefiniujemy cyfrową produkcję z nutą luksusu.
               </p>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Shop</h4>
+              <h4 className="font-bold mb-4">Sklep</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><button onClick={() => setSelectedCategory("all")} className="hover:text-foreground">All Products</button></li>
-                <li><button onClick={() => setSelectedCategory("art")} className="hover:text-foreground">Art</button></li>
-                <li><button onClick={() => setSelectedCategory("decor")} className="hover:text-foreground">Home Decor</button></li>
+                <li><button onClick={() => setSelectedCategory("all")} className="hover:text-foreground">Wszystkie Produkty</button></li>
+                <li><button onClick={() => setSelectedCategory("art")} className="hover:text-foreground">Sztuka</button></li>
+                <li><button onClick={() => setSelectedCategory("decor")} className="hover:text-foreground">Dekoracje</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Company</h4>
+              <h4 className="font-bold mb-4">Firma</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/about" className="hover:text-foreground">About Us</a></li>
-                <li><a href="/contact" className="hover:text-foreground">Contact</a></li>
-                <li><a href="/terms" className="hover:text-foreground">Terms</a></li>
+                <li><a href="/about" className="hover:text-foreground">O Nas</a></li>
+                <li><a href="/contact" className="hover:text-foreground">Kontakt</a></li>
+                <li><a href="/terms" className="hover:text-foreground">Regulamin</a></li>
               </ul>
             </div>
             <div>
@@ -125,17 +125,17 @@ export default function ProductsPage() {
               <div className="flex gap-2">
                 <input 
                   type="email" 
-                  placeholder="Enter your email" 
+                  placeholder="Wpisz swój email" 
                   className="flex-1 h-9 rounded-md border bg-background px-3 text-sm"
                 />
                 <button className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium">
-                  Subscribe
+                  Zapisz się
                 </button>
               </div>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Artifex Forge. All rights reserved.
+            © {new Date().getFullYear()} Artifex Forge. Wszelkie prawa zastrzeżone.
           </div>
         </div>
       </footer>
