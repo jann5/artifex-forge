@@ -1,0 +1,155 @@
+import { useParams } from "react-router";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { Navbar } from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/format";
+import { useState } from "react";
+import { Minus, Plus, ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+
+export default function ProductPage() {
+  const { id } = useParams<{ id: string }>();
+  const product = useQuery(api.products.get, { id: id as Id<"products"> });
+  const addToCart = useMutation(api.cart.add);
+  const { isAuthenticated } = useAuth();
+  
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  if (product === undefined) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-20">
+          <div className="animate-pulse space-y-8">
+            <div className="h-96 bg-muted rounded-xl" />
+            <div className="h-8 bg-muted w-1/3 rounded" />
+            <div className="h-4 bg-muted w-2/3 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (product === null) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-20 text-center">
+          <h1 className="text-2xl font-bold">Product not found</h1>
+        </div>
+      </div>
+    );
+  }
+
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      toast.error("Please log in to add items to cart");
+      return;
+    }
+
+    try {
+      await addToCart({ 
+        productId: product._id, 
+        quantity 
+      });
+      toast.success("Added to cart");
+    } catch (error) {
+      toast.error("Failed to add to cart");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Navbar />
+      
+      <main className="flex-1 container mx-auto px-4 py-12">
+        <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
+          {/* Image Gallery */}
+          <div className="space-y-4">
+            <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden">
+              <img 
+                src={product.images[selectedImage] || "https://placehold.co/600x750"} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {product.images.length > 1 && (
+              <div className="grid grid-cols-4 gap-4">
+                {product.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImage(idx)}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                      selectedImage === idx ? "border-primary" : "border-transparent"
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Product Details */}
+          <div className="flex flex-col justify-center">
+            <div className="mb-8">
+              <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">
+                {product.category}
+              </span>
+              <h1 className="text-4xl md:text-5xl font-bold mt-2 mb-4">{product.name}</h1>
+              <p className="text-2xl font-medium text-primary">
+                {formatCurrency(product.price)}
+              </p>
+            </div>
+
+            <div className="prose prose-neutral dark:prose-invert mb-8">
+              <p>{product.description}</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <span className="font-medium">Quantity</span>
+                <div className="flex items-center gap-2 border rounded-md p-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <span className="w-8 text-center font-medium">{quantity}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <Button size="lg" className="flex-1 h-14 text-lg" onClick={handleAddToCart}>
+                  <ShoppingBag className="mr-2 h-5 w-5" /> Add to Cart
+                </Button>
+                {/* Wishlist button could go here */}
+              </div>
+              
+              <div className="text-sm text-muted-foreground pt-4 border-t">
+                <p>Free shipping on orders over $100</p>
+                <p>30-day return policy</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
