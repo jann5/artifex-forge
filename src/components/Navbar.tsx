@@ -2,13 +2,23 @@ import { Link } from "react-router";
 import { CartDrawer } from "./CartDrawer";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { User, Package, Settings, LogOut, ShieldCheck } from "lucide-react";
+import { 
+  User, 
+  Package, 
+  Settings, 
+  LogOut, 
+  ShieldCheck, 
+  Star, 
+  Clock, 
+  MapPin, 
+  MessageSquare 
+} from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { UserProfileSidebar } from "@/components/ui/menu";
+import { UserProfileSidebar } from "@/components/ui/menu.tsx";
 
 export function Navbar() {
   const { isAuthenticated, signOut, user } = useAuth();
@@ -19,6 +29,26 @@ export function Navbar() {
       href: '/orders',
       icon: <Package className="h-full w-full" />,
     },
+    {
+      label: 'Opinie',
+      href: '/reviews', // Placeholder
+      icon: <MessageSquare className="h-full w-full" />,
+    },
+    {
+      label: 'Adresy dostawy',
+      href: '/addresses', // Placeholder
+      icon: <MapPin className="h-full w-full" />,
+    },
+    {
+      label: 'Ostatnio oglądane',
+      href: '/recent', // Placeholder
+      icon: <Clock className="h-full w-full" />,
+    },
+    {
+      label: 'Ulubione',
+      href: '/favorites', // Placeholder
+      icon: <Star className="h-full w-full" />,
+    },
     ...(user?.role === 'admin' ? [{
       label: 'Panel Admina',
       href: '/admin',
@@ -26,7 +56,7 @@ export function Navbar() {
     }] : []),
     {
       label: 'Ustawienia',
-      href: '/settings', // Placeholder, could be profile page
+      href: '/settings', // Placeholder
       icon: <Settings className="h-full w-full" />,
       isSeparator: true,
     },
@@ -75,7 +105,7 @@ export function Navbar() {
                   </Link>
                 </Button>
               </HoverCardTrigger>
-              <HoverCardContent align="end" className="w-80 p-0 border-none bg-transparent shadow-none" sideOffset={10}>
+              <HoverCardContent align="end" className="w-72 p-0 border bg-card shadow-lg rounded-xl overflow-hidden" sideOffset={10}>
                 <UserProfileSidebar 
                   user={{
                     name: user?.name || user?.email?.split('@')[0] || 'Użytkownik',
