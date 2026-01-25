@@ -15,7 +15,7 @@ export const sendVerificationEmail = internalAction({
     
     try {
       await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || "noreply@yourdomain.com",
+        from: process.env.RESEND_FROM_EMAIL || "biuro@auralasu.pl",
         to: args.to,
         subject: `Twój kod weryfikacyjny - ${appName}`,
         html: `
