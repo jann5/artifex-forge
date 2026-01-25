@@ -7,14 +7,14 @@ export const sendTest = action({
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
-    console.log("Testing Telegram with:", { 
-      hasToken: !!botToken, 
-      hasChatId: !!chatId 
-    });
-
     if (!botToken || !chatId) {
-      return "BŁĄD: Brakuje zmiennych środowiskowych TELEGRAM_BOT_TOKEN lub TELEGRAM_CHAT_ID.";
+      return "BŁĄD: Brakuje zmiennych środowiskowych.";
     }
+
+    // Logowanie dla celów debugowania (ukrywamy środek tokena)
+    const maskedToken = botToken.substring(0, 5) + "..." + botToken.substring(botToken.length - 5);
+    console.log(`Próba wysłania z tokenem: ${maskedToken} (długość: ${botToken.length})`);
+    console.log(`Na Chat ID: ${chatId}`);
 
     try {
       const response = await fetch(
@@ -33,7 +33,8 @@ export const sendTest = action({
       const result = await response.json();
       
       if (!response.ok) {
-        return `BŁĄD API Telegrama: ${result.description || response.statusText}`;
+        console.error("Błąd Telegram API:", result);
+        return `BŁĄD API Telegrama: ${result.description || response.statusText} (Kod: ${response.status})`;
       }
 
       return "SUKCES: Wiadomość wysłana pomyślnie!";
