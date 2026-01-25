@@ -58,6 +58,11 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
             src={imageUrl}
             alt={name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(e) => {
+              const target = e.currentTarget;
+              console.error('Image failed to load:', target.src);
+              target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
+            }}
           />
           <div className="absolute top-3 right-3 z-10">
             <Button

@@ -93,8 +93,9 @@ export function ProductForm({
                 alt={`Upload ${idx + 1}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  console.error('Image failed to load:', imageId);
-                  e.currentTarget.src = 'https://placehold.co/400x400/f3f4f6/1f2937?text=Błąd+ładowania';
+                  const target = e.currentTarget;
+                  console.error('Image failed to load:', target.src);
+                  target.src = 'https://placehold.co/400x400/f3f4f6/1f2937?text=Błąd+ładowania';
                 }}
               />
               <button

@@ -27,17 +27,28 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
     // path is /api/storage/<storageId>
-    const storageId = url.pathname.split("/").pop() as Id<"_storage">;
+    const pathParts = url.pathname.split("/");
+    const storageId = pathParts[pathParts.length - 1] as Id<"_storage">;
     
     if (!storageId) {
       return new Response("Missing storage ID", { status: 400 });
     }
 
-    const blob = await ctx.storage.get(storageId);
-    if (!blob) {
-      return new Response("Image not found", { status: 404 });
+    try {
+      const blob = await ctx.storage.get(storageId);
+      if (!blob) {
+        return new Response("Image not found", { status: 404 });
+      }
+      return new Response(blob, {
+        headers: {
+          "Content-Type": blob.type || "application/octet-stream",
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    } catch (error) {
+      console.error("Error serving image:", error);
+      return new Response("Internal Server Error", { status: 500 });
     }
-    return new Response(blob);
   }),
 });
 

@@ -61,6 +61,7 @@ Zarządzaj statusem poniżej:
         throw new Error(`Telegram API error: ${response.statusText}`);
       }
 
+      console.log(`Telegram notification sent for order ${args.orderId}`);
       return { success: true };
     } catch (error: any) {
       console.error("Failed to send Telegram notification:", error);

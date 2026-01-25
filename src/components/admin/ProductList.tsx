@@ -30,7 +30,9 @@ export function ProductList({ products, onEdit, onDelete }: ProductListProps) {
               alt="" 
               className="h-10 w-10 rounded object-cover"
               onError={(e) => {
-                e.currentTarget.src = 'https://placehold.co/100';
+                const target = e.currentTarget;
+                console.error('Image failed to load:', target.src);
+                target.src = 'https://placehold.co/100';
               }}
             />
             <div>

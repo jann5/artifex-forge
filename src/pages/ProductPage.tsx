@@ -80,9 +80,16 @@ export default function ProductPage() {
           <div className="space-y-4">
             <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden">
               <img 
-                src={product.images[selectedImage] || "https://placehold.co/600x750"} 
+                src={product.images[selectedImage]?.startsWith('http') 
+                  ? product.images[selectedImage] 
+                  : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${product.images[selectedImage]}` || "https://placehold.co/600x750"} 
                 alt={product.name}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  console.error('Image failed to load:', target.src);
+                  target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
+                }}
               />
             </div>
             {product.images.length > 1 && (
@@ -95,7 +102,14 @@ export default function ProductPage() {
                       selectedImage === idx ? "border-primary" : "border-transparent"
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img 
+                      src={img.startsWith('http') ? img : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${img}`} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://placehold.co/100';
+                      }}
+                    />
                   </button>
                 ))}
               </div>
