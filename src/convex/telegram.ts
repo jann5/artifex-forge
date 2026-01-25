@@ -134,13 +134,13 @@ export const webhook = httpAction(async (ctx, request) => {
               break;
 
             case "CHOOSE_DESCRIPTION_TYPE":
-               if (text === "✨ AI (ze zdjęcia)") {
+               if (text === "✨ AI (ulepsz opis)") {
                   await ctx.runMutation(internal.telegram_db.updateSession, {
                     chatId,
-                    step: "DESCRIPTION_AI_WAIT_IMAGE",
+                    step: "DESCRIPTION_FOR_AI",
                     updates: {}
                   });
-                  await sendMessage(chatId, "📸 Wyślij zdjęcie produktu, aby AI mogło wygenerować opis.", { remove_keyboard: true });
+                  await sendMessage(chatId, "📝 Wpisz podstawowy opis produktu, a AI go ulepszy i rozbuduje:", { remove_keyboard: true });
                } else {
                   // Default to manual
                   await ctx.runMutation(internal.telegram_db.updateSession, {
@@ -152,6 +152,37 @@ export const webhook = httpAction(async (ctx, request) => {
                }
                break;
 
+            case "DESCRIPTION_FOR_AI":
+              await sendMessage(chatId, "🤖 Ulepszam opis... Proszę czekać.");
+              
+              // Call AI Action to improve description
+              // @ts-ignore
+              const improvedDescription = await ctx.runAction(internal.ai.generateProductDescription, {
+                name: session.productData.name || "Produkt",
+                imageUrl: text // Using text as the base description to improve
+              });
+
+              await ctx.runMutation(internal.telegram_db.updateSession, {
+                chatId,
+                step: "CATEGORY",
+                updates: { 
+                  description: improvedDescription
+                }
+              });
+
+              const categoryKeyboardAI = {
+                keyboard: [
+                  [{ text: "art" }, { text: "decor" }],
+                  [{ text: "functional" }, { text: "gadgets" }],
+                  [{ text: "other" }]
+                ],
+                one_time_keyboard: true,
+                resize_keyboard: true
+              };
+
+              await sendMessage(chatId, `✨ *Ulepszony opis:*\n${improvedDescription}\n\n📂 Wybierz kategorię:`, categoryKeyboardAI);
+              break;
+
             case "DESCRIPTION":
               await ctx.runMutation(internal.telegram_db.updateSession, {
                 chatId,
@@ -159,7 +190,7 @@ export const webhook = httpAction(async (ctx, request) => {
                 updates: { description: text }
               });
               
-              const categoryKeyboard = {
+              const categoryKeyboardManual = {
                 keyboard: [
                   [{ text: "art" }, { text: "decor" }],
                   [{ text: "functional" }, { text: "gadgets" }],
@@ -169,7 +200,7 @@ export const webhook = httpAction(async (ctx, request) => {
                 resize_keyboard: true
               };
               
-              await sendMessage(chatId, "📂 Wybierz kategorię:", categoryKeyboard);
+              await sendMessage(chatId, "📂 Wybierz kategorię:", categoryKeyboardManual);
               break;
 
             case "CATEGORY":

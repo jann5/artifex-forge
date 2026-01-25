@@ -5,7 +5,7 @@ import { v } from "convex/values";
 export const generateProductDescription = internalAction({
   args: {
     name: v.string(),
-    imageUrl: v.string(),
+    imageUrl: v.string(), // Now used as base description to improve
   },
   handler: async (ctx, args) => {
     const groqApiKey = process.env.GROQ_API_KEY;
@@ -27,11 +27,11 @@ export const generateProductDescription = internalAction({
           messages: [
             {
               role: "system",
-              content: "Jesteś ekspertem od marketingu e-commerce. Twoim zadaniem jest stworzenie atrakcyjnego, krótkiego opisu produktu na podstawie jego nazwy. Opis powinien być po polsku, zachęcający do zakupu, i podkreślać potencjalne cechy produktu. Opis powinien mieć około 2-3 zdania.",
+              content: "Jesteś ekspertem od marketingu e-commerce. Twoim zadaniem jest ulepszenie i rozbudowanie opisu produktu podanego przez użytkownika. Opis powinien być po polsku, atrakcyjny, zachęcający do zakupu, i profesjonalny. Rozbuduj opis do 3-4 zdań, zachowując kluczowe informacje z oryginalnego opisu.",
             },
             {
               role: "user",
-              content: `Nazwa produktu: ${args.name}. Stwórz krótki, atrakcyjny opis tego produktu.`,
+              content: `Nazwa produktu: ${args.name}\n\nOpis użytkownika: ${args.imageUrl}\n\nUlepsz i rozbuduj ten opis, aby był bardziej atrakcyjny i profesjonalny.`,
             },
           ],
           temperature: 0.7,
