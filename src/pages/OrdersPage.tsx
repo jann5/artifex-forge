@@ -9,6 +9,7 @@ import { Package, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { OrderTracking } from "@/components/ui/order-tracking";
 
 export default function OrdersPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -87,6 +88,53 @@ export default function OrdersPage() {
     return statusMap[status] || status;
   };
 
+  const getTrackingSteps = (order: any) => {
+    const creationDate = new Date(order._creationTime).toLocaleDateString("pl-PL", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    if (order.status === "cancelled") {
+      return [
+        {
+          name: "Złożono zamówienie",
+          timestamp: creationDate,
+          isCompleted: true,
+        },
+        {
+          name: "Anulowano",
+          timestamp: "Zamówienie zostało anulowane",
+          isCompleted: true,
+        }
+      ];
+    }
+
+    return [
+      {
+        name: "Złożono zamówienie",
+        timestamp: creationDate,
+        isCompleted: true,
+      },
+      {
+        name: "Płatność",
+        timestamp: order.status === "pending" ? "Oczekuje na płatność" : "Zatwierdzona",
+        isCompleted: ["paid", "shipped", "delivered"].includes(order.status),
+      },
+      {
+        name: "Wysłano",
+        timestamp: ["shipped", "delivered"].includes(order.status) ? "Przekazano kurierowi" : "Oczekuje",
+        isCompleted: ["shipped", "delivered"].includes(order.status),
+      },
+      {
+        name: "Dostarczono",
+        timestamp: order.status === "delivered" ? "Dostarczono pomyślnie" : "W drodze",
+        isCompleted: order.status === "delivered",
+      }
+    ];
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -116,12 +164,23 @@ export default function OrdersPage() {
           ) : (
             <div className="space-y-6">
               {orders.map((order) => (
-                <Card key={order._id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        Zamówienie #{order._id.slice(-8).toUpperCase()}
-                      </CardTitle>
+                <Card key={order._id} className="overflow-hidden">
+                  <CardHeader className="bg-muted/30 border-b">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          Zamówienie #{order._id.slice(-8).toUpperCase()}
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {new Date(order._creationTime).toLocaleDateString("pl-PL", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
+                        </p>
+                      </div>
                       <Badge className={getStatusColor(order.status)}>
                         <span className="flex items-center gap-1">
                           {getStatusIcon(order.status)}
@@ -129,45 +188,48 @@ export default function OrdersPage() {
                         </span>
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(order._creationTime).toLocaleDateString("pl-PL", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex gap-4 pb-4 border-b last:border-0">
-                          <div className="h-16 w-16 rounded-md bg-muted overflow-hidden flex-shrink-0">
-                            {item.image && (
-                              <img 
-                                src={item.image} 
-                                alt={item.name}
-                                className="h-full w-full object-cover"
-                              />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Ilość: {item.quantity} × {formatCurrency(item.price)}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold">
-                              {formatCurrency(item.price * item.quantity)}
-                            </p>
-                          </div>
+                  <CardContent className="p-6">
+                    <div className="grid lg:grid-cols-3 gap-8">
+                      <div className="lg:col-span-2 space-y-6">
+                        <div className="space-y-4">
+                          {order.items.map((item: any, idx: number) => (
+                            <div key={idx} className="flex gap-4 pb-4 border-b last:border-0 last:pb-0">
+                              <div className="h-20 w-20 rounded-lg bg-muted overflow-hidden flex-shrink-0 border">
+                                {item.image && (
+                                  <img 
+                                    src={item.image} 
+                                    alt={item.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-medium text-lg">{item.name}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.quantity} × {formatCurrency(item.price)}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold">
+                                  {formatCurrency(item.price * item.quantity)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                      <div className="flex justify-between items-center pt-2">
-                        <span className="font-semibold">Razem</span>
-                        <span className="text-xl font-bold">
-                          {formatCurrency(order.totalAmount)}
-                        </span>
+                        
+                        <div className="flex justify-between items-center pt-4 border-t">
+                          <span className="font-medium text-muted-foreground">Suma całkowita</span>
+                          <span className="text-2xl font-bold text-primary">
+                            {formatCurrency(order.totalAmount)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="bg-muted/10 rounded-xl p-6 border h-fit">
+                        <h3 className="font-semibold mb-6">Status zamówienia</h3>
+                        <OrderTracking steps={getTrackingSteps(order)} />
                       </div>
                     </div>
                   </CardContent>
