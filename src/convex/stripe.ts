@@ -70,8 +70,7 @@ export const createCheckoutSession = action({
 
     try {
       const session = await stripe.checkout.sessions.create({
-        // @ts-expect-error - Stripe types mismatch
-        automatic_payment_methods: { enabled: true },
+        payment_method_types: ["card", "blik"],
         line_items: lineItems,
         mode: "payment",
         success_url: `${domain}/?success=true`,
