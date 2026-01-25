@@ -3,10 +3,34 @@ import { httpAction } from "./_generated/server";
 import { auth } from "./auth";
 import { webhook, setWebhook } from "./telegram";
 import { Id } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 
 const http = httpRouter();
 
 auth.addHttpRoutes(http);
+
+http.route({
+  path: "/stripe/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const signature = request.headers.get("Stripe-Signature");
+    if (!signature) {
+      return new Response("Missing Signature", { status: 400 });
+    }
+    const payload = await request.text();
+
+    try {
+      await ctx.runAction(api.stripe.handleWebhook, {
+        signature,
+        payload,
+      });
+      return new Response("OK", { status: 200 });
+    } catch (error) {
+      console.error("Stripe webhook error:", error);
+      return new Response("Webhook Error", { status: 400 });
+    }
+  }),
+});
 
 http.route({
   path: "/telegram/webhook",
