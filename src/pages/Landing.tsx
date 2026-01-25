@@ -6,7 +6,6 @@ import { ProductCard } from "@/components/ProductCard";
 import { ArrowRight, Box, Layers, Zap, Sparkles, TrendingUp, Award } from "lucide-react";
 import { Link } from "react-router";
 import { motion } from "framer-motion";
-import Spline from '@splinetool/react-spline';
 
 export default function Landing() {
   const featuredProducts = useQuery(api.products.list, { featured: true });
@@ -15,40 +14,33 @@ export default function Landing() {
     <div className="min-h-screen bg-background flex flex-col overflow-hidden">
       <Navbar />
       
-      {/* Full Screen Spline Hero */}
-      <section className="relative h-screen w-full overflow-hidden">
-        <Spline 
-          scene="https://prod.spline.design/cURy8v0dvmGfcyqT/scene.splinecode"
-          className="w-full h-full"
-        />
-        
-        {/* Overlay Content */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Hero Section */}
+      <section className="relative py-32 lg:py-40 overflow-hidden">
+        <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="text-center px-4 pointer-events-auto"
+            transition={{ duration: 0.8 }}
+            className="text-center max-w-4xl mx-auto"
           >
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-white drop-shadow-2xl">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
               Artifex Forge
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto drop-shadow-lg">
+            <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto">
               Premium druk 3D
             </p>
-            <Button size="lg" className="h-14 px-10 text-lg shadow-2xl" asChild>
+            <Button size="lg" className="h-14 px-10 text-lg" asChild>
               <Link to="/products">
                 Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           </motion.div>
         </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
-            <div className="w-1 h-3 bg-white/50 rounded-full" />
-          </div>
+        
+        {/* Background Elements */}
+        <div className="absolute top-0 left-0 -z-10 w-full h-full opacity-5">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary rounded-full blur-3xl" />
         </div>
       </section>
 
