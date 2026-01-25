@@ -4,6 +4,9 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
+  "env": {
+    "VITE_CONVEX_URL": "https://deafening-panda-728.convex.cloud"
+  },
   "rewrites": [
     {
       "source": "/(.*)",
