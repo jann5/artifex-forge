@@ -1,6 +1,5 @@
 import { Email } from "@convex-dev/auth/providers/Email";
 import { RandomReader, generateRandomString } from "@oslojs/crypto/random";
-import { internal } from "../_generated/api";
 
 export const emailOtp = Email({
   id: "email-otp",
@@ -15,8 +14,9 @@ export const emailOtp = Email({
     return generateRandomString(random, alphabet, 6);
   },
   async sendVerificationRequest({ identifier: email, token }) {
-    // Call our custom email action to send verification code
-    await fetch(`${process.env.CONVEX_SITE_URL}/sendVerificationEmail`, {
+    // Call our HTTP endpoint to send the email via Resend
+    const siteUrl = process.env.CONVEX_SITE_URL || "http://localhost:5173";
+    await fetch(`${siteUrl}/sendVerificationEmail`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ to: email, code: token }),

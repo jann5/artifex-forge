@@ -1,9 +1,9 @@
 "use node";
 import { v } from "convex/values";
-import { internalAction } from "./_generated/server";
+import { action } from "./_generated/server";
 import { Resend } from "resend";
 
-export const sendVerificationEmail = internalAction({
+export const sendVerificationEmail = action({
   args: {
     to: v.string(),
     code: v.string(),
