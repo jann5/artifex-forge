@@ -130,7 +130,18 @@ export const webhook = httpAction(async (ctx, request) => {
                 step: "CATEGORY",
                 updates: { description: text }
               });
-              await sendMessage(chatId, "📂 Podaj kategorię (np. decor, art, functional):");
+              
+              const categoryKeyboard = {
+                keyboard: [
+                  [{ text: "art" }, { text: "decor" }],
+                  [{ text: "functional" }, { text: "gadgets" }],
+                  [{ text: "other" }]
+                ],
+                one_time_keyboard: true,
+                resize_keyboard: true
+              };
+              
+              await sendMessage(chatId, "📂 Wybierz kategorię:", categoryKeyboard);
               break;
 
             case "CATEGORY":
@@ -139,7 +150,10 @@ export const webhook = httpAction(async (ctx, request) => {
                 step: "PRICE",
                 updates: { category: text.toLowerCase() }
               });
-              await sendMessage(chatId, "💰 Podaj cenę (PLN):");
+              
+              // Remove keyboard by sending a new one or removing it
+              const removeKeyboard = { remove_keyboard: true };
+              await sendMessage(chatId, "💰 Podaj cenę (PLN):", removeKeyboard);
               break;
 
             case "PRICE":

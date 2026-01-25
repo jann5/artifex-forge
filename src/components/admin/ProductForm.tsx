@@ -1,6 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Upload, X, Loader2 } from "lucide-react";
 import { useRef } from "react";
 import { getStorageUrl } from "@/lib/utils";
@@ -75,11 +82,21 @@ export function ProductForm({
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Kategoria</label>
-        <Input 
+        <Select 
           value={product.category} 
-          onChange={e => onProductChange({ category: e.target.value })}
-          required
-        />
+          onValueChange={(value) => onProductChange({ category: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Wybierz kategorię" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="art">Sztuka</SelectItem>
+            <SelectItem value="decor">Dekoracje</SelectItem>
+            <SelectItem value="functional">Funkcjonalne</SelectItem>
+            <SelectItem value="gadgets">Gadżety</SelectItem>
+            <SelectItem value="other">Inne</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
       <div>
