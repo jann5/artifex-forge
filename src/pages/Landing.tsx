@@ -15,59 +15,40 @@ export default function Landing() {
     <div className="min-h-screen bg-background flex flex-col overflow-hidden">
       <Navbar />
       
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 lg:py-32 min-h-[90vh] flex items-center">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-6">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Premium 3D Printing</span>
-              </div>
-
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 leading-[1.1]">
-                Minimalistyczny luksus spotyka{" "}
-                <span className="text-primary">cyfrowe rzemiosło</span>.
-              </h1>
-
-              <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl leading-relaxed">
-                Odkryj wyselekcjonowaną kolekcję premium produktów drukowanych 3D. 
-                Gdzie sztuka spotyka inżynierię w każdej warstwie.
-              </p>
-
-              <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="h-14 px-10 text-lg" asChild>
-                  <Link to="/products">
-                    Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" className="h-14 px-10 text-lg border-2" asChild>
-                  <Link to="/about">
-                    Nasza Historia
-                  </Link>
-                </Button>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-              className="relative h-[500px] lg:h-[600px] rounded-2xl overflow-hidden"
-            >
-              <Spline scene="https://prod.spline.design/cURy8v0dvmGfcyqT/scene.splinecode" />
-            </motion.div>
-          </div>
-        </div>
+      {/* Full Screen Spline Hero */}
+      <section className="relative h-screen w-full overflow-hidden">
+        <Spline 
+          scene="https://prod.spline.design/cURy8v0dvmGfcyqT/scene.splinecode"
+          className="w-full h-full"
+        />
         
-        {/* Subtle Background Elements */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-20 right-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 left-20 w-72 h-72 bg-secondary/5 rounded-full blur-3xl" />
+        {/* Overlay Content */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="text-center px-4 pointer-events-auto"
+          >
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-white drop-shadow-2xl">
+              Artifex Forge
+            </h1>
+            <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto drop-shadow-lg">
+              Premium druk 3D
+            </p>
+            <Button size="lg" className="h-14 px-10 text-lg shadow-2xl" asChild>
+              <Link to="/products">
+                Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+          </motion.div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
+            <div className="w-1 h-3 bg-white/50 rounded-full" />
+          </div>
         </div>
       </section>
 
