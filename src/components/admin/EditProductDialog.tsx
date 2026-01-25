@@ -27,7 +27,6 @@ interface EditingProduct {
   price: number;
   category: string;
   images: string[];
-  model3d?: string;
   inventory: number;
   featured?: boolean;
 }
@@ -40,8 +39,6 @@ interface EditProductDialogProps {
   onProductChange: (updates: Partial<EditingProduct>) => void;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onImageRemove: (index: number) => void;
-  onModelUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onModelRemove?: () => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -53,8 +50,6 @@ export function EditProductDialog({
   onProductChange,
   onImageUpload,
   onImageRemove,
-  onModelUpload,
-  onModelRemove,
   onSubmit,
 }: EditProductDialogProps) {
   if (!product) return null;
@@ -129,54 +124,6 @@ export function EditProductDialog({
               onCheckedChange={(checked) => onProductChange({ featured: checked })}
             />
             <Label htmlFor="edit-featured">Wyróżniony produkt</Label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Model 3D (.glb)</label>
-            <p className="text-xs text-muted-foreground mb-2">
-              Model 3D będzie wyświetlany jako pierwszy element na stronie produktu.
-            </p>
-            {product.model3d ? (
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-primary font-bold text-xs">3D</div>
-                  <span className="text-sm truncate max-w-[200px]">Model załadowany</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={onModelRemove}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div>
-                <input
-                  type="file"
-                  accept=".glb,.gltf"
-                  onChange={onModelUpload}
-                  className="hidden"
-                  id="edit-model-upload"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => document.getElementById('edit-model-upload')?.click()}
-                  disabled={isUploading}
-                  className="w-full"
-                >
-                  {isUploading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="mr-2 h-4 w-4" />
-                  )}
-                  Dodaj Model 3D
-                </Button>
-              </div>
-            )}
           </div>
           
           <div>

@@ -6,11 +6,10 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
 import { useState, useEffect } from "react";
-import { Minus, Plus, ShoppingBag, Box } from "lucide-react";
+import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getStorageUrl } from "@/lib/utils";
-import { ModelViewer } from "@/components/ModelViewer";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,18 +19,11 @@ export default function ProductPage() {
   const { isAuthenticated } = useAuth();
   
   const [quantity, setQuantity] = useState(1);
-  // '3d' for 3D model, number for image index
-  const [activeMedia, setActiveMedia] = useState<'3d' | number>(0);
+  const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
     if (product && isAuthenticated) {
       recordView({ productId: product._id });
-    }
-    // Set default media to 3D if available when product loads
-    if (product?.model3d) {
-      setActiveMedia('3d');
-    } else {
-      setActiveMedia(0);
     }
   }, [product, isAuthenticated, recordView]);
 
@@ -84,48 +76,29 @@ export default function ProductPage() {
       
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
-          {/* Image Gallery & 3D Model */}
+          {/* Image Gallery */}
           <div className="space-y-4">
             <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden relative border">
-              {activeMedia === '3d' && product.model3d ? (
-                <ModelViewer url={getStorageUrl(product.model3d)} />
-              ) : (
-                <img 
-                  src={getStorageUrl(product.images[typeof activeMedia === 'number' ? activeMedia : 0])} 
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    console.error('Image failed to load:', target.src);
-                    target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
-                  }}
-                />
-              )}
+              <img 
+                src={getStorageUrl(product.images[activeImage])} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  console.error('Image failed to load:', target.src);
+                  target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
+                }}
+              />
             </div>
 
             {/* Thumbnails */}
             <div className="grid grid-cols-5 gap-2 sm:gap-4">
-              {product.model3d && (
-                <button
-                  onClick={() => setActiveMedia('3d')}
-                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-muted/50 hover:bg-muted ${
-                    activeMedia === '3d' ? "border-primary ring-2 ring-primary/20" : "border-transparent"
-                  }`}
-                  title="Widok 3D"
-                >
-                  <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                    <Box className="h-6 w-6" />
-                    <span className="text-[10px] font-bold uppercase">360°</span>
-                  </div>
-                </button>
-              )}
-              
               {product.images.map((img, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setActiveMedia(idx)}
+                  onClick={() => setActiveImage(idx)}
                   className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                    activeMedia === idx ? "border-primary ring-2 ring-primary/20" : "border-transparent"
+                    activeImage === idx ? "border-primary ring-2 ring-primary/20" : "border-transparent"
                   }`}
                 >
                   <img 

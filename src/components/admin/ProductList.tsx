@@ -1,15 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Box } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { getStorageUrl } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 interface Product {
   _id: Id<"products">;
   name: string;
   price: number;
   images: string[];
-  model3d?: string;
 }
 
 interface ProductListProps {
@@ -24,30 +22,18 @@ export function ProductList({ products, onEdit, onDelete }: ProductListProps) {
       {products?.map(product => (
         <div key={product._id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <img 
-                src={getStorageUrl(product.images[0])} 
-                alt="" 
-                className="h-12 w-12 rounded object-cover border"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  console.error('Image failed to load:', target.src);
-                  target.src = 'https://placehold.co/100';
-                }}
-              />
-              {product.model3d && (
-                <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm">
-                  <Box className="h-3 w-3" />
-                </div>
-              )}
-            </div>
+            <img 
+              src={getStorageUrl(product.images[0])} 
+              alt="" 
+              className="h-12 w-12 rounded object-cover border"
+              onError={(e) => {
+                const target = e.currentTarget;
+                console.error('Image failed to load:', target.src);
+                target.src = 'https://placehold.co/100';
+              }}
+            />
             <div>
-              <div className="flex items-center gap-2">
-                <p className="font-medium">{product.name}</p>
-                {product.model3d && (
-                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5">3D</Badge>
-                )}
-              </div>
+              <p className="font-medium">{product.name}</p>
               <p className="text-sm text-muted-foreground">{product.price} PLN</p>
             </div>
           </div>

@@ -30,7 +30,6 @@ export default function AdminPage() {
     category: "art",
     inventory: 1,
     images: [] as string[],
-    model3d: undefined as string | undefined,
     featured: false,
   });
 
@@ -85,42 +84,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleModelUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEditMode = false) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const postUrl = await generateUploadUrl();
-      
-      const result = await fetch(postUrl, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      
-      const { storageId } = await result.json();
-
-      if (isEditMode && editingProduct) {
-        setEditingProduct({
-          ...editingProduct,
-          model3d: storageId
-        });
-      } else {
-        setNewProduct({
-          ...newProduct,
-          model3d: storageId
-        });
-      }
-      toast.success("Model 3D przesłany pomyślnie");
-    } catch (error) {
-      console.error(error);
-      toast.error("Błąd przesyłania modelu 3D");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -133,7 +96,6 @@ export default function AdminPage() {
         category: "art",
         inventory: 1,
         images: [],
-        model3d: undefined,
         featured: false,
       });
     } catch (error) {
@@ -155,7 +117,6 @@ export default function AdminPage() {
           category: editingProduct.category,
           inventory: editingProduct.inventory,
           images: editingProduct.images,
-          model3d: editingProduct.model3d,
           featured: editingProduct.featured,
         }
       });
@@ -187,8 +148,6 @@ export default function AdminPage() {
                   ...newProduct, 
                   images: newProduct.images.filter((_, i) => i !== idx)
                 })}
-                onModelUpload={(e) => handleModelUpload(e, false)}
-                onModelRemove={() => setNewProduct({...newProduct, model3d: undefined})}
                 onSubmit={handleCreateProduct}
                 submitLabel="Utwórz Produkt"
               />
@@ -224,8 +183,6 @@ export default function AdminPage() {
           ...editingProduct, 
           images: editingProduct.images.filter((_: any, i: number) => i !== idx)
         })}
-        onModelUpload={(e) => handleModelUpload(e, true)}
-        onModelRemove={() => setEditingProduct({...editingProduct, model3d: undefined})}
         onSubmit={handleUpdateProduct}
       />
     </div>
