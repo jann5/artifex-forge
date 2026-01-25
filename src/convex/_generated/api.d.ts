@@ -16,6 +16,7 @@ import type * as diagnostics from "../diagnostics.js";
 import type * as emails from "../emails.js";
 import type * as favorites from "../favorites.js";
 import type * as files from "../files.js";
+import type * as get_site_url from "../get_site_url.js";
 import type * as http from "../http.js";
 import type * as notifications from "../notifications.js";
 import type * as orders from "../orders.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   emails: typeof emails;
   favorites: typeof favorites;
   files: typeof files;
+  get_site_url: typeof get_site_url;
   http: typeof http;
   notifications: typeof notifications;
   orders: typeof orders;
