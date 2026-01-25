@@ -70,7 +70,7 @@ export const createCheckoutSession = action({
 
     try {
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
+        payment_method_types: ["card", "blik"],
         line_items: lineItems,
         mode: "payment",
         success_url: `${domain}/?success=true`,
