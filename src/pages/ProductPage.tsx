@@ -179,7 +179,7 @@ export default function ProductPage() {
 
       {/* Image Modal */}
       <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-        <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 bg-black/95 border-none">
+        <DialogContent className="w-screen h-screen max-w-none p-0 bg-black/95 border-none">
           <button
             onClick={() => setIsImageModalOpen(false)}
             className="absolute top-4 right-4 z-50 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
