@@ -124,7 +124,7 @@ export const webhook = httpAction(async (ctx, request) => {
               
               const descKeyboard = {
                 keyboard: [
-                  [{ text: "✍️ Ręcznie" }, { text: "✨ AI (ze zdjęcia)" }]
+                  [{ text: "✍️ Ręcznie" }, { text: "✨ AI (ulepsz opis)" }]
                 ],
                 one_time_keyboard: true,
                 resize_keyboard: true
