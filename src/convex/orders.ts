@@ -121,19 +121,13 @@ export const updateStatus = mutation({
     const customer = await ctx.db.get(order.userId);
     
     // Send Telegram notification (scheduled to run after mutation completes)
-    // Note: Uncomment after Convex regenerates API types
-    try {
-      // @ts-ignore - Convex will regenerate this after deployment
-      await ctx.scheduler.runAfter(0, internal.notifications?.sendTelegramNotification, {
-        orderId: args.orderId,
-        customerEmail: customer?.email || "Unknown",
-        totalAmount: order.totalAmount,
-        status: args.status,
-      });
-    } catch (error) {
-      console.error("Failed to schedule Telegram notification:", error);
-      // Don't fail the mutation if notification fails
-    }
+    // @ts-expect-error - Convex API types will regenerate on next deployment
+    await ctx.scheduler.runAfter(0, internal.notifications.sendTelegramNotification, {
+      orderId: args.orderId,
+      customerEmail: customer?.email || "Unknown",
+      totalAmount: order.totalAmount,
+      status: args.status,
+    });
 
     return { success: true };
   },
