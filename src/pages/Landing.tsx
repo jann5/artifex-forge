@@ -138,34 +138,6 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* Trust Badges Section */}
-      <section className="py-12 bg-primary/5 border-y">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { icon: Shield, text: "100% Bezpieczne Płatności" },
-              { icon: Truck, text: "Darmowa Dostawa" },
-              { icon: Star, text: "5★ Opinie Klientów" },
-              { icon: Award, text: "Gwarancja Jakości" },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="flex flex-col items-center text-center gap-3 p-4"
-              >
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <item.icon className="h-6 w-6 text-primary" />
-                </div>
-                <p className="text-sm font-medium">{item.text}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Stats Section */}
       <section className="py-16 bg-muted/30 border-b">
         <div className="container mx-auto px-4">
