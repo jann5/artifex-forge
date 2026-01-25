@@ -28,11 +28,9 @@ http.route({
     const url = new URL(request.url);
     // path is /api/storage/<storageId>
     const pathParts = url.pathname.split("/");
-    // Handle potential trailing slash or extra segments
-    let storageId = pathParts[pathParts.length - 1];
-    if (!storageId) {
-        storageId = pathParts[pathParts.length - 2];
-    }
+    // Filter empty parts to handle trailing slashes or double slashes
+    const segments = pathParts.filter(p => p.length > 0);
+    const storageId = segments[segments.length - 1];
     
     if (!storageId) {
       return new Response("Missing storage ID", { status: 400 });
@@ -41,6 +39,7 @@ http.route({
     try {
       const blob = await ctx.storage.get(storageId as Id<"_storage">);
       if (!blob) {
+        console.error(`Image not found for ID: ${storageId}`);
         return new Response("Image not found", { status: 404 });
       }
       return new Response(blob, {
@@ -50,7 +49,7 @@ http.route({
         },
       });
     } catch (error) {
-      console.error("Error serving image:", error);
+      console.error(`Error serving image ${storageId}:`, error);
       return new Response("Internal Server Error", { status: 500 });
     }
   }),
