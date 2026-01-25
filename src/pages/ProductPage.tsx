@@ -25,6 +25,16 @@ export default function ProductPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [show3D, setShow3D] = useState(false);
 
+  const has3DModel = product?.model3d && product.model3d.length > 0;
+
+  // Auto-show 3D model if available
+  useEffect(() => {
+    if (has3DModel) {
+      setShow3D(true);
+      setActiveImage(-1);
+    }
+  }, [has3DModel]);
+
   useEffect(() => {
     if (product && isAuthenticated) {
       recordView({ productId: product._id });
@@ -73,8 +83,6 @@ export default function ProductPage() {
       toast.error("Nie udało się dodać do koszyka");
     }
   };
-
-  const has3DModel = product.model3d && product.model3d.length > 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

@@ -125,19 +125,19 @@ export function ProductForm({
             Model 3D (opcjonalny)
           </label>
           {model3d ? (
-            <div className="relative p-4 rounded-lg border bg-muted/30">
+            <div className="relative p-4 rounded-lg border bg-primary/5 border-primary/20">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center">
-                  <Box className="h-5 w-5 text-primary" />
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Box className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Model 3D dodany</p>
-                  <p className="text-xs text-muted-foreground">Plik .glb</p>
+                  <p className="text-sm font-semibold text-primary">Model 3D przesłany</p>
+                  <p className="text-xs text-muted-foreground">Plik .glb gotowy do wyświetlenia</p>
                 </div>
                 <button
                   type="button"
                   onClick={onModelRemove}
-                  className="h-8 w-8 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90"
+                  className="h-8 w-8 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -163,7 +163,7 @@ export function ProductForm({
                 {isUploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
+                    Przesyłanie...
                   </>
                 ) : (
                   <>
@@ -226,7 +226,7 @@ export function ProductForm({
               {isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
+                  Przesyłanie...
                 </>
               ) : (
                 <>
