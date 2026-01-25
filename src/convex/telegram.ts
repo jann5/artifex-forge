@@ -29,6 +29,7 @@ export const webhook = httpAction(async (ctx, request) => {
       const callbackQuery = body.callback_query;
       const data = callbackQuery.data;
       const message = callbackQuery.message;
+      const chatId = String(message.chat.id);
       
       // Format: update_status:ORDER_ID:STATUS
       if (data && data.startsWith("update_status:")) {
@@ -69,6 +70,75 @@ export const webhook = httpAction(async (ctx, request) => {
           });
         }
       }
+
+      // Handle Product Selection for Edit
+      if (data && data.startsWith("edit_select:")) {
+        const productId = data.split(":")[1];
+        
+        await ctx.runMutation(internal.telegram_db.updateSession, {
+          chatId,
+          step: "EDIT_CHOOSE_FIELD",
+          updates: { editingProductId: productId }
+        });
+
+        const product = await ctx.runQuery(api.products.get, { id: productId as Id<"products"> });
+        
+        const editKeyboard = {
+          keyboard: [
+            [{ text: "Nazwa" }, { text: "Opis" }],
+            [{ text: "Cena" }, { text: "Ilość" }],
+            [{ text: "Kategoria" }]
+          ],
+          one_time_keyboard: true,
+          resize_keyboard: true
+        };
+
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: `✏️ Edytujesz: *${product?.name}*\\nCo chcesz zmienić?`,
+              parse_mode: "Markdown",
+              reply_markup: editKeyboard,
+            }),
+        });
+
+        // Answer callback to stop loading animation
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ callback_query_id: callbackQuery.id })
+        });
+      }
+
+      // Handle Product Selection for Delete
+      if (data && data.startsWith("delete_select:")) {
+        const productId = data.split(":")[1];
+        const product = await ctx.runQuery(api.products.get, { id: productId as Id<"products"> });
+
+        if (product) {
+            await ctx.runMutation(api.products.remove, { id: productId as Id<"products"> });
+            await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+            
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `✅ Usunięto produkt: *${product.name}*`,
+                  parse_mode: "Markdown",
+                }),
+            });
+        }
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ callback_query_id: callbackQuery.id })
+        });
+      }
+
       return new Response("OK", { status: 200 });
     }
 
@@ -83,7 +153,65 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // COMMANDS
       if (text === "/start" || text === "/help") {
-        await sendMessage(chatId, "🤖 *Artifex Bot*\\n\\nKomendy:\\n/addproduct - Dodaj produkt\\n/editproduct - Edytuj produkt\\n/deleteproduct - Usuń produkt\\n/cancel - Anuluj\\n/help - Pomoc");
+        await sendMessage(chatId, "🤖 *Artifex Bot*\\n\\nKomendy:\\n/orders - Ostatnie zamówienia\\n/stats - Statystyki sklepu\\n/lowstock - Niskie stany magazynowe\\n/addproduct - Dodaj produkt\\n/editproduct - Edytuj produkt\\n/deleteproduct - Usuń produkt\\n/cancel - Anuluj\\n/help - Pomoc");
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/stats") {
+        const stats = await ctx.runQuery(internal.orders.getStats);
+        const productStats = await ctx.runQuery(internal.products.getStats);
+        
+        const msg = `📊 *Statystyki Sklepu*\\n\\n` +
+                    `📦 Zamówienia: ${stats.totalOrders}\\n` +
+                    `💰 Przychód: ${stats.totalRevenue.toFixed(2)} PLN\\n` +
+                    `⏳ Oczekujące: ${stats.pendingOrders}\\n` +
+                    `✅ Opłacone: ${stats.paidOrders}\\n\\n` +
+                    `🛍️ Produkty: ${productStats.totalProducts}\\n` +
+                    `⚠️ Niski stan: ${productStats.lowStockCount}`;
+        
+        await sendMessage(chatId, msg);
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/orders") {
+        const orders = await ctx.runQuery(internal.orders.getRecent);
+        if (orders.length === 0) {
+            await sendMessage(chatId, "Brak ostatnich zamówień.");
+        } else {
+            for (const order of orders) {
+                const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
+                const msg = `📦 *Zamówienie* (${date})\\n` +
+                            `👤 ${order.customerName}\\n` +
+                            `💰 ${order.totalAmount} PLN\\n` +
+                            `Status: ${order.status}`;
+                
+                // Add status buttons
+                const keyboard = {
+                    inline_keyboard: [
+                        [
+                            { text: "Oczekuje", callback_data: `update_status:${order._id}:pending` },
+                            { text: "Opłacone", callback_data: `update_status:${order._id}:paid` }
+                        ],
+                        [
+                            { text: "Wysłane", callback_data: `update_status:${order._id}:shipped` },
+                            { text: "Dostarczone", callback_data: `update_status:${order._id}:delivered` }
+                        ]
+                    ]
+                };
+                await sendMessage(chatId, msg, keyboard);
+            }
+        }
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/lowstock") {
+        const stats = await ctx.runQuery(internal.products.getStats);
+        if (stats.lowStockCount === 0) {
+            await sendMessage(chatId, "✅ Wszystkie produkty mają odpowiedni stan magazynowy.");
+        } else {
+            const list = stats.lowStockNames.map(n => `- ${n}`).join("\\n");
+            await sendMessage(chatId, `⚠️ *Niski stan magazynowy (<5):*\\n\\n${list}`);
+        }
         return new Response("OK", { status: 200 });
       }
 
@@ -151,13 +279,13 @@ export const webhook = httpAction(async (ctx, request) => {
               const productsToDelete = await ctx.runQuery(api.products.list, { search: text });
               if (productsToDelete.length === 0) {
                 await sendMessage(chatId, "❌ Nie znaleziono produktu. Spróbuj innej nazwy lub wpisz /cancel.");
-              } else if (productsToDelete.length === 1) {
-                const p = productsToDelete[0];
-                await ctx.runMutation(api.products.remove, { id: p._id });
-                await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
-                await sendMessage(chatId, `✅ Usunięto produkt: *${p.name}*`);
               } else {
-                await sendMessage(chatId, `⚠️ Znaleziono ${productsToDelete.length} produktów. Bądź bardziej precyzyjny.`);
+                // Show list of products to delete
+                const buttons = productsToDelete.slice(0, 10).map(p => ([
+                    { text: `${p.name} (${p.price} PLN)`, callback_data: `delete_select:${p._id}` }
+                ]));
+                
+                await sendMessage(chatId, "🗑️ Wybierz produkt do usunięcia:", { inline_keyboard: buttons });
               }
               break;
 
@@ -165,26 +293,13 @@ export const webhook = httpAction(async (ctx, request) => {
               const productsToEdit = await ctx.runQuery(api.products.list, { search: text });
               if (productsToEdit.length === 0) {
                 await sendMessage(chatId, "❌ Nie znaleziono produktu. Spróbuj innej nazwy lub wpisz /cancel.");
-              } else if (productsToEdit.length === 1) {
-                const p = productsToEdit[0];
-                await ctx.runMutation(internal.telegram_db.updateSession, {
-                  chatId,
-                  step: "EDIT_CHOOSE_FIELD",
-                  updates: { editingProductId: p._id }
-                });
-                
-                const editKeyboard = {
-                  keyboard: [
-                    [{ text: "Nazwa" }, { text: "Opis" }],
-                    [{ text: "Cena" }, { text: "Ilość" }],
-                    [{ text: "Kategoria" }]
-                  ],
-                  one_time_keyboard: true,
-                  resize_keyboard: true
-                };
-                await sendMessage(chatId, `✏️ Edytujesz: *${p.name}*\\nCo chcesz zmienić?`, editKeyboard);
               } else {
-                await sendMessage(chatId, `⚠️ Znaleziono ${productsToEdit.length} produktów. Bądź bardziej precyzyjny.`);
+                // Show list of products to edit
+                const buttons = productsToEdit.slice(0, 10).map(p => ([
+                    { text: `${p.name} (${p.price} PLN)`, callback_data: `edit_select:${p._id}` }
+                ]));
+                
+                await sendMessage(chatId, "✏️ Wybierz produkt do edycji:", { inline_keyboard: buttons });
               }
               break;
 
@@ -327,7 +442,7 @@ export const webhook = httpAction(async (ctx, request) => {
                 resize_keyboard: true
               };
 
-              await sendMessage(chatId, `✨ *Ulepszony opis:*\n${improvedDescription}\n\n📂 Wybierz kategorię:`, categoryKeyboardAI);
+              await sendMessage(chatId, `✨ *Ulepszony opis:*\\n${improvedDescription}\\n\\n📂 Wybierz kategorię:`, categoryKeyboardAI);
               break;
 
             case "DESCRIPTION":
@@ -387,7 +502,7 @@ export const webhook = httpAction(async (ctx, request) => {
                 step: "IMAGES",
                 updates: { inventory }
               });
-              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\n\nKiedy skończysz, wpisz /done");
+              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\\n\\nKiedy skończysz, wpisz /done");
               break;
               
             case "IMAGES":
@@ -458,7 +573,7 @@ export const webhook = httpAction(async (ctx, request) => {
                     resize_keyboard: true
                   };
 
-                  await sendMessage(chatId, `✨ *Wygenerowany opis:*\n${description}\n\n📂 Wybierz kategorię:`, categoryKeyboard);
+                  await sendMessage(chatId, `✨ *Wygenerowany opis:*\\n${description}\\n\\n📂 Wybierz kategorię:`, categoryKeyboard);
 
                 } else {
                   // Standard Image Upload Flow
@@ -498,7 +613,7 @@ export const webhook = httpAction(async (ctx, request) => {
           });
 
           await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
-          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\n\n${p.name}\n${p.price} PLN`);
+          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\\n\\n${p.name}\\n${p.price} PLN`);
         }
       }
     }

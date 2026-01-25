@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery } from "./_generated/server";
 
 export const list = query({
   args: {
@@ -106,4 +106,17 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
   },
+});
+
+export const getStats = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    const lowStock = products.filter(p => p.inventory < 5);
+    return { 
+        totalProducts: products.length, 
+        lowStockCount: lowStock.length,
+        lowStockNames: lowStock.map(p => p.name).slice(0, 10)
+    };
+  }
 });

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation, action } from "./_generated/server";
+import { mutation, query, internalMutation, action, internalQuery } from "./_generated/server";
 import { getCurrentUser } from "./users";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
@@ -203,4 +203,26 @@ export const listAll = query({
 
     return ordersWithCustomers;
   },
+});
+
+export const getStats = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const orders = await ctx.db.query("orders").collect();
+    const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+    const pendingOrders = orders.filter(o => o.status === "pending").length;
+    const paidOrders = orders.filter(o => o.status === "paid").length;
+    return { totalOrders: orders.length, totalRevenue, pendingOrders, paidOrders };
+  }
+});
+
+export const getRecent = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const orders = await ctx.db.query("orders").order("desc").take(5);
+    return await Promise.all(orders.map(async (o) => {
+        const user = await ctx.db.get(o.userId);
+        return { ...o, customerName: user?.name || user?.email || "Unknown" };
+    }));
+  }
 });
