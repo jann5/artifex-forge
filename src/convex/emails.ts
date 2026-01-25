@@ -10,11 +10,10 @@ export const sendVerificationEmail = action({
   },
   handler: async (ctx, args) => {
     const resend = new Resend(process.env.RESEND_API_KEY);
-
     const appName = process.env.VLY_APP_NAME || "Artifex Forge";
     
     try {
-      await resend.emails.send({
+      const result = await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || "biuro@auralasu.pl",
         to: args.to,
         subject: `Twój kod weryfikacyjny - ${appName}`,
