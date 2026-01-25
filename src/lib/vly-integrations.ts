@@ -1,9 +1,8 @@
-// VLY Integrations Configuration
-// See /integrations.md for usage documentation
+import * as VlyPkg from "@vly-ai/integrations";
 
-import { createVlyIntegrations } from '@vly-ai/integrations';
+// Handle potential import differences (default vs named vs namespace)
+const Vly = (VlyPkg as any).Vly || (VlyPkg as any).default || VlyPkg;
 
-export const vly = createVlyIntegrations({
-  deploymentToken: process.env.VLY_INTEGRATION_KEY!,
-  debug: process.env.NODE_ENV === 'development'
+export const vly = new Vly({
+  apiKey: process.env.VLY_INTEGRATION_KEY!,
 });

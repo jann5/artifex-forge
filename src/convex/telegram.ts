@@ -83,14 +83,14 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // COMMANDS
       if (text === "/start" || text === "/help") {
-        await sendMessage(chatId, "🤖 *Artifex Bot*\n\nKomendy:\n/addproduct - Rozpocznij dodawanie produktu\n/cancel - Anuluj dodawanie\n/help - Pomoc");
+        await sendMessage(chatId, "🤖 *Artifex Bot*\\n\\nKomendy:\\n/addproduct - Rozpocznij dodawanie produktu\\n/cancel - Anuluj dodawanie\\n/help - Pomoc");
         return new Response("OK", { status: 200 });
       }
 
       if (text === "/cancel") {
         if (session) {
           await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
-          await sendMessage(chatId, "❌ Anulowano dodawanie produktu.");
+          await sendMessage(chatId, "❌ Anulowano dodawanie produktu.", { remove_keyboard: true });
         } else {
           await sendMessage(chatId, "Nie ma aktywnej operacji do anulowania.");
         }
@@ -106,7 +106,7 @@ export const webhook = httpAction(async (ctx, request) => {
         }
 
         await ctx.runMutation(internal.telegram_db.startSession, { chatId });
-        await sendMessage(chatId, "📦 *Nowy Produkt*\n\nPodaj nazwę produktu:");
+        await sendMessage(chatId, "📦 *Nowy Produkt*\\n\\nPodaj nazwę produktu:");
         return new Response("OK", { status: 200 });
       }
 
@@ -118,11 +118,39 @@ export const webhook = httpAction(async (ctx, request) => {
             case "NAME":
               await ctx.runMutation(internal.telegram_db.updateSession, {
                 chatId,
-                step: "DESCRIPTION",
+                step: "CHOOSE_DESCRIPTION_TYPE",
                 updates: { name: text }
               });
-              await sendMessage(chatId, "📝 Podaj opis produktu:");
+              
+              const descKeyboard = {
+                keyboard: [
+                  [{ text: "✍️ Ręcznie" }, { text: "✨ AI (ze zdjęcia)" }]
+                ],
+                one_time_keyboard: true,
+                resize_keyboard: true
+              };
+              
+              await sendMessage(chatId, "📝 Jak chcesz dodać opis?", descKeyboard);
               break;
+
+            case "CHOOSE_DESCRIPTION_TYPE":
+               if (text === "✨ AI (ze zdjęcia)") {
+                  await ctx.runMutation(internal.telegram_db.updateSession, {
+                    chatId,
+                    step: "DESCRIPTION_AI_WAIT_IMAGE",
+                    updates: {}
+                  });
+                  await sendMessage(chatId, "📸 Wyślij zdjęcie produktu, aby AI mogło wygenerować opis.", { remove_keyboard: true });
+               } else {
+                  // Default to manual
+                  await ctx.runMutation(internal.telegram_db.updateSession, {
+                    chatId,
+                    step: "DESCRIPTION",
+                    updates: {}
+                  });
+                  await sendMessage(chatId, "📝 Podaj opis produktu:", { remove_keyboard: true });
+               }
+               break;
 
             case "DESCRIPTION":
               await ctx.runMutation(internal.telegram_db.updateSession, {
@@ -181,7 +209,7 @@ export const webhook = httpAction(async (ctx, request) => {
                 step: "IMAGES",
                 updates: { inventory }
               });
-              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\n\nKiedy skończysz, wpisz /done");
+              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\\n\\nKiedy skończysz, wpisz /done");
               break;
               
             case "IMAGES":
@@ -191,47 +219,82 @@ export const webhook = httpAction(async (ctx, request) => {
         }
 
         // Handle Image Inputs
-        if (message.photo && session.step === "IMAGES") {
-          try {
-            const photo = message.photo[message.photo.length - 1];
-            const fileId = photo.file_id;
+        if (message.photo) {
+          if (session.step === "IMAGES" || session.step === "DESCRIPTION_AI_WAIT_IMAGE") {
+            try {
+              const photo = message.photo[message.photo.length - 1];
+              const fileId = photo.file_id;
 
-            const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
-            const fileData = await fileRes.json();
-            
-            if (fileData.ok) {
-              const filePath = fileData.result.file_path;
-              const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+              const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+              const fileData = await fileRes.json();
               
-              const imageRes = await fetch(fileUrl);
-              const imageBlob = await imageRes.blob();
-              
-              // Ensure we have a content type
-              let blobToStore = imageBlob;
-              if (!imageBlob.type || imageBlob.type === 'application/octet-stream') {
-                 // Try to guess from file path extension
-                 const ext = filePath.split('.').pop()?.toLowerCase();
-                 let type = 'image/jpeg';
-                 if (ext === 'png') type = 'image/png';
-                 if (ext === 'webp') type = 'image/webp';
-                 if (ext === 'jpg' || ext === 'jpeg') type = 'image/jpeg';
-                 
-                 blobToStore = new Blob([await imageBlob.arrayBuffer()], { type });
+              if (fileData.ok) {
+                const filePath = fileData.result.file_path;
+                const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+                
+                const imageRes = await fetch(fileUrl);
+                const imageBlob = await imageRes.blob();
+                
+                // Ensure we have a content type
+                let blobToStore = imageBlob;
+                if (!imageBlob.type || imageBlob.type === 'application/octet-stream') {
+                   // Try to guess from file path extension
+                   const ext = filePath.split('.').pop()?.toLowerCase();
+                   let type = 'image/jpeg';
+                   if (ext === 'png') type = 'image/png';
+                   if (ext === 'webp') type = 'image/webp';
+                   if (ext === 'jpg' || ext === 'jpeg') type = 'image/jpeg';
+                   
+                   blobToStore = new Blob([await imageBlob.arrayBuffer()], { type });
+                }
+
+                const storageId = await ctx.storage.store(blobToStore);
+
+                if (session.step === "DESCRIPTION_AI_WAIT_IMAGE") {
+                  // AI Generation Flow
+                  await sendMessage(chatId, "🤖 Generuję opis na podstawie zdjęcia... Proszę czekać.");
+                  
+                  // Call AI Action
+                  const description = await ctx.runAction(internal.ai.generateProductDescription, {
+                    name: session.productData.name || "Produkt",
+                    imageUrl: fileUrl
+                  });
+
+                  await ctx.runMutation(internal.telegram_db.updateSession, {
+                    chatId,
+                    step: "CATEGORY",
+                    updates: { 
+                      description: description,
+                      images: [storageId] // Add this image as the first image
+                    }
+                  });
+
+                  const categoryKeyboard = {
+                    keyboard: [
+                      [{ text: "art" }, { text: "decor" }],
+                      [{ text: "functional" }, { text: "gadgets" }],
+                      [{ text: "other" }]
+                    ],
+                    one_time_keyboard: true,
+                    resize_keyboard: true
+                  };
+
+                  await sendMessage(chatId, `✨ *Wygenerowany opis:*\n${description}\n\n📂 Wybierz kategorię:`, categoryKeyboard);
+
+                } else {
+                  // Standard Image Upload Flow
+                  await ctx.runMutation(internal.telegram_db.updateSession, {
+                    chatId,
+                    step: "IMAGES",
+                    updates: { image: storageId }
+                  });
+                  await sendMessage(chatId, "✅ Zdjęcie dodane. Wyślij kolejne lub wpisz /done");
+                }
               }
-
-              const storageId = await ctx.storage.store(blobToStore);
-
-              await ctx.runMutation(internal.telegram_db.updateSession, {
-                chatId,
-                step: "IMAGES",
-                updates: { image: storageId }
-              });
-
-              await sendMessage(chatId, "✅ Zdjęcie dodane. Wyślij kolejne lub wpisz /done");
+            } catch (e) {
+              console.error(e);
+              await sendMessage(chatId, "❌ Błąd podczas pobierania zdjęcia.");
             }
-          } catch (e) {
-            console.error(e);
-            await sendMessage(chatId, "❌ Błąd podczas pobierania zdjęcia.");
           }
         }
 
@@ -256,7 +319,7 @@ export const webhook = httpAction(async (ctx, request) => {
           });
 
           await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
-          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\n\n${p.name}\n${p.price} PLN`);
+          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\\n\\n${p.name}\\n${p.price} PLN`);
         }
       }
     }
