@@ -179,18 +179,18 @@ export default function ProductPage() {
 
       {/* Image Modal */}
       <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-        <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-black/95 border-none">
+        <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 bg-black/95 border-none">
           <button
             onClick={() => setIsImageModalOpen(false)}
             className="absolute top-4 right-4 z-50 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
-          <div className="relative w-full h-full flex items-center justify-center p-8">
+          <div className="relative w-full h-full flex items-center justify-center p-4">
             <img
               src={getStorageUrl(product.images[activeImage])}
               alt={product.name}
-              className="max-w-full max-h-full object-contain"
+              className="w-full h-full object-contain"
               onError={(e) => {
                 const target = e.currentTarget;
                 console.error('Image failed to load:', target.src);
