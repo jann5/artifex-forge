@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, X, Loader2, Box } from "lucide-react";
+import { Upload, X, Loader2, Box, CheckCircle } from "lucide-react";
 import { useRef } from "react";
 import { getStorageUrl } from "@/lib/utils";
 
@@ -125,13 +125,13 @@ export function ProductForm({
             Model 3D (opcjonalny)
           </label>
           {model3d ? (
-            <div className="relative p-4 rounded-lg border bg-primary/5 border-primary/20">
+            <div className="relative p-4 rounded-lg border-2 bg-green-500/10 border-green-500/30">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Box className="h-6 w-6 text-primary" />
+                <div className="h-12 w-12 rounded-lg bg-green-500/20 flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-primary">Model 3D przesłany</p>
+                  <p className="text-sm font-semibold text-green-700">✅ Model 3D przesłany pomyślnie!</p>
                   <p className="text-xs text-muted-foreground">Plik .glb gotowy do wyświetlenia</p>
                 </div>
                 <button
@@ -163,7 +163,7 @@ export function ProductForm({
                 {isUploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Przesyłanie...
+                    Przesyłanie modelu 3D...
                   </>
                 ) : (
                   <>
@@ -226,7 +226,7 @@ export function ProductForm({
               {isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Przesyłanie...
+                  Przesyłanie zdjęć...
                 </>
               ) : (
                 <>

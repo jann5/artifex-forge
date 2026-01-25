@@ -89,15 +89,27 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (!file.name.endsWith('.glb') && !file.name.endsWith('.gltf')) {
+      toast.error("Nieprawidłowy format pliku. Użyj .glb lub .gltf");
+      return;
+    }
+
     setIsUploading(true);
+    toast.info("Przesyłanie modelu 3D...");
+    
     try {
       const postUrl = await generateUploadUrl();
       
       const result = await fetch(postUrl, {
         method: "POST",
-        headers: { "Content-Type": file.type },
+        headers: { "Content-Type": file.type || "model/gltf-binary" },
         body: file,
       });
+      
+      if (!result.ok) {
+        throw new Error("Błąd przesyłania pliku");
+      }
       
       const { storageId } = await result.json();
 
@@ -112,10 +124,10 @@ export default function AdminPage() {
           model3d: storageId
         });
       }
-      toast.success("Model 3D przesłany pomyślnie");
+      toast.success("✅ Model 3D przesłany pomyślnie!");
     } catch (error) {
-      console.error(error);
-      toast.error("Błąd przesyłania modelu 3D");
+      console.error("Model upload error:", error);
+      toast.error("Błąd przesyłania modelu 3D. Spróbuj ponownie.");
     } finally {
       setIsUploading(false);
     }
