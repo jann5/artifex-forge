@@ -98,7 +98,7 @@ export const webhook = httpAction(async (ctx, request) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: chatId,
-              text: `✏️ Edytujesz: *${product?.name}*\\nCo chcesz zmienić?`,
+              text: `✏️ Edytujesz: *${product?.name}*\nCo chcesz zmienić?`,
               parse_mode: "Markdown",
               reply_markup: editKeyboard,
             }),
@@ -153,7 +153,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // COMMANDS
       if (text === "/start" || text === "/help") {
-        await sendMessage(chatId, "🤖 *Artifex Bot*\\n\\nKomendy:\\n/orders - Ostatnie zamówienia\\n/stats - Statystyki sklepu\\n/lowstock - Niskie stany magazynowe\\n/addproduct - Dodaj produkt\\n/editproduct - Edytuj produkt\\n/deleteproduct - Usuń produkt\\n/cancel - Anuluj\\n/help - Pomoc");
+        await sendMessage(chatId, "🤖 *Artifex Bot*\n\nKomendy:\n/orders - Ostatnie zamówienia\n/stats - Statystyki sklepu\n/lowstock - Niskie stany magazynowe\n/addproduct - Dodaj produkt\n/editproduct - Edytuj produkt\n/deleteproduct - Usuń produkt\n/cancel - Anuluj\n/help - Pomoc");
         return new Response("OK", { status: 200 });
       }
 
@@ -161,12 +161,12 @@ export const webhook = httpAction(async (ctx, request) => {
         const stats = await ctx.runQuery(internal.orders.getStats);
         const productStats = await ctx.runQuery(internal.products.getStats);
         
-        const msg = `📊 *Statystyki Sklepu*\\n\\n` +
-                    `📦 Zamówienia: ${stats.totalOrders}\\n` +
-                    `💰 Przychód: ${stats.totalRevenue.toFixed(2)} PLN\\n` +
-                    `⏳ Oczekujące: ${stats.pendingOrders}\\n` +
-                    `✅ Opłacone: ${stats.paidOrders}\\n\\n` +
-                    `🛍️ Produkty: ${productStats.totalProducts}\\n` +
+        const msg = `📊 *Statystyki Sklepu*\n\n` +
+                    `📦 Zamówienia: ${stats.totalOrders}\n` +
+                    `💰 Przychód: ${stats.totalRevenue.toFixed(2)} PLN\n` +
+                    `⏳ Oczekujące: ${stats.pendingOrders}\n` +
+                    `✅ Opłacone: ${stats.paidOrders}\n\n` +
+                    `🛍️ Produkty: ${productStats.totalProducts}\n` +
                     `⚠️ Niski stan: ${productStats.lowStockCount}`;
         
         await sendMessage(chatId, msg);
@@ -180,9 +180,9 @@ export const webhook = httpAction(async (ctx, request) => {
         } else {
             for (const order of orders) {
                 const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
-                const msg = `📦 *Zamówienie* (${date})\\n` +
-                            `👤 ${order.customerName}\\n` +
-                            `💰 ${order.totalAmount} PLN\\n` +
+                const msg = `📦 *Zamówienie* (${date})\n` +
+                            `👤 ${order.customerName}\n` +
+                            `💰 ${order.totalAmount} PLN\n` +
                             `Status: ${order.status}`;
                 
                 // Add status buttons
@@ -209,8 +209,8 @@ export const webhook = httpAction(async (ctx, request) => {
         if (stats.lowStockCount === 0) {
             await sendMessage(chatId, "✅ Wszystkie produkty mają odpowiedni stan magazynowy.");
         } else {
-            const list = stats.lowStockNames.map(n => `- ${n}`).join("\\n");
-            await sendMessage(chatId, `⚠️ *Niski stan magazynowy (<5):*\\n\\n${list}`);
+            const list = stats.lowStockNames.map(n => `- ${n}`).join("\n");
+            await sendMessage(chatId, `⚠️ *Niski stan magazynowy (<5):*\n\n${list}`);
         }
         return new Response("OK", { status: 200 });
       }
@@ -234,7 +234,7 @@ export const webhook = httpAction(async (ctx, request) => {
         }
 
         await ctx.runMutation(internal.telegram_db.startSession, { chatId });
-        await sendMessage(chatId, "📦 *Nowy Produkt*\\n\\nPodaj nazwę produktu:");
+        await sendMessage(chatId, "📦 *Nowy Produkt*\n\nPodaj nazwę produktu:");
         return new Response("OK", { status: 200 });
       }
 
@@ -250,7 +250,7 @@ export const webhook = httpAction(async (ctx, request) => {
           step: "DELETE_SEARCH", 
           updates: {} 
         });
-        await sendMessage(chatId, "🗑️ *Usuwanie Produktu*\\n\\nWpisz nazwę produktu, który chcesz usunąć:");
+        await sendMessage(chatId, "🗑️ *Usuwanie Produktu*\n\nWpisz nazwę produktu, który chcesz usunąć:");
         return new Response("OK", { status: 200 });
       }
 
@@ -266,7 +266,7 @@ export const webhook = httpAction(async (ctx, request) => {
           step: "EDIT_SEARCH", 
           updates: {} 
         });
-        await sendMessage(chatId, "✏️ *Edycja Produktu*\\n\\nWpisz nazwę produktu, który chcesz edytować:");
+        await sendMessage(chatId, "✏️ *Edycja Produktu*\n\nWpisz nazwę produktu, który chcesz edytować:");
         return new Response("OK", { status: 200 });
       }
 
@@ -442,7 +442,7 @@ export const webhook = httpAction(async (ctx, request) => {
                 resize_keyboard: true
               };
 
-              await sendMessage(chatId, `✨ *Ulepszony opis:*\\n${improvedDescription}\\n\\n📂 Wybierz kategorię:`, categoryKeyboardAI);
+              await sendMessage(chatId, `✨ *Ulepszony opis:*\n${improvedDescription}\n\n📂 Wybierz kategorię:`, categoryKeyboardAI);
               break;
 
             case "DESCRIPTION":
@@ -502,7 +502,7 @@ export const webhook = httpAction(async (ctx, request) => {
                 step: "IMAGES",
                 updates: { inventory }
               });
-              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\\n\\nKiedy skończysz, wpisz /done");
+              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\n\nKiedy skończysz, wpisz /done");
               break;
               
             case "IMAGES":
@@ -573,7 +573,7 @@ export const webhook = httpAction(async (ctx, request) => {
                     resize_keyboard: true
                   };
 
-                  await sendMessage(chatId, `✨ *Wygenerowany opis:*\\n${description}\\n\\n📂 Wybierz kategorię:`, categoryKeyboard);
+                  await sendMessage(chatId, `✨ *Wygenerowany opis:*\n${description}\n\n📂 Wybierz kategorię:`, categoryKeyboard);
 
                 } else {
                   // Standard Image Upload Flow
@@ -613,7 +613,7 @@ export const webhook = httpAction(async (ctx, request) => {
           });
 
           await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
-          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\\n\\n${p.name}\\n${p.price} PLN`);
+          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\n\n${p.name}\n${p.price} PLN`);
         }
       }
     }
