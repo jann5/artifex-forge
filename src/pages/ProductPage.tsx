@@ -84,7 +84,7 @@ export default function ProductPage() {
               <img 
                 src={getStorageUrl(product.images[activeImage])} 
                 alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 onError={(e) => {
                   const target = e.currentTarget;
                   console.error('Image failed to load:', target.src);
