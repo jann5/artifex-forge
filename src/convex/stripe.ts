@@ -21,7 +21,16 @@ export const createCheckoutSession = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error("Stripe Secret Key is missing. Please add STRIPE_SECRET_KEY in the dashboard.");
+    }
+
+    const domain = process.env.CONVEX_SITE_URL;
+    if (!domain) {
+      throw new Error("CONVEX_SITE_URL is missing. Please check your environment variables.");
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2025-02-24.acacia",
     });
 
@@ -37,19 +46,24 @@ export const createCheckoutSession = action({
       quantity: item.quantity,
     }));
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card", "blik", "p24"],
-      line_items: lineItems,
-      mode: "payment",
-      success_url: `${process.env.CONVEX_SITE_URL}/?success=true`,
-      cancel_url: `${process.env.CONVEX_SITE_URL}/checkout?canceled=true`,
-      metadata: {
-        userId: userId,
-        items: JSON.stringify(args.items),
-      },
-    });
+    try {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card", "blik", "p24"],
+        line_items: lineItems,
+        mode: "payment",
+        success_url: `${domain}/?success=true`,
+        cancel_url: `${domain}/checkout?canceled=true`,
+        metadata: {
+          userId: userId,
+          items: JSON.stringify(args.items),
+        },
+      });
 
-    return { sessionId: session.id, url: session.url };
+      return { sessionId: session.id, url: session.url };
+    } catch (err: any) {
+      console.error("Stripe error:", err);
+      throw new Error(`Stripe error: ${err.message}`);
+    }
   },
 });
 
@@ -59,7 +73,11 @@ export const handleWebhook = action({
     payload: v.string(),
   },
   handler: async (ctx, args) => {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error("Stripe Secret Key is missing");
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2025-02-24.acacia",
     });
     

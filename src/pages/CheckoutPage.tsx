@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, CreditCard, Truck, ArrowLeft, Lock } from "lucide-react";
+import { Loader2, ShieldCheck, CreditCard, Truck, ArrowLeft, Lock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
@@ -72,9 +72,11 @@ export default function CheckoutPage() {
         toast.error("Nie udało się utworzyć sesji płatności");
         setIsProcessing(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Błąd płatności:", error);
-      toast.error("Nie udało się przetworzyć płatności");
+      // Show the actual error message from the backend if available
+      const errorMessage = error.message || "Nie udało się przetworzyć płatności";
+      toast.error(errorMessage);
       setIsProcessing(false);
     }
   };
@@ -106,7 +108,7 @@ export default function CheckoutPage() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-5xl mx-auto"
+          className="max-w-6xl mx-auto"
         >
           <div className="flex items-center gap-4 mb-8">
             <Button variant="ghost" size="icon" onClick={() => navigate("/products")}>
@@ -115,12 +117,12 @@ export default function CheckoutPage() {
             <h1 className="text-3xl font-bold font-display">Podsumowanie Zamówienia</h1>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12 items-start">
             {/* Left Column - Order Items */}
             <div className="md:col-span-2 space-y-6">
-              <Card className="border-none shadow-md overflow-hidden">
-                <CardHeader className="bg-muted/30 border-b">
-                  <CardTitle className="flex items-center gap-2">
+              <Card className="border shadow-sm overflow-hidden bg-card">
+                <CardHeader className="bg-muted/30 border-b py-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
                     <Truck className="h-5 w-5 text-primary" />
                     Produkty w koszyku ({cartItems.length})
                   </CardTitle>
@@ -134,7 +136,7 @@ export default function CheckoutPage() {
                   ) : (
                     <div className="divide-y">
                       {cartItems.map((item) => (
-                        <div key={item._id} className="p-6 flex gap-4 sm:gap-6 items-center">
+                        <div key={item._id} className="p-6 flex gap-4 sm:gap-6 items-center hover:bg-muted/5 transition-colors">
                           <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg bg-muted overflow-hidden flex-shrink-0 border">
                             {item.product?.images?.[0] && (
                               <img 
@@ -148,7 +150,7 @@ export default function CheckoutPage() {
                             <h3 className="font-medium text-lg truncate">{item.product?.name}</h3>
                             <p className="text-sm text-muted-foreground capitalize mb-1">{item.product?.category}</p>
                             <div className="flex items-center gap-2 text-sm">
-                              <Badge variant="secondary" className="font-normal">
+                              <Badge variant="outline" className="font-normal bg-background">
                                 Ilość: {item.quantity}
                               </Badge>
                             </div>
@@ -170,80 +172,79 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900/50">
-                <ShieldCheck className="h-5 w-5 flex-shrink-0" />
-                <p className="text-sm">
-                  Wszystkie transakcje są szyfrowane i bezpieczne. Gwarantujemy 100% satysfakcji lub zwrot pieniędzy.
-                </p>
+              <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                <ShieldCheck className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold mb-1">Bezpieczna transakcja</p>
+                  <p className="opacity-90">
+                    Wszystkie transakcje są szyfrowane i bezpieczne. Gwarantujemy 100% satysfakcji lub zwrot pieniędzy.
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Right Column - Summary & Payment */}
-            <div className="relative">
-              <div className="sticky top-24 space-y-6">
-                <Card className="border-2 border-primary/10 shadow-lg">
-                  <CardHeader className="bg-primary/5 border-b border-primary/10 pb-4">
-                    <CardTitle className="text-xl">Do zapłaty</CardTitle>
-                    <CardDescription>Podsumowanie kosztów</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6 space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>Wartość produktów</span>
-                        <span>{formatCurrency(total)}</span>
-                      </div>
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>Wysyłka</span>
-                        <span className="text-green-600 font-medium">Darmowa</span>
-                      </div>
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>Podatek VAT (23%)</span>
-                        <span>wliczony</span>
-                      </div>
+            <div className="relative md:sticky md:top-24">
+              <Card className="border shadow-md bg-card overflow-hidden">
+                <CardHeader className="bg-muted/30 border-b pb-4">
+                  <CardTitle className="text-xl">Do zapłaty</CardTitle>
+                  <CardDescription>Podsumowanie kosztów</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Wartość produktów</span>
+                      <span>{formatCurrency(total)}</span>
                     </div>
-                    
-                    <Separator />
-                    
-                    <div className="flex justify-between items-end">
-                      <span className="font-bold text-lg">Razem</span>
-                      <span className="font-bold text-3xl text-primary">{formatCurrency(total)}</span>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Wysyłka</span>
+                      <span className="text-green-600 font-medium">Darmowa</span>
                     </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Podatek VAT (23%)</span>
+                      <span>wliczony</span>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="flex justify-between items-end">
+                    <span className="font-bold text-lg">Razem</span>
+                    <span className="font-bold text-3xl text-primary">{formatCurrency(total)}</span>
+                  </div>
 
-                    <div className="pt-4">
-                      <Button 
-                        className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/20" 
-                        size="lg" 
-                        onClick={handleCheckout}
-                        disabled={!cartItems?.length || isProcessing}
-                      >
-                        {isProcessing ? (
-                          <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            Przetwarzanie...
-                          </>
-                        ) : (
-                          <>
-                            Zapłać teraz <CreditCard className="ml-2 h-5 w-5" />
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="bg-muted/30 border-t p-4">
-                    <div className="w-full flex justify-center gap-4 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
-                      {/* Payment Icons Placeholders - Text for now or SVGs if available */}
-                      <span className="text-xs font-bold border px-2 py-1 rounded bg-background">VISA</span>
-                      <span className="text-xs font-bold border px-2 py-1 rounded bg-background">Mastercard</span>
-                      <span className="text-xs font-bold border px-2 py-1 rounded bg-background">BLIK</span>
-                      <span className="text-xs font-bold border px-2 py-1 rounded bg-background">Przelewy24</span>
-                    </div>
-                  </CardFooter>
-                </Card>
-                
-                <p className="text-xs text-center text-muted-foreground px-4">
-                  Klikając "Zapłać teraz", zostaniesz przekierowany do bezpiecznej bramki płatności Stripe.
-                </p>
-              </div>
+                  <div className="pt-4">
+                    <Button 
+                      className="w-full h-14 text-lg font-bold shadow-md hover:shadow-lg transition-all" 
+                      size="lg" 
+                      onClick={handleCheckout}
+                      disabled={!cartItems?.length || isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Przetwarzanie...
+                        </>
+                      ) : (
+                        <>
+                          Zapłać teraz <CreditCard className="ml-2 h-5 w-5" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+                <CardFooter className="bg-muted/10 border-t p-4 flex flex-col gap-3">
+                  <div className="w-full flex justify-center gap-3 opacity-70 grayscale hover:grayscale-0 transition-all duration-300">
+                    <div className="h-6 px-2 border rounded bg-white flex items-center justify-center text-[10px] font-bold text-gray-700">VISA</div>
+                    <div className="h-6 px-2 border rounded bg-white flex items-center justify-center text-[10px] font-bold text-gray-700">Mastercard</div>
+                    <div className="h-6 px-2 border rounded bg-white flex items-center justify-center text-[10px] font-bold text-gray-700">BLIK</div>
+                    <div className="h-6 px-2 border rounded bg-white flex items-center justify-center text-[10px] font-bold text-gray-700">Przelewy24</div>
+                  </div>
+                  <p className="text-[10px] text-center text-muted-foreground">
+                    Płatności obsługiwane przez Stripe. Twoje dane są bezpieczne.
+                  </p>
+                </CardFooter>
+              </Card>
             </div>
           </div>
         </motion.div>
