@@ -3,19 +3,28 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ProductCard } from "@/components/ProductCard";
-import { ArrowRight, Box, Layers, Zap, Sparkles, TrendingUp, Award } from "lucide-react";
+import { ArrowRight, Box, Layers, Zap, Sparkles, TrendingUp, Award, Star, Shield, Truck } from "lucide-react";
 import { Link } from "react-router";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 
 export default function Landing() {
   const featuredProducts = useQuery(api.products.list, { featured: true });
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+
+  const opacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.8]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-hidden">
       <Navbar />
       
       {/* Hero Section - Full Screen with Rich Content */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
@@ -32,7 +41,10 @@ export default function Landing() {
           }} />
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
+        <motion.div 
+          style={{ opacity, scale }}
+          className="container mx-auto px-4 relative z-10"
+        >
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -104,7 +116,7 @@ export default function Landing() {
               </div>
             </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* Scroll Indicator */}
         <motion.div
@@ -126,8 +138,36 @@ export default function Landing() {
         </motion.div>
       </section>
 
+      {/* Trust Badges Section */}
+      <section className="py-12 bg-primary/5 border-y">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { icon: Shield, text: "100% Bezpieczne Płatności" },
+              { icon: Truck, text: "Darmowa Dostawa" },
+              { icon: Star, text: "5★ Opinie Klientów" },
+              { icon: Award, text: "Gwarancja Jakości" },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex flex-col items-center text-center gap-3 p-4"
+              >
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <item.icon className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm font-medium">{item.text}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Stats Section */}
-      <section className="py-16 bg-muted/30 border-y">
+      <section className="py-16 bg-muted/30 border-b">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
@@ -136,13 +176,28 @@ export default function Landing() {
               { icon: Sparkles, label: "Lat Doświadczenia", value: "5+" },
               { icon: Box, label: "Wysyłek Miesięcznie", value: "1K+" },
             ].map((stat, i) => (
-              <div key={i} className="text-center">
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="text-center"
+              >
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
                   <stat.icon className="h-6 w-6 text-primary" />
                 </div>
-                <div className="text-3xl font-bold mb-1">{stat.value}</div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 + 0.3 }}
+                  className="text-3xl font-bold mb-1"
+                >
+                  {stat.value}
+                </motion.div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -151,12 +206,17 @@ export default function Landing() {
       {/* Features Grid */}
       <section className="py-24 relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Dlaczego My?</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Łączymy najnowszą technologię z rzemieślniczą precyzją
             </p>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
@@ -176,7 +236,15 @@ export default function Landing() {
                 description: "Z naszej drukarni do Twoich drzwi w rekordowym czasie.",
               }
             ].map((feature, i) => (
-              <div key={i} className="p-8 rounded-2xl bg-background border shadow-sm hover:shadow-lg transition-shadow duration-300">
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.2 }}
+                whileHover={{ y: -10, transition: { duration: 0.2 } }}
+                className="p-8 rounded-2xl bg-background border shadow-sm hover:shadow-lg transition-shadow duration-300"
+              >
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10 mb-6">
                   <feature.icon className="h-8 w-8 text-primary" />
                 </div>
@@ -184,7 +252,7 @@ export default function Landing() {
                 <p className="text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -194,28 +262,45 @@ export default function Landing() {
       <section className="py-24 bg-muted/20">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
               <h2 className="text-4xl md:text-5xl font-bold mb-3">Wyróżnione Produkty</h2>
               <p className="text-xl text-muted-foreground">Wyselekcjonowane wybory dla Twojej przestrzeni.</p>
-            </div>
-            <Button variant="ghost" size="lg" asChild>
-              <Link to="/products" className="text-lg">
-                Zobacz Wszystkie <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <Button variant="ghost" size="lg" asChild>
+                <Link to="/products" className="text-lg">
+                  Zobacz Wszystkie <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </motion.div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {featuredProducts ? (
-              featuredProducts.map((product) => (
-                <ProductCard
+              featuredProducts.map((product, i) => (
+                <motion.div
                   key={product._id}
-                  id={product._id}
-                  name={product.name}
-                  price={product.price}
-                  image={product.images[0] || "https://placehold.co/400x500/f3f4f6/1f2937?text=Produkt"}
-                  category={product.category}
-                />
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <ProductCard
+                    id={product._id}
+                    name={product.name}
+                    price={product.price}
+                    image={product.images[0] || "https://placehold.co/400x500/f3f4f6/1f2937?text=Produkt"}
+                    category={product.category}
+                  />
+                </motion.div>
               ))
             ) : (
               Array.from({ length: 4 }).map((_, i) => (
@@ -227,6 +312,31 @@ export default function Landing() {
               ))
             )}
           </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/10" />
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mx-auto text-center"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Gotowy na Coś Wyjątkowego?
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8">
+              Dołącz do tysięcy zadowolonych klientów, którzy już odkryli magię druku 3D.
+            </p>
+            <Button size="lg" className="h-16 px-12 text-lg shadow-2xl hover:shadow-3xl transition-all" asChild>
+              <Link to="/products">
+                Rozpocznij Zakupy <ArrowRight className="ml-2 h-6 w-6" />
+              </Link>
+            </Button>
+          </motion.div>
         </div>
       </section>
 
