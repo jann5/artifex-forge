@@ -191,7 +191,20 @@ export const webhook = httpAction(async (ctx, request) => {
               
               const imageRes = await fetch(fileUrl);
               const imageBlob = await imageRes.blob();
-              const storageId = await ctx.storage.store(imageBlob);
+              
+              // Ensure we have a content type
+              let blobToStore = imageBlob;
+              if (!imageBlob.type || imageBlob.type === 'application/octet-stream') {
+                 // Try to guess from file path extension
+                 const ext = filePath.split('.').pop()?.toLowerCase();
+                 let type = 'image/jpeg';
+                 if (ext === 'png') type = 'image/png';
+                 if (ext === 'webp') type = 'image/webp';
+                 
+                 blobToStore = new Blob([await imageBlob.arrayBuffer()], { type });
+              }
+
+              const storageId = await ctx.storage.store(blobToStore);
 
               await ctx.runMutation(internal.telegram_db.updateSession, {
                 chatId,
