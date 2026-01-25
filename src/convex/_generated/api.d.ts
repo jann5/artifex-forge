@@ -20,7 +20,9 @@ import type * as orders from "../orders.js";
 import type * as products from "../products.js";
 import type * as recent from "../recent.js";
 import type * as seed from "../seed.js";
+import type * as setup_telegram from "../setup_telegram.js";
 import type * as stripe from "../stripe.js";
+import type * as telegram from "../telegram.js";
 import type * as test_telegram from "../test_telegram.js";
 import type * as users from "../users.js";
 
@@ -43,7 +45,9 @@ declare const fullApi: ApiFromModules<{
   products: typeof products;
   recent: typeof recent;
   seed: typeof seed;
+  setup_telegram: typeof setup_telegram;
   stripe: typeof stripe;
+  telegram: typeof telegram;
   test_telegram: typeof test_telegram;
   users: typeof users;
 }>;

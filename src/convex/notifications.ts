@@ -19,15 +19,28 @@ export const sendTelegramNotification = action({
     }
 
     const message = `
-🛍️ *Nowe Zamówienie*
+🛍️ *Nowe Zamówienie / Aktualizacja*
 
 📦 ID: \`${args.orderId}\`
 👤 Klient: ${args.customerEmail}
 💰 Kwota: ${args.totalAmount} PLN
-📊 Status: ${args.status}
+📊 Status: *${args.status}*
 
-Sprawdź szczegóły w panelu admina.
+Zarządzaj statusem poniżej:
     `.trim();
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "💰 Opłacone", callback_data: `update_status:${args.orderId}:paid` },
+          { text: "🚚 Wysłane", callback_data: `update_status:${args.orderId}:shipped` }
+        ],
+        [
+          { text: "✅ Dostarczone", callback_data: `update_status:${args.orderId}:delivered` },
+          { text: "❌ Anulowane", callback_data: `update_status:${args.orderId}:cancelled` }
+        ]
+      ]
+    };
 
     try {
       const response = await fetch(
@@ -39,6 +52,7 @@ Sprawdź szczegóły w panelu admina.
             chat_id: chatId,
             text: message,
             parse_mode: "Markdown",
+            reply_markup: keyboard,
           }),
         }
       );
