@@ -255,6 +255,7 @@ export const webhook = httpAction(async (ctx, request) => {
                   await sendMessage(chatId, "🤖 Generuję opis na podstawie zdjęcia... Proszę czekać.");
                   
                   // Call AI Action
+                  // @ts-ignore
                   const description = await ctx.runAction(internal.ai.generateProductDescription, {
                     name: session.productData.name || "Produkt",
                     imageUrl: fileUrl

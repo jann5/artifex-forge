@@ -5,15 +5,12 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
-import { useState } from "react";
-import { Minus, Plus, ShoppingBag } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Minus, Plus, ShoppingBag, Box } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
 import { getStorageUrl } from "@/lib/utils";
 import { ModelViewer } from "@/components/ModelViewer";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Box, Image as ImageIcon } from "lucide-react";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,11 +20,18 @@ export default function ProductPage() {
   const { isAuthenticated } = useAuth();
   
   const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
+  // '3d' for 3D model, number for image index
+  const [activeMedia, setActiveMedia] = useState<'3d' | number>(0);
 
   useEffect(() => {
     if (product && isAuthenticated) {
       recordView({ productId: product._id });
+    }
+    // Set default media to 3D if available when product loads
+    if (product?.model3d) {
+      setActiveMedia('3d');
+    } else {
+      setActiveMedia(0);
     }
   }, [product, isAuthenticated, recordView]);
 
@@ -82,94 +86,59 @@ export default function ProductPage() {
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
           {/* Image Gallery & 3D Model */}
           <div className="space-y-4">
-            {product.model3d ? (
-              <Tabs defaultValue="images" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="images" className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4" /> Zdjęcia
-                  </TabsTrigger>
-                  <TabsTrigger value="3d" className="flex items-center gap-2">
-                    <Box className="h-4 w-4" /> Model 3D
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="images" className="space-y-4 mt-0">
-                  <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden">
-                    <img 
-                      src={getStorageUrl(product.images[selectedImage])} 
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        console.error('Image failed to load:', target.src);
-                        target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
-                      }}
-                    />
+            <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden relative border">
+              {activeMedia === '3d' && product.model3d ? (
+                <ModelViewer url={getStorageUrl(product.model3d)} />
+              ) : (
+                <img 
+                  src={getStorageUrl(product.images[typeof activeMedia === 'number' ? activeMedia : 0])} 
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    console.error('Image failed to load:', target.src);
+                    target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            <div className="grid grid-cols-5 gap-2 sm:gap-4">
+              {product.model3d && (
+                <button
+                  onClick={() => setActiveMedia('3d')}
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-muted/50 hover:bg-muted ${
+                    activeMedia === '3d' ? "border-primary ring-2 ring-primary/20" : "border-transparent"
+                  }`}
+                  title="Widok 3D"
+                >
+                  <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                    <Box className="h-6 w-6" />
+                    <span className="text-[10px] font-bold uppercase">360°</span>
                   </div>
-                  {product.images.length > 1 && (
-                    <div className="grid grid-cols-4 gap-4">
-                      {product.images.map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setSelectedImage(idx)}
-                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                            selectedImage === idx ? "border-primary" : "border-transparent"
-                          }`}
-                        >
-                          <img 
-                            src={getStorageUrl(img)} 
-                            alt="" 
-                            className="w-full h-full object-cover" 
-                            onError={(e) => {
-                              e.currentTarget.src = 'https://placehold.co/100';
-                            }}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-                <TabsContent value="3d" className="mt-0 h-[500px]">
-                  <ModelViewer url={getStorageUrl(product.model3d)} />
-                </TabsContent>
-              </Tabs>
-            ) : (
-              <div className="space-y-4">
-                <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden">
+                </button>
+              )}
+              
+              {product.images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveMedia(idx)}
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                    activeMedia === idx ? "border-primary ring-2 ring-primary/20" : "border-transparent"
+                  }`}
+                >
                   <img 
-                    src={getStorageUrl(product.images[selectedImage])} 
-                    alt={product.name}
-                    className="w-full h-full object-cover"
+                    src={getStorageUrl(img)} 
+                    alt={`Widok ${idx + 1}`} 
+                    className="w-full h-full object-cover" 
                     onError={(e) => {
-                      const target = e.currentTarget;
-                      console.error('Image failed to load:', target.src);
-                      target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
+                      e.currentTarget.src = 'https://placehold.co/100';
                     }}
                   />
-                </div>
-                {product.images.length > 1 && (
-                  <div className="grid grid-cols-4 gap-4">
-                    {product.images.map((img, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedImage(idx)}
-                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                          selectedImage === idx ? "border-primary" : "border-transparent"
-                        }`}
-                      >
-                        <img 
-                          src={getStorageUrl(img)} 
-                          alt="" 
-                          className="w-full h-full object-cover" 
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://placehold.co/100';
-                          }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Product Details */}

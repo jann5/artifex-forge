@@ -44,6 +44,7 @@ export const updateSession = internalMutation({
       price: v.optional(v.number()),
       inventory: v.optional(v.number()),
       image: v.optional(v.string()), // Single image to add to array
+      images: v.optional(v.array(v.string())), // Array of images to set directly
     }),
   },
   handler: async (ctx, args) => {
@@ -54,16 +55,20 @@ export const updateSession = internalMutation({
 
     if (!session) throw new Error("Session not found");
 
-    const currentImages = session.productData.images || [];
-    if (args.updates.image) {
-      currentImages.push(args.updates.image);
+    const { image, images, ...otherUpdates } = args.updates;
+    let currentImages = session.productData.images || [];
+
+    if (images) {
+      currentImages = images;
+    } else if (image) {
+      currentImages.push(image);
     }
 
     await ctx.db.patch(session._id, {
       step: args.step,
       productData: {
         ...session.productData,
-        ...args.updates,
+        ...otherUpdates,
         images: currentImages,
       },
     });

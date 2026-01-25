@@ -133,6 +133,9 @@ export function EditProductDialog({
 
           <div>
             <label className="block text-sm font-medium mb-2">Model 3D (.glb)</label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Model 3D będzie wyświetlany jako pierwszy element na stronie produktu.
+            </p>
             {product.model3d ? (
               <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
                 <div className="flex items-center gap-2">

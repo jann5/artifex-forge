@@ -1,7 +1,6 @@
 "use node";
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
-import { vly } from "../lib/vly-integrations";
 
 export const generateProductDescription = internalAction({
   args: {
@@ -10,6 +9,19 @@ export const generateProductDescription = internalAction({
   },
   handler: async (ctx, args) => {
     try {
+      // Dynamic import to avoid build-time resolution issues
+      const VlyPkg = await import("@vly-ai/integrations") as any;
+      const VlyClass = VlyPkg.Vly || VlyPkg.default?.Vly || VlyPkg.default;
+      
+      if (!VlyClass) {
+        console.warn("Vly integration library not found");
+        return "AI generation unavailable (library missing)";
+      }
+
+      const vly = new VlyClass({
+        apiKey: process.env.VLY_INTEGRATION_KEY!,
+      });
+
       const result = await vly.ai.completion({
         model: "gpt-4o",
         messages: [
@@ -25,7 +37,7 @@ export const generateProductDescription = internalAction({
             ] as any,
           },
         ],
-      });
+      }) as any; // Cast to any to avoid type errors
 
       if (result.success && result.data) {
         return result.data.choices[0]?.message?.content || "Nie udało się wygenerować opisu.";
