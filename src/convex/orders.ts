@@ -55,6 +55,15 @@ export const create = mutation({
       await ctx.db.delete(item._id);
     }
 
+    // Send Telegram notification
+    // @ts-expect-error - Convex API types will regenerate on next deployment
+    await ctx.scheduler.runAfter(0, internal.notifications.sendTelegramNotification, {
+      orderId: orderId,
+      customerEmail: user.email || "Unknown",
+      totalAmount: args.totalAmount,
+      status: "pending",
+    });
+
     return orderId;
   },
 });
@@ -72,7 +81,7 @@ export const createFromStripe = internalMutation({
 
     if (!dbUser) throw new Error("User not found");
 
-    await ctx.db.insert("orders", {
+    const orderId = await ctx.db.insert("orders", {
       userId: dbUser._id,
       items: args.items,
       totalAmount: args.totalAmount,
@@ -90,6 +99,15 @@ export const createFromStripe = internalMutation({
     for (const item of cartItems) {
       await ctx.db.delete(item._id);
     }
+
+    // Send Telegram notification
+    // @ts-expect-error - Convex API types will regenerate on next deployment
+    await ctx.scheduler.runAfter(0, internal.notifications.sendTelegramNotification, {
+      orderId: orderId,
+      customerEmail: dbUser.email || "Unknown",
+      totalAmount: args.totalAmount,
+      status: "paid",
+    });
   },
 });
 
