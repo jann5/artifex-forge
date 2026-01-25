@@ -1,1 +1,1 @@
-vercel
+npx convex env set CONVEX_SITE_URL https://your-project.vercel.app
