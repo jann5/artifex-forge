@@ -49,7 +49,7 @@ export const createCheckoutSession = action({
         shippingAddress: args.shippingAddress,
       });
 
-      return { sessionId: mockSessionId, url: `${domain}/?success=true` };
+      return { sessionId: mockSessionId, url: `${domain}/orders?success=true` };
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -73,7 +73,7 @@ export const createCheckoutSession = action({
         payment_method_types: ["card", "blik"],
         line_items: lineItems,
         mode: "payment",
-        success_url: `${domain}/?success=true`,
+        success_url: `${domain}/orders?success=true`,
         cancel_url: `${domain}/checkout?canceled=true`,
         metadata: {
           userId: userId,
