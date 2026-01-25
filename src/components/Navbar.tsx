@@ -100,9 +100,7 @@ export function Navbar() {
             <HoverCard openDelay={100} closeDelay={200}>
               <HoverCardTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
-                  <Link to="/orders">
-                    <User className="h-5 w-5" />
-                  </Link>
+                  <User className="h-5 w-5" />
                 </Button>
               </HoverCardTrigger>
               <HoverCardContent align="end" className="w-72 p-0 border bg-card shadow-lg rounded-xl overflow-hidden" sideOffset={10}>
