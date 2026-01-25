@@ -112,10 +112,63 @@ export const seedProducts = mutation({
         inventory: 20,
         featured: false,
       },
+      {
+        name: "Uchwyt na Pada",
+        description: "Stylowy uchwyt na kontroler do gier. Pasuje do większości modeli.",
+        price: 25,
+        category: "accessories",
+        images: ["https://images.unsplash.com/photo-1600080972464-8e5f35f63d88?auto=format&fit=crop&q=80&w=1000"],
+        inventory: 40,
+        featured: false,
+      },
+      {
+        name: "Wazon Low Poly",
+        description: "Nowoczesny wazon w stylu low poly. Idealny do nowoczesnych wnętrz.",
+        price: 42,
+        category: "decor",
+        images: ["https://images.unsplash.com/photo-1580480055273-228ff5388ef8?auto=format&fit=crop&q=80&w=1000"],
+        inventory: 15,
+        featured: false,
+      },
+      {
+        name: "Podstawka pod Laptopa",
+        description: "Ergonomiczna podstawka pod laptopa poprawiająca przepływ powietrza.",
+        price: 45,
+        category: "functional",
+        images: ["https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=1000"],
+        inventory: 25,
+        featured: false,
+      },
+      {
+        name: "Figurka Kota Geometryczna",
+        description: "Minimalistyczna figurka kota. Świetny prezent dla miłośników zwierząt.",
+        price: 29,
+        category: "art",
+        images: ["https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=1000"],
+        inventory: 30,
+        featured: false,
+      },
+      {
+        name: "Pudełko na Biżuterię",
+        description: "Eleganckie pudełko na biżuterię z mechanizmem otwieranym.",
+        price: 55,
+        category: "accessories",
+        images: ["https://images.unsplash.com/photo-1589128777090-7c294348fd81?auto=format&fit=crop&q=80&w=1000"],
+        inventory: 10,
+        featured: false,
+      },
     ];
 
     for (const product of products) {
-      await ctx.db.insert("products", product);
+      // Check if product exists to avoid duplicates during re-seed
+      const existing = await ctx.db
+        .query("products")
+        .filter((q) => q.eq(q.field("name"), product.name))
+        .first();
+        
+      if (!existing) {
+        await ctx.db.insert("products", product);
+      }
     }
   },
 });

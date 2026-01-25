@@ -4,6 +4,8 @@ import { api } from "@/convex/_generated/api";
 import { ProductCard } from "@/components/ProductCard";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -14,14 +16,15 @@ import {
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("default");
   
-  const allProducts = useQuery(api.products.list, {});
-  const filteredProducts = useQuery(
-    api.products.list,
-    selectedCategory !== "all" ? { category: selectedCategory } : {}
-  );
-
-  const products = selectedCategory !== "all" ? filteredProducts : allProducts;
+  // Debounce search could be added here, but for now direct binding
+  const products = useQuery(api.products.list, { 
+    category: selectedCategory !== "all" ? selectedCategory : undefined,
+    search: searchQuery || undefined,
+    sort: sortBy !== "default" ? sortBy : undefined
+  });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -33,7 +36,7 @@ export default function ProductsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
+          <div className="flex flex-col gap-8 mb-12">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-2">Nasza Kolekcja</h1>
               <p className="text-muted-foreground text-lg">
@@ -41,20 +44,50 @@ export default function ProductsPage() {
               </p>
             </div>
             
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-medium">Filtruj:</label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Wszystkie Kategorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Wszystkie Kategorie</SelectItem>
-                  <SelectItem value="art">Sztuka</SelectItem>
-                  <SelectItem value="decor">Dekoracje</SelectItem>
-                  <SelectItem value="functional">Funkcjonalne</SelectItem>
-                  <SelectItem value="accessories">Akcesoria</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-4 rounded-xl border shadow-sm">
+              <div className="relative w-full md:w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Szukaj produktów..." 
+                  className="pl-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium whitespace-nowrap">Kategoria:</label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <SelectValue placeholder="Wszystkie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Wszystkie</SelectItem>
+                      <SelectItem value="art">Sztuka</SelectItem>
+                      <SelectItem value="decor">Dekoracje</SelectItem>
+                      <SelectItem value="functional">Funkcjonalne</SelectItem>
+                      <SelectItem value="accessories">Akcesoria</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium whitespace-nowrap">Sortuj:</label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <SelectValue placeholder="Domyślnie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Domyślnie</SelectItem>
+                      <SelectItem value="price_asc">Cena: Rosnąco</SelectItem>
+                      <SelectItem value="price_desc">Cena: Malejąco</SelectItem>
+                      <SelectItem value="name_asc">Nazwa: A-Z</SelectItem>
+                      <SelectItem value="name_desc">Nazwa: Z-A</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -69,8 +102,12 @@ export default function ProductsPage() {
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">Brak produktów w tej kategorii.</p>
+            <div className="text-center py-20 border rounded-xl bg-muted/10">
+              <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-20" />
+              <h2 className="text-xl font-semibold mb-2">Nie znaleziono produktów</h2>
+              <p className="text-muted-foreground">
+                Spróbuj zmienić kryteria wyszukiwania lub kategorię.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -107,7 +144,7 @@ export default function ProductsPage() {
             <div>
               <h4 className="font-bold mb-4">Sklep</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><button onClick={() => setSelectedCategory("all")} className="hover:text-foreground">Wszystkie Produkty</button></li>
+                <li><button onClick={() => {setSelectedCategory("all"); setSearchQuery("");}} className="hover:text-foreground">Wszystkie Produkty</button></li>
                 <li><button onClick={() => setSelectedCategory("art")} className="hover:text-foreground">Sztuka</button></li>
                 <li><button onClick={() => setSelectedCategory("decor")} className="hover:text-foreground">Dekoracje</button></li>
               </ul>

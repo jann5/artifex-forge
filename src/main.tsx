@@ -18,6 +18,7 @@ import AddressesPage from "./pages/AddressesPage";
 import RecentPage from "./pages/RecentPage";
 import SettingsPage from "./pages/SettingsPage";
 import Demo from "./demo";
+import AboutPage from "./pages/AboutPage";
 import { Toaster } from "@/components/ui/sonner";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -78,6 +79,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/addresses" element={<AddressesPage />} />
             <Route path="/recent" element={<RecentPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/demo" element={<Demo />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

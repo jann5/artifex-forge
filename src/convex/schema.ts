@@ -54,7 +54,11 @@ const schema = defineSchema(
       ),
     })
       .index("by_category", ["category"])
-      .index("by_featured", ["featured"]),
+      .index("by_featured", ["featured"])
+      .searchIndex("search_name", {
+        searchField: "name",
+        filterFields: ["category"],
+      }),
 
     cartItems: defineTable({
       userId: v.id("users"),
