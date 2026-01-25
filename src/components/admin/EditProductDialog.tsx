@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, X, Loader2 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { getStorageUrl } from "@/lib/utils";
 
 interface EditingProduct {
   id: Id<"products">;
@@ -104,7 +105,7 @@ export function EditProductDialog({
               {product.images.map((imageId, idx) => (
                 <div key={idx} className="relative aspect-square rounded-lg border overflow-hidden bg-muted">
                   <img 
-                    src={imageId.startsWith('http') ? imageId : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${imageId}`}
+                    src={getStorageUrl(imageId)}
                     alt={`Image ${idx + 1}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {

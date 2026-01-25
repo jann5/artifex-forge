@@ -26,6 +26,7 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
+    console.log(`[HTTP] Serving storage request: ${url.toString()}`);
     // path is /api/storage/<storageId>
     const pathParts = url.pathname.split("/");
     // Filter empty parts to handle trailing slashes or double slashes

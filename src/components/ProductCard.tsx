@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { getStorageUrl } from "@/lib/utils";
 
 interface ProductCardProps {
   id: Id<"products">;
@@ -40,9 +41,7 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
   };
 
   // Convert storage ID to URL if needed
-  const imageUrl = image.startsWith('http') 
-    ? image 
-    : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${image}`;
+  const imageUrl = getStorageUrl(image);
 
   return (
     <motion.div

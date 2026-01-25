@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderTracking } from "@/components/ui/order-tracking";
+import { getStorageUrl } from "@/lib/utils";
 
 export default function OrdersPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -198,7 +199,7 @@ export default function OrdersPage() {
                               <div className="h-20 w-20 rounded-lg bg-muted overflow-hidden flex-shrink-0 border">
                                 {item.image && (
                                   <img 
-                                    src={item.image} 
+                                    src={getStorageUrl(item.image)} 
                                     alt={item.name}
                                     className="h-full w-full object-cover"
                                   />

@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getStorageUrl } from "@/lib/utils";
 
 export default function CheckoutPage() {
   const { isAuthenticated } = useAuth();
@@ -158,7 +159,7 @@ export default function CheckoutPage() {
                           <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg bg-muted overflow-hidden flex-shrink-0 border">
                             {item.product?.images?.[0] && (
                               <img 
-                                src={item.product.images[0].startsWith('http') ? item.product.images[0] : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${item.product.images[0]}`} 
+                                src={getStorageUrl(item.product.images[0])} 
                                 alt={item.product.name}
                                 className="h-full w-full object-cover"
                               />

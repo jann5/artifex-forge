@@ -10,6 +10,7 @@ import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
+import { getStorageUrl } from "@/lib/utils";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -80,9 +81,7 @@ export default function ProductPage() {
           <div className="space-y-4">
             <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden">
               <img 
-                src={product.images[selectedImage]?.startsWith('http') 
-                  ? product.images[selectedImage] 
-                  : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${product.images[selectedImage]}` || "https://placehold.co/600x750"} 
+                src={getStorageUrl(product.images[selectedImage])} 
                 alt={product.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -103,7 +102,7 @@ export default function ProductPage() {
                     }`}
                   >
                     <img 
-                      src={img.startsWith('http') ? img : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${img}`} 
+                      src={getStorageUrl(img)} 
                       alt="" 
                       className="w-full h-full object-cover" 
                       onError={(e) => {

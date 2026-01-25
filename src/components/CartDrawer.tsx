@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
+import { getStorageUrl } from "@/lib/utils";
 
 export function CartDrawer() {
   const { isAuthenticated } = useAuth();
@@ -104,7 +105,7 @@ export function CartDrawer() {
                   <div className="h-24 w-24 rounded-lg bg-background overflow-hidden flex-shrink-0 border shadow-sm">
                     {item.product?.images?.[0] && (
                       <img 
-                        src={item.product.images[0]} 
+                        src={getStorageUrl(item.product.images[0])} 
                         alt={item.product.name}
                         className="h-full w-full object-cover"
                       />
