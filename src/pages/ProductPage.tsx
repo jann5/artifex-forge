@@ -12,7 +12,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { getStorageUrl } from "@/lib/utils";
 
 // Lazy load ModelViewer to avoid breaking the page if it fails
-const ModelViewer = lazy(() => import("@/components/ModelViewer").then(module => ({ default: module.ModelViewer })).catch(() => ({ default: () => <div className="text-muted-foreground">Model 3D niedostępny</div> })));
+const ModelViewer = lazy(() => import("@/components/ModelViewer").then(module => ({ default: module.ModelViewer })).catch((error) => {
+  console.error("Failed to load ModelViewer:", error);
+  return { default: () => <div className="text-muted-foreground">Model 3D niedostępny (błąd ładowania komponentu)</div> };
+}));
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -30,10 +33,11 @@ export default function ProductPage() {
   // Auto-show 3D model if available
   useEffect(() => {
     if (has3DModel) {
+      console.log("ProductPage: 3D model detected:", product.model3d);
       setShow3D(true);
       setActiveImage(-1);
     }
-  }, [has3DModel]);
+  }, [has3DModel, product?.model3d]);
 
   useEffect(() => {
     if (product && isAuthenticated) {
@@ -84,6 +88,8 @@ export default function ProductPage() {
     }
   };
 
+  const model3dUrl = has3DModel ? getStorageUrl(product.model3d!) : null;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -93,13 +99,13 @@ export default function ProductPage() {
           {/* Image Gallery */}
           <div className="space-y-4">
             <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden relative border">
-              {show3D && has3DModel ? (
+              {show3D && has3DModel && model3dUrl ? (
                 <Suspense fallback={
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                     Ładowanie modelu 3D...
                   </div>
                 }>
-                  <ModelViewer url={getStorageUrl(product.model3d!)} />
+                  <ModelViewer url={model3dUrl} />
                 </Suspense>
               ) : (
                 <img 
