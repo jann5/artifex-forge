@@ -22,9 +22,16 @@ export function ProductList({ products, onEdit, onDelete }: ProductListProps) {
         <div key={product._id} className="flex items-center justify-between p-4 border rounded-lg">
           <div className="flex items-center gap-4">
             <img 
-              src={product.images[0] ? `${import.meta.env.VITE_CONVEX_URL}/api/storage/${product.images[0]}` : "https://placehold.co/100"} 
+              src={product.images[0] 
+                ? (product.images[0].startsWith('http') 
+                  ? product.images[0] 
+                  : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${product.images[0]}`)
+                : "https://placehold.co/100"} 
               alt="" 
-              className="h-10 w-10 rounded object-cover" 
+              className="h-10 w-10 rounded object-cover"
+              onError={(e) => {
+                e.currentTarget.src = 'https://placehold.co/100';
+              }}
             />
             <div>
               <p className="font-medium">{product.name}</p>

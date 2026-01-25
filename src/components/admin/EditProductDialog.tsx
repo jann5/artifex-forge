@@ -104,9 +104,13 @@ export function EditProductDialog({
               {product.images.map((imageId, idx) => (
                 <div key={idx} className="relative aspect-square rounded-lg border overflow-hidden bg-muted">
                   <img 
-                    src={`${import.meta.env.VITE_CONVEX_URL}/api/storage/${imageId}`}
+                    src={imageId.startsWith('http') ? imageId : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${imageId}`}
                     alt={`Image ${idx + 1}`}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('Image failed to load:', imageId);
+                      e.currentTarget.src = 'https://placehold.co/400x400/f3f4f6/1f2937?text=Błąd+ładowania';
+                    }}
                   />
                   <button
                     type="button"
