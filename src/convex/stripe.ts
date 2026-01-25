@@ -16,6 +16,13 @@ export const createCheckoutSession = action({
         image: v.optional(v.string()),
       })
     ),
+    shippingAddress: v.object({
+      fullName: v.string(),
+      street: v.string(),
+      city: v.string(),
+      postalCode: v.string(),
+      phone: v.string(),
+    }),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -39,6 +46,7 @@ export const createCheckoutSession = action({
         userId,
         items: args.items,
         totalAmount,
+        shippingAddress: args.shippingAddress,
       });
 
       return { sessionId: mockSessionId, url: `${domain}/?success=true` };
@@ -70,6 +78,7 @@ export const createCheckoutSession = action({
         metadata: {
           userId: userId,
           items: JSON.stringify(args.items),
+          shippingAddress: JSON.stringify(args.shippingAddress),
         },
       });
 
@@ -116,6 +125,7 @@ export const handleWebhook = action({
         userId: session.metadata?.userId!,
         items: JSON.parse(session.metadata?.items || "[]"),
         totalAmount: (session.amount_total || 0) / 100,
+        shippingAddress: session.metadata?.shippingAddress ? JSON.parse(session.metadata.shippingAddress) : undefined,
       });
     }
 

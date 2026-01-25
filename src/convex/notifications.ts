@@ -8,6 +8,7 @@ export const sendTelegramNotification = action({
     customerEmail: v.string(),
     totalAmount: v.number(),
     status: v.string(),
+    shippingAddress: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -18,6 +19,14 @@ export const sendTelegramNotification = action({
       return { success: false, message: "Telegram not configured" };
     }
 
+    const addressInfo = args.shippingAddress ? `
+📍 *Adres dostawy:*
+👤 ${args.shippingAddress.fullName}
+🏠 ${args.shippingAddress.street}
+mj. ${args.shippingAddress.postalCode} ${args.shippingAddress.city}
+📞 ${args.shippingAddress.phone}
+` : "";
+
     const message = `
 🛍️ *Nowe Zamówienie / Aktualizacja*
 
@@ -25,7 +34,7 @@ export const sendTelegramNotification = action({
 👤 Klient: ${args.customerEmail}
 💰 Kwota: ${args.totalAmount} PLN
 📊 Status: *${args.status}*
-
+${addressInfo}
 Zarządzaj statusem poniżej:
     `.trim();
 

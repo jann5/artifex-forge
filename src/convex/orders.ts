@@ -62,6 +62,7 @@ export const create = mutation({
       customerEmail: user.email || "Unknown",
       totalAmount: args.totalAmount,
       status: "pending",
+      shippingAddress: args.shippingAddress,
     });
 
     return orderId;
@@ -74,6 +75,7 @@ export const createFromStripe = internalMutation({
     userId: v.string(),
     items: v.array(v.any()),
     totalAmount: v.number(),
+    shippingAddress: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     const userId = args.userId as Id<"users">;
@@ -87,7 +89,7 @@ export const createFromStripe = internalMutation({
       totalAmount: args.totalAmount,
       status: "paid",
       stripeSessionId: args.sessionId,
-      shippingAddress: undefined,
+      shippingAddress: args.shippingAddress,
     });
 
     // Clear cart
@@ -107,6 +109,7 @@ export const createFromStripe = internalMutation({
       customerEmail: dbUser.email || "Unknown",
       totalAmount: args.totalAmount,
       status: "paid",
+      shippingAddress: args.shippingAddress,
     });
   },
 });
@@ -145,6 +148,7 @@ export const updateStatus = mutation({
       customerEmail: customer?.email || "Unknown",
       totalAmount: order.totalAmount,
       status: args.status,
+      shippingAddress: order.shippingAddress,
     });
 
     return { success: true };

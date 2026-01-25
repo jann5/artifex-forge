@@ -7,11 +7,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, CreditCard, Truck, ArrowLeft, Lock, AlertCircle } from "lucide-react";
+import { Loader2, ShieldCheck, CreditCard, Truck, ArrowLeft, Lock, AlertCircle, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function CheckoutPage() {
   const { isAuthenticated } = useAuth();
@@ -19,6 +21,14 @@ export default function CheckoutPage() {
   const cartItems = useQuery(api.cart.get);
   const createCheckout = useAction(api.stripe.createCheckoutSession);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  const [shippingDetails, setShippingDetails] = useState({
+    fullName: "",
+    street: "",
+    city: "",
+    postalCode: "",
+    phone: "",
+  });
 
   if (!isAuthenticated) {
     return (
@@ -54,6 +64,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!shippingDetails.fullName || !shippingDetails.street || !shippingDetails.city || !shippingDetails.postalCode || !shippingDetails.phone) {
+      toast.error("Proszę uzupełnić wszystkie dane do wysyłki");
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const items = cartItems.map((item) => ({
@@ -64,7 +79,10 @@ export default function CheckoutPage() {
         image: item.product?.images?.[0],
       }));
 
-      const result = await createCheckout({ items });
+      const result = await createCheckout({ 
+        items,
+        shippingAddress: shippingDetails
+      });
       
       if (result.url) {
         window.location.href = result.url;
@@ -118,7 +136,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12 items-start">
-            {/* Left Column - Order Items */}
+            {/* Left Column - Order Items & Shipping */}
             <div className="md:col-span-2 space-y-6">
               <Card className="border shadow-none bg-card overflow-hidden">
                 <CardHeader className="bg-muted/30 border-b py-4">
@@ -140,7 +158,7 @@ export default function CheckoutPage() {
                           <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg bg-muted overflow-hidden flex-shrink-0 border">
                             {item.product?.images?.[0] && (
                               <img 
-                                src={item.product.images[0]} 
+                                src={item.product.images[0].startsWith('http') ? item.product.images[0] : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${item.product.images[0]}`} 
                                 alt={item.product.name}
                                 className="h-full w-full object-cover"
                               />
@@ -169,6 +187,64 @@ export default function CheckoutPage() {
                       ))}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              <Card className="border shadow-none bg-card">
+                <CardHeader className="bg-muted/30 border-b py-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <MapPin className="h-5 w-5 text-primary" />
+                    Dane do wysyłki
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="fullName">Imię i Nazwisko</Label>
+                    <Input 
+                      id="fullName" 
+                      placeholder="Jan Kowalski"
+                      value={shippingDetails.fullName}
+                      onChange={(e) => setShippingDetails({...shippingDetails, fullName: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="street">Ulica i numer</Label>
+                    <Input 
+                      id="street" 
+                      placeholder="ul. Słoneczna 12/4"
+                      value={shippingDetails.street}
+                      onChange={(e) => setShippingDetails({...shippingDetails, street: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="postalCode">Kod pocztowy</Label>
+                      <Input 
+                        id="postalCode" 
+                        placeholder="00-000"
+                        value={shippingDetails.postalCode}
+                        onChange={(e) => setShippingDetails({...shippingDetails, postalCode: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="city">Miasto</Label>
+                      <Input 
+                        id="city" 
+                        placeholder="Warszawa"
+                        value={shippingDetails.city}
+                        onChange={(e) => setShippingDetails({...shippingDetails, city: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">Numer telefonu</Label>
+                    <Input 
+                      id="phone" 
+                      placeholder="+48 123 456 789"
+                      value={shippingDetails.phone}
+                      onChange={(e) => setShippingDetails({...shippingDetails, phone: e.target.value})}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 

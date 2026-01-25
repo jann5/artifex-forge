@@ -32,6 +32,8 @@ http.route({
     const segments = pathParts.filter(p => p.length > 0);
     const storageId = segments[segments.length - 1];
 
+    console.log(`[HTTP] Serving image request for storageId: ${storageId}`);
+
     // Add CORS headers
     const headers = new Headers({
       "Access-Control-Allow-Origin": "*",
@@ -40,13 +42,14 @@ http.route({
     });
     
     if (!storageId) {
+      console.error("[HTTP] Missing storage ID in request");
       return new Response("Missing storage ID", { status: 400, headers });
     }
 
     try {
       const blob = await ctx.storage.get(storageId as Id<"_storage">);
       if (!blob) {
-        console.error(`Image not found for ID: ${storageId}`);
+        console.error(`[HTTP] Image not found for ID: ${storageId}`);
         return new Response("Image not found", { status: 404, headers });
       }
 
@@ -58,12 +61,13 @@ http.route({
       headers.set("Content-Type", contentType);
       headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
+      console.log(`[HTTP] Successfully serving image ${storageId} with type ${contentType}`);
       return new Response(blob, {
         status: 200,
         headers,
       });
     } catch (error) {
-      console.error(`Error serving image ${storageId}:`, error);
+      console.error(`[HTTP] Error serving image ${storageId}:`, error);
       return new Response("Internal Server Error", { status: 500, headers });
     }
   }),
