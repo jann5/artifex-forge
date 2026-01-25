@@ -130,6 +130,7 @@ const schema = defineSchema(
     telegramSessions: defineTable({
       chatId: v.string(), // Telegram chat ID (stored as string to be safe)
       step: v.string(), // Current step: "NAME", "DESCRIPTION", "CATEGORY", "PRICE", "INVENTORY", "IMAGES"
+      editingProductId: v.optional(v.string()), // ID of the product being edited
       productData: v.object({
         name: v.optional(v.string()),
         description: v.optional(v.string()),

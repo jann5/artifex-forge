@@ -83,7 +83,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // COMMANDS
       if (text === "/start" || text === "/help") {
-        await sendMessage(chatId, "🤖 *Artifex Bot*\n\nKomendy:\n/addproduct - Rozpocznij dodawanie produktu\n/cancel - Anuluj dodawanie\n/help - Pomoc");
+        await sendMessage(chatId, "🤖 *Artifex Bot*\\n\\nKomendy:\\n/addproduct - Dodaj produkt\\n/editproduct - Edytuj produkt\\n/deleteproduct - Usuń produkt\\n/cancel - Anuluj\\n/help - Pomoc");
         return new Response("OK", { status: 200 });
       }
 
@@ -106,7 +106,39 @@ export const webhook = httpAction(async (ctx, request) => {
         }
 
         await ctx.runMutation(internal.telegram_db.startSession, { chatId });
-        await sendMessage(chatId, "📦 *Nowy Produkt*\n\nPodaj nazwę produktu:");
+        await sendMessage(chatId, "📦 *Nowy Produkt*\\n\\nPodaj nazwę produktu:");
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/deleteproduct") {
+        const adminChatId = process.env.TELEGRAM_CHAT_ID;
+        if (adminChatId && chatId !== String(adminChatId)) {
+           await sendMessage(chatId, "⛔ Brak uprawnień.");
+           return new Response("OK", { status: 200 });
+        }
+        await ctx.runMutation(internal.telegram_db.startSession, { chatId });
+        await ctx.runMutation(internal.telegram_db.updateSession, { 
+          chatId, 
+          step: "DELETE_SEARCH", 
+          updates: {} 
+        });
+        await sendMessage(chatId, "🗑️ *Usuwanie Produktu*\\n\\nWpisz nazwę produktu, który chcesz usunąć:");
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/editproduct") {
+        const adminChatId = process.env.TELEGRAM_CHAT_ID;
+        if (adminChatId && chatId !== String(adminChatId)) {
+           await sendMessage(chatId, "⛔ Brak uprawnień.");
+           return new Response("OK", { status: 200 });
+        }
+        await ctx.runMutation(internal.telegram_db.startSession, { chatId });
+        await ctx.runMutation(internal.telegram_db.updateSession, { 
+          chatId, 
+          step: "EDIT_SEARCH", 
+          updates: {} 
+        });
+        await sendMessage(chatId, "✏️ *Edycja Produktu*\\n\\nWpisz nazwę produktu, który chcesz edytować:");
         return new Response("OK", { status: 200 });
       }
 
@@ -115,6 +147,121 @@ export const webhook = httpAction(async (ctx, request) => {
         // Handle Text Inputs
         if (text && !text.startsWith("/")) {
           switch (session.step) {
+            case "DELETE_SEARCH":
+              const productsToDelete = await ctx.runQuery(api.products.list, { search: text });
+              if (productsToDelete.length === 0) {
+                await sendMessage(chatId, "❌ Nie znaleziono produktu. Spróbuj innej nazwy lub wpisz /cancel.");
+              } else if (productsToDelete.length === 1) {
+                const p = productsToDelete[0];
+                await ctx.runMutation(api.products.remove, { id: p._id });
+                await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+                await sendMessage(chatId, `✅ Usunięto produkt: *${p.name}*`);
+              } else {
+                await sendMessage(chatId, `⚠️ Znaleziono ${productsToDelete.length} produktów. Bądź bardziej precyzyjny.`);
+              }
+              break;
+
+            case "EDIT_SEARCH":
+              const productsToEdit = await ctx.runQuery(api.products.list, { search: text });
+              if (productsToEdit.length === 0) {
+                await sendMessage(chatId, "❌ Nie znaleziono produktu. Spróbuj innej nazwy lub wpisz /cancel.");
+              } else if (productsToEdit.length === 1) {
+                const p = productsToEdit[0];
+                await ctx.runMutation(internal.telegram_db.updateSession, {
+                  chatId,
+                  step: "EDIT_CHOOSE_FIELD",
+                  updates: { editingProductId: p._id }
+                });
+                
+                const editKeyboard = {
+                  keyboard: [
+                    [{ text: "Nazwa" }, { text: "Opis" }],
+                    [{ text: "Cena" }, { text: "Ilość" }],
+                    [{ text: "Kategoria" }]
+                  ],
+                  one_time_keyboard: true,
+                  resize_keyboard: true
+                };
+                await sendMessage(chatId, `✏️ Edytujesz: *${p.name}*\\nCo chcesz zmienić?`, editKeyboard);
+              } else {
+                await sendMessage(chatId, `⚠️ Znaleziono ${productsToEdit.length} produktów. Bądź bardziej precyzyjny.`);
+              }
+              break;
+
+            case "EDIT_CHOOSE_FIELD":
+              let nextStep = "EDIT_VALUE";
+              let prompt = "";
+              
+              switch(text) {
+                case "Nazwa": prompt = "Podaj nową nazwę:"; break;
+                case "Opis": prompt = "Podaj nowy opis:"; break;
+                case "Cena": prompt = "Podaj nową cenę (PLN):"; break;
+                case "Ilość": prompt = "Podaj nową ilość:"; break;
+                case "Kategoria": prompt = "Podaj nową kategorię:"; break;
+                default: 
+                  await sendMessage(chatId, "❌ Nieznane pole. Wybierz z klawiatury.");
+                  return new Response("OK", { status: 200 });
+              }
+
+              await ctx.runMutation(internal.telegram_db.updateSession, {
+                chatId,
+                step: `EDIT_VALUE_${text.toUpperCase()}`, // e.g. EDIT_VALUE_CENA
+                updates: {}
+              });
+              await sendMessage(chatId, prompt, { remove_keyboard: true });
+              break;
+
+            case "EDIT_VALUE_NAZWA":
+            case "EDIT_VALUE_OPIS":
+            case "EDIT_VALUE_CENA":
+            case "EDIT_VALUE_ILOŚĆ": // Handle polish chars in step name if needed, but better to map
+            case "EDIT_VALUE_ILOSC":
+            case "EDIT_VALUE_KATEGORIA":
+              // We need to map the step back to the field
+              const fieldMap: Record<string, string> = {
+                "EDIT_VALUE_NAZWA": "name",
+                "EDIT_VALUE_OPIS": "description",
+                "EDIT_VALUE_CENA": "price",
+                "EDIT_VALUE_ILOŚĆ": "inventory",
+                "EDIT_VALUE_ILOSC": "inventory",
+                "EDIT_VALUE_KATEGORIA": "category"
+              };
+              
+              const field = fieldMap[session.step];
+              if (!field || !session.editingProductId) {
+                 await sendMessage(chatId, "❌ Błąd sesji. Wpisz /cancel");
+                 return new Response("OK", { status: 200 });
+              }
+
+              const updates: any = {};
+              if (field === "price") {
+                const val = parseFloat(text.replace(",", "."));
+                if (isNaN(val)) {
+                  await sendMessage(chatId, "❌ Cena musi być liczbą.");
+                  return new Response("OK", { status: 200 });
+                }
+                updates.price = val;
+              } else if (field === "inventory") {
+                const val = parseInt(text);
+                if (isNaN(val)) {
+                  await sendMessage(chatId, "❌ Ilość musi być liczbą.");
+                  return new Response("OK", { status: 200 });
+                }
+                updates.inventory = val;
+              } else {
+                updates[field] = text;
+              }
+
+              // Apply update
+              await ctx.runMutation(api.products.update, {
+                id: session.editingProductId as Id<"products">,
+                updates: updates
+              });
+
+              await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+              await sendMessage(chatId, "✅ Zaktualizowano produkt!");
+              break;
+
             case "NAME":
               await ctx.runMutation(internal.telegram_db.updateSession, {
                 chatId,
