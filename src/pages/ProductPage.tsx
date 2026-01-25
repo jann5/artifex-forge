@@ -6,10 +6,11 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
 import { useState, useEffect } from "react";
-import { Minus, Plus, ShoppingBag } from "lucide-react";
+import { Minus, Plus, ShoppingBag, X, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getStorageUrl } from "@/lib/utils";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +21,7 @@ export default function ProductPage() {
   
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   useEffect(() => {
     if (product && isAuthenticated) {
@@ -78,17 +80,22 @@ export default function ProductPage() {
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
           {/* Image Gallery */}
           <div className="space-y-4">
-            <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden relative border">
+            <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden relative border group cursor-pointer" onClick={() => setIsImageModalOpen(true)}>
               <img 
                 src={getStorageUrl(product.images[activeImage])} 
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 onError={(e) => {
                   const target = e.currentTarget;
                   console.error('Image failed to load:', target.src);
                   target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
                 }}
               />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 rounded-full p-3">
+                  <ZoomIn className="h-6 w-6" />
+                </div>
+              </div>
             </div>
 
             {/* Thumbnails */}
@@ -97,7 +104,7 @@ export default function ProductPage() {
                 <button
                   key={idx}
                   onClick={() => setActiveImage(idx)}
-                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
                     activeImage === idx ? "border-primary ring-2 ring-primary/20" : "border-transparent"
                   }`}
                 >
@@ -169,6 +176,49 @@ export default function ProductPage() {
           </div>
         </div>
       </main>
+
+      {/* Image Modal */}
+      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+        <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-black/95 border-none">
+          <button
+            onClick={() => setIsImageModalOpen(false)}
+            className="absolute top-4 right-4 z-50 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <div className="relative w-full h-full flex items-center justify-center p-8">
+            <img
+              src={getStorageUrl(product.images[activeImage])}
+              alt={product.name}
+              className="max-w-full max-h-full object-contain"
+              onError={(e) => {
+                const target = e.currentTarget;
+                console.error('Image failed to load:', target.src);
+                target.src = 'https://placehold.co/1200x1500/f3f4f6/1f2937?text=Błąd+ładowania';
+              }}
+            />
+          </div>
+          {product.images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/50 p-2 rounded-lg">
+              {product.images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(idx)}
+                  className={`h-16 w-16 rounded-md overflow-hidden border-2 transition-all ${
+                    activeImage === idx ? "border-white" : "border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img
+                    src={getStorageUrl(img)}
+                    alt={`Miniatura ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

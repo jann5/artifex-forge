@@ -40,7 +40,6 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
     }
   };
 
-  // Convert storage ID to URL if needed
   const imageUrl = getStorageUrl(image);
 
   return (
@@ -56,6 +55,7 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
           <img
             src={imageUrl}
             alt={name}
+            loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               const target = e.currentTarget;
