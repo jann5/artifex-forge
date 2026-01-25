@@ -39,6 +39,11 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
     }
   };
 
+  // Convert storage ID to URL if needed
+  const imageUrl = image.startsWith('http') 
+    ? image 
+    : `${import.meta.env.VITE_CONVEX_URL}/api/storage/${image}`;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -50,7 +55,7 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
       <Link to={`/products/${id}`} className="block">
         <div className="aspect-[4/5] overflow-hidden rounded-xl bg-muted relative">
           <img
-            src={image}
+            src={imageUrl}
             alt={name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
