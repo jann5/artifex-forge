@@ -3,13 +3,23 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ProductCard } from "@/components/ProductCard";
-import { ArrowRight, Box, Layers, Zap } from "lucide-react";
-import { Link } from "react-router";
+import { ArrowRight, Box, Layers, Zap, CheckCircle, Package } from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export default function Landing() {
   const featuredProducts = useQuery(api.products.list, { featured: true });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -19,10 +29,66 @@ export default function Landing() {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const y = useTransform(scrollYProgress, [0, 0.5], [0, -50]);
 
+  const success = searchParams.get("success");
+  const canceled = searchParams.get("canceled");
+
+  useEffect(() => {
+    if (success === "true") {
+      toast.success("Płatność zakończona sukcesem!");
+    }
+    if (canceled === "true") {
+      toast.error("Płatność została anulowana");
+      setSearchParams({});
+    }
+  }, [success, canceled, setSearchParams]);
+
+  const handleCloseSuccessDialog = () => {
+    setSearchParams({});
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-hidden">
       <Navbar />
       
+      {/* Success Dialog */}
+      <Dialog open={success === "true"} onOpenChange={handleCloseSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+              <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+            </div>
+            <DialogTitle className="text-center text-2xl">Płatność Zakończona Sukcesem!</DialogTitle>
+            <DialogDescription className="text-center">
+              Twoje zamówienie zostało przyjęte i jest przetwarzane. Możesz śledzić status zamówienia w panelu zamówień.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button 
+              size="lg" 
+              className="w-full"
+              onClick={() => {
+                handleCloseSuccessDialog();
+                navigate("/orders");
+              }}
+            >
+              <Package className="mr-2 h-5 w-5" />
+              Śledź Zamówienie
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="w-full"
+              onClick={() => {
+                handleCloseSuccessDialog();
+                navigate("/products");
+              }}
+            >
+              Kontynuuj Zakupy
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Hero Section - Premium & Clean */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
