@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, X, Loader2, Box, CheckCircle } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
 import { useRef } from "react";
 import { getStorageUrl } from "@/lib/utils";
 
@@ -24,13 +24,10 @@ interface ProductFormProps {
     featured?: boolean;
   };
   images: string[];
-  model3d?: string;
   isUploading: boolean;
   onProductChange: (updates: Partial<ProductFormProps['product']>) => void;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onImageRemove: (index: number) => void;
-  onModelUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onModelRemove?: () => void;
   onSubmit: (e: React.FormEvent) => void;
   submitLabel: string;
 }
@@ -38,18 +35,14 @@ interface ProductFormProps {
 export function ProductForm({
   product,
   images,
-  model3d,
   isUploading,
   onProductChange,
   onImageUpload,
   onImageRemove,
-  onModelUpload,
-  onModelRemove,
   onSubmit,
   submitLabel,
 }: ProductFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const modelInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 max-w-md">
@@ -117,65 +110,6 @@ export function ProductForm({
         />
         <Label htmlFor="featured">Wyróżniony produkt</Label>
       </div>
-
-      {/* Model 3D Upload */}
-      {onModelUpload && onModelRemove && (
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Model 3D (opcjonalny)
-          </label>
-          {model3d ? (
-            <div className="relative p-4 rounded-lg border-2 bg-green-500/10 border-green-500/30">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-green-500/20 flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-green-700">✅ Model 3D przesłany pomyślnie!</p>
-                  <p className="text-xs text-muted-foreground">Plik .glb gotowy do wyświetlenia</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={onModelRemove}
-                  className="h-8 w-8 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <input
-                ref={modelInputRef}
-                type="file"
-                accept=".glb,.gltf"
-                onChange={onModelUpload}
-                className="hidden"
-                id="model-upload"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => modelInputRef.current?.click()}
-                disabled={isUploading}
-                className="w-full"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Przesyłanie modelu 3D...
-                  </>
-                ) : (
-                  <>
-                    <Box className="mr-2 h-4 w-4" />
-                    Dodaj Model 3D (.glb)
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
       
       <div>
         <label className="block text-sm font-medium mb-2">
