@@ -1,22 +1,17 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
+import { getCurrentUser } from "./users";
+import { Id } from "./_generated/dataModel";
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const user = await ctx.auth.getUserIdentity();
+    const user = await getCurrentUser(ctx);
     if (!user) return [];
-
-    const dbUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", user.email!))
-      .unique();
-
-    if (!dbUser) return [];
 
     return await ctx.db
       .query("orders")
-      .withIndex("by_user", (q) => q.eq("userId", dbUser._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .order("desc")
       .take(20);
   },
@@ -38,18 +33,11 @@ export const create = mutation({
     shippingAddress: v.any(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.auth.getUserIdentity();
+    const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
 
-    const dbUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", user.email!))
-      .unique();
-
-    if (!dbUser) throw new Error("User not found");
-
     const orderId = await ctx.db.insert("orders", {
-      userId: dbUser._id,
+      userId: user._id,
       items: args.items,
       totalAmount: args.totalAmount,
       status: "pending",
@@ -59,7 +47,7 @@ export const create = mutation({
     // Clear cart
     const cartItems = await ctx.db
       .query("cartItems")
-      .withIndex("by_user", (q) => q.eq("userId", dbUser._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     for (const item of cartItems) {
@@ -78,10 +66,8 @@ export const createFromStripe = internalMutation({
     totalAmount: v.number(),
   },
   handler: async (ctx, args) => {
-    const dbUser = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("_id"), args.userId))
-      .first();
+    const userId = args.userId as Id<"users">;
+    const dbUser = await ctx.db.get(userId);
 
     if (!dbUser) throw new Error("User not found");
 

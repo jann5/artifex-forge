@@ -3,6 +3,7 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import Stripe from "stripe";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const createCheckoutSession = action({
   args: {
@@ -17,8 +18,8 @@ export const createCheckoutSession = action({
     ),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
       apiVersion: "2025-02-24.acacia",
@@ -26,24 +27,24 @@ export const createCheckoutSession = action({
 
     const lineItems = args.items.map((item) => ({
       price_data: {
-        currency: "usd",
+        currency: "pln",
         product_data: {
           name: item.name,
           images: item.image ? [item.image] : [],
         },
-        unit_amount: Math.round(item.price * 100), // Convert to cents
+        unit_amount: Math.round(item.price * 100),
       },
       quantity: item.quantity,
     }));
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "blik", "p24"],
       line_items: lineItems,
       mode: "payment",
       success_url: `${process.env.CONVEX_SITE_URL}/?success=true`,
       cancel_url: `${process.env.CONVEX_SITE_URL}/checkout?canceled=true`,
       metadata: {
-        userId: identity.subject,
+        userId: userId,
         items: JSON.stringify(args.items),
       },
     });
