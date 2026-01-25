@@ -1,3 +1,5 @@
+edit src/pages/ProductPage.tsx
+---
 import { useParams } from "react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -181,7 +183,7 @@ export default function ProductPage() {
       <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
         <DialogContent 
           showCloseButton={false}
-          className="!max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-none bg-black/95 !translate-x-0 !translate-y-0 !top-0 !left-0 flex items-center justify-center overflow-hidden"
+          className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-none bg-black/95 overflow-hidden"
         >
           <button
             onClick={() => setIsImageModalOpen(false)}
