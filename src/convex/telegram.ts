@@ -139,6 +139,96 @@ export const webhook = httpAction(async (ctx, request) => {
         });
       }
 
+      // Handle Delete Pagination
+      if (data && data.startsWith("delete_page:")) {
+        const page = parseInt(data.split(":")[1]);
+        const allProducts = await ctx.runQuery(api.products.list, {});
+        
+        const pageSize = 10;
+        const startIdx = page * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, allProducts.length);
+        const productsPage = allProducts.slice(startIdx, endIdx);
+        
+        const buttons = productsPage.map(p => ([
+          { text: `${p.name} (${p.price} PLN)`, callback_data: `delete_select:${p._id}` }
+        ]));
+        
+        // Add navigation buttons
+        const navButtons = [];
+        if (page > 0) {
+          navButtons.push({ text: "⬅️ Poprzednia", callback_data: `delete_page:${page - 1}` });
+        }
+        if (endIdx < allProducts.length) {
+          navButtons.push({ text: "➡️ Następna", callback_data: `delete_page:${page + 1}` });
+        }
+        if (navButtons.length > 0) {
+          buttons.push(navButtons);
+        }
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: message.message_id,
+            text: `🗑️ *Usuwanie Produktu* (${startIdx + 1}-${endIdx} z ${allProducts.length})\n\nWybierz produkt do usunięcia:`,
+            parse_mode: "Markdown",
+            reply_markup: { inline_keyboard: buttons }
+          })
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: callbackQuery.id })
+        });
+      }
+
+      // Handle Edit Pagination
+      if (data && data.startsWith("edit_page:")) {
+        const page = parseInt(data.split(":")[1]);
+        const allProducts = await ctx.runQuery(api.products.list, {});
+        
+        const pageSize = 10;
+        const startIdx = page * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, allProducts.length);
+        const productsPage = allProducts.slice(startIdx, endIdx);
+        
+        const buttons = productsPage.map(p => ([
+          { text: `${p.name} (${p.price} PLN)`, callback_data: `edit_select:${p._id}` }
+        ]));
+        
+        // Add navigation buttons
+        const navButtons = [];
+        if (page > 0) {
+          navButtons.push({ text: "⬅️ Poprzednia", callback_data: `edit_page:${page - 1}` });
+        }
+        if (endIdx < allProducts.length) {
+          navButtons.push({ text: "➡️ Następna", callback_data: `edit_page:${page + 1}` });
+        }
+        if (navButtons.length > 0) {
+          buttons.push(navButtons);
+        }
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: message.message_id,
+            text: `✏️ *Edycja Produktu* (${startIdx + 1}-${endIdx} z ${allProducts.length})\n\nWybierz produkt do edycji:`,
+            parse_mode: "Markdown",
+            reply_markup: { inline_keyboard: buttons }
+          })
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: callbackQuery.id })
+        });
+      }
+
       // Handle Order Info
       if (data && data.startsWith("order_info:")) {
         const orderId = data.split(":")[1] as Id<"orders">;
@@ -356,7 +446,7 @@ export const webhook = httpAction(async (ctx, request) => {
            return new Response("OK", { status: 200 });
         }
         
-        // Get all products and show selection list
+        // Get all products and show selection list with pagination
         const allProducts = await ctx.runQuery(api.products.list, {});
         
         if (allProducts.length === 0) {
@@ -364,12 +454,27 @@ export const webhook = httpAction(async (ctx, request) => {
           return new Response("OK", { status: 200 });
         }
         
-        // Show first 10 products with delete buttons
-        const buttons = allProducts.slice(0, 10).map(p => ([
+        // Show first page (0-9)
+        const pageSize = 10;
+        const page = 0;
+        const startIdx = page * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, allProducts.length);
+        const productsPage = allProducts.slice(startIdx, endIdx);
+        
+        const buttons = productsPage.map(p => ([
           { text: `${p.name} (${p.price} PLN)`, callback_data: `delete_select:${p._id}` }
         ]));
         
-        await sendMessage(chatId, "🗑️ *Usuwanie Produktu*\n\nWybierz produkt do usunięcia:", { inline_keyboard: buttons });
+        // Add navigation buttons if needed
+        const navButtons = [];
+        if (endIdx < allProducts.length) {
+          navButtons.push({ text: "➡️ Następna strona", callback_data: `delete_page:${page + 1}` });
+        }
+        if (navButtons.length > 0) {
+          buttons.push(navButtons);
+        }
+        
+        await sendMessage(chatId, `🗑️ *Usuwanie Produktu* (${startIdx + 1}-${endIdx} z ${allProducts.length})\n\nWybierz produkt do usunięcia:`, { inline_keyboard: buttons });
         return new Response("OK", { status: 200 });
       }
 
@@ -380,7 +485,7 @@ export const webhook = httpAction(async (ctx, request) => {
            return new Response("OK", { status: 200 });
         }
         
-        // Get all products and show selection list
+        // Get all products and show selection list with pagination
         const allProducts = await ctx.runQuery(api.products.list, {});
         
         if (allProducts.length === 0) {
@@ -388,12 +493,27 @@ export const webhook = httpAction(async (ctx, request) => {
           return new Response("OK", { status: 200 });
         }
         
-        // Show first 10 products with edit buttons
-        const buttons = allProducts.slice(0, 10).map(p => ([
+        // Show first page (0-9)
+        const pageSize = 10;
+        const page = 0;
+        const startIdx = page * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, allProducts.length);
+        const productsPage = allProducts.slice(startIdx, endIdx);
+        
+        const buttons = productsPage.map(p => ([
           { text: `${p.name} (${p.price} PLN)`, callback_data: `edit_select:${p._id}` }
         ]));
         
-        await sendMessage(chatId, "✏️ *Edycja Produktu*\n\nWybierz produkt do edycji:", { inline_keyboard: buttons });
+        // Add navigation buttons if needed
+        const navButtons = [];
+        if (endIdx < allProducts.length) {
+          navButtons.push({ text: "➡️ Następna strona", callback_data: `edit_page:${page + 1}` });
+        }
+        if (navButtons.length > 0) {
+          buttons.push(navButtons);
+        }
+        
+        await sendMessage(chatId, `✏️ *Edycja Produktu* (${startIdx + 1}-${endIdx} z ${allProducts.length})\n\nWybierz produkt do edycji:`, { inline_keyboard: buttons });
         return new Response("OK", { status: 200 });
       }
 
