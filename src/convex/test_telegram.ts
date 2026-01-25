@@ -6,15 +6,21 @@ export const sendTest = action({
   handler: async (ctx) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
+    const siteUrl = process.env.CONVEX_SITE_URL;
 
-    if (!botToken || !chatId) {
-      return "BŁĄD: Brakuje zmiennych środowiskowych.";
+    if (!botToken || !chatId || !siteUrl) {
+      const missingVars = [];
+      if (!botToken) missingVars.push("TELEGRAM_BOT_TOKEN");
+      if (!chatId) missingVars.push("TELEGRAM_CHAT_ID");
+      if (!siteUrl) missingVars.push("CONVEX_SITE_URL");
+      return `BŁĄD: Brakuje zmiennych środowiskowych: ${missingVars.join(", ")}`;
     }
 
     // Logowanie dla celów debugowania (ukrywamy środek tokena)
     const maskedToken = botToken.substring(0, 5) + "..." + botToken.substring(botToken.length - 5);
     console.log(`Próba wysłania z tokenem: ${maskedToken} (długość: ${botToken.length})`);
     console.log(`Na Chat ID: ${chatId}`);
+    console.log(`Site URL: ${siteUrl}`);
 
     try {
       const response = await fetch(

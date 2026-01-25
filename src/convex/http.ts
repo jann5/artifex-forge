@@ -28,14 +28,18 @@ http.route({
     const url = new URL(request.url);
     // path is /api/storage/<storageId>
     const pathParts = url.pathname.split("/");
-    const storageId = pathParts[pathParts.length - 1] as Id<"_storage">;
+    // Handle potential trailing slash or extra segments
+    let storageId = pathParts[pathParts.length - 1];
+    if (!storageId) {
+        storageId = pathParts[pathParts.length - 2];
+    }
     
     if (!storageId) {
       return new Response("Missing storage ID", { status: 400 });
     }
 
     try {
-      const blob = await ctx.storage.get(storageId);
+      const blob = await ctx.storage.get(storageId as Id<"_storage">);
       if (!blob) {
         return new Response("Image not found", { status: 404 });
       }
