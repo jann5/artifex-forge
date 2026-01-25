@@ -355,13 +355,21 @@ export const webhook = httpAction(async (ctx, request) => {
            await sendMessage(chatId, "⛔ Brak uprawnień.");
            return new Response("OK", { status: 200 });
         }
-        await ctx.runMutation(internal.telegram_db.startSession, { chatId });
-        await ctx.runMutation(internal.telegram_db.updateSession, { 
-          chatId, 
-          step: "DELETE_SEARCH", 
-          updates: {} 
-        });
-        await sendMessage(chatId, "🗑️ *Usuwanie Produktu*\n\nWpisz nazwę produktu, który chcesz usunąć:");
+        
+        // Get all products and show selection list
+        const allProducts = await ctx.runQuery(api.products.list, {});
+        
+        if (allProducts.length === 0) {
+          await sendMessage(chatId, "❌ Brak produktów w sklepie.");
+          return new Response("OK", { status: 200 });
+        }
+        
+        // Show first 10 products with delete buttons
+        const buttons = allProducts.slice(0, 10).map(p => ([
+          { text: `${p.name} (${p.price} PLN)`, callback_data: `delete_select:${p._id}` }
+        ]));
+        
+        await sendMessage(chatId, "🗑️ *Usuwanie Produktu*\n\nWybierz produkt do usunięcia:", { inline_keyboard: buttons });
         return new Response("OK", { status: 200 });
       }
 
@@ -371,13 +379,21 @@ export const webhook = httpAction(async (ctx, request) => {
            await sendMessage(chatId, "⛔ Brak uprawnień.");
            return new Response("OK", { status: 200 });
         }
-        await ctx.runMutation(internal.telegram_db.startSession, { chatId });
-        await ctx.runMutation(internal.telegram_db.updateSession, { 
-          chatId, 
-          step: "EDIT_SEARCH", 
-          updates: {} 
-        });
-        await sendMessage(chatId, "✏️ *Edycja Produktu*\n\nWpisz nazwę produktu, który chcesz edytować:");
+        
+        // Get all products and show selection list
+        const allProducts = await ctx.runQuery(api.products.list, {});
+        
+        if (allProducts.length === 0) {
+          await sendMessage(chatId, "❌ Brak produktów w sklepie.");
+          return new Response("OK", { status: 200 });
+        }
+        
+        // Show first 10 products with edit buttons
+        const buttons = allProducts.slice(0, 10).map(p => ([
+          { text: `${p.name} (${p.price} PLN)`, callback_data: `edit_select:${p._id}` }
+        ]));
+        
+        await sendMessage(chatId, "✏️ *Edycja Produktu*\n\nWybierz produkt do edycji:", { inline_keyboard: buttons });
         return new Response("OK", { status: 200 });
       }
 
@@ -386,34 +402,6 @@ export const webhook = httpAction(async (ctx, request) => {
         // Handle Text Inputs
         if (text && !text.startsWith("/")) {
           switch (session.step) {
-            case "DELETE_SEARCH":
-              const productsToDelete = await ctx.runQuery(api.products.list, { search: text });
-              if (productsToDelete.length === 0) {
-                await sendMessage(chatId, "❌ Nie znaleziono produktu. Spróbuj innej nazwy lub wpisz /cancel.");
-              } else {
-                // Show list of products to delete
-                const buttons = productsToDelete.slice(0, 10).map(p => ([
-                    { text: `${p.name} (${p.price} PLN)`, callback_data: `delete_select:${p._id}` }
-                ]));
-                
-                await sendMessage(chatId, "🗑️ Wybierz produkt do usunięcia:", { inline_keyboard: buttons });
-              }
-              break;
-
-            case "EDIT_SEARCH":
-              const productsToEdit = await ctx.runQuery(api.products.list, { search: text });
-              if (productsToEdit.length === 0) {
-                await sendMessage(chatId, "❌ Nie znaleziono produktu. Spróbuj innej nazwy lub wpisz /cancel.");
-              } else {
-                // Show list of products to edit
-                const buttons = productsToEdit.slice(0, 10).map(p => ([
-                    { text: `${p.name} (${p.price} PLN)`, callback_data: `edit_select:${p._id}` }
-                ]));
-                
-                await sendMessage(chatId, "✏️ Wybierz produkt do edycji:", { inline_keyboard: buttons });
-              }
-              break;
-
             case "EDIT_CHOOSE_FIELD":
               let nextStep = "EDIT_VALUE";
               let prompt = "";
