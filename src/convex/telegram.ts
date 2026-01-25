@@ -200,6 +200,7 @@ export const webhook = httpAction(async (ctx, request) => {
                  let type = 'image/jpeg';
                  if (ext === 'png') type = 'image/png';
                  if (ext === 'webp') type = 'image/webp';
+                 if (ext === 'jpg' || ext === 'jpeg') type = 'image/jpeg';
                  
                  blobToStore = new Blob([await imageBlob.arrayBuffer()], { type });
               }

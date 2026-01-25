@@ -27,6 +27,8 @@ mj. ${args.shippingAddress.postalCode} ${args.shippingAddress.city}
 📞 ${args.shippingAddress.phone}
 ` : "";
 
+    console.log(`Preparing Telegram notification for order ${args.orderId}. Has address: ${!!args.shippingAddress}`);
+
     const message = `
 🛍️ *Nowe Zamówienie / Aktualizacja*
 

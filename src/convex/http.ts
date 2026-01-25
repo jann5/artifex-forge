@@ -32,43 +32,30 @@ http.route({
     const segments = pathParts.filter(p => p.length > 0);
     const storageId = segments[segments.length - 1];
 
-    console.log(`[HTTP] Serving image request for storageId: ${storageId}`);
-
-    // Add CORS headers
-    const headers = new Headers({
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    });
-    
     if (!storageId) {
-      console.error("[HTTP] Missing storage ID in request");
-      return new Response("Missing storage ID", { status: 400, headers });
+      return new Response("Missing storage ID", { status: 400 });
     }
 
     try {
-      const blob = await ctx.storage.get(storageId as Id<"_storage">);
-      if (!blob) {
+      // Use getUrl to generate a signed URL and redirect to it
+      // This is more robust than serving the blob directly and handles caching/CDNs better
+      const imageUrl = await ctx.storage.getUrl(storageId as Id<"_storage">);
+      
+      if (!imageUrl) {
         console.error(`[HTTP] Image not found for ID: ${storageId}`);
-        return new Response("Image not found", { status: 404, headers });
+        return new Response("Image not found", { status: 404 });
       }
 
-      // Ensure Content-Type is set, default to image/jpeg if missing/octet-stream for better browser compatibility
-      let contentType = blob.type;
-      if (!contentType || contentType === "application/octet-stream") {
-        contentType = "image/jpeg"; 
-      }
-      headers.set("Content-Type", contentType);
-      headers.set("Cache-Control", "public, max-age=31536000, immutable");
-
-      console.log(`[HTTP] Successfully serving image ${storageId} with type ${contentType}`);
-      return new Response(blob, {
-        status: 200,
-        headers,
+      return new Response(null, {
+        status: 302,
+        headers: {
+          "Location": imageUrl,
+          "Access-Control-Allow-Origin": "*",
+        },
       });
     } catch (error) {
       console.error(`[HTTP] Error serving image ${storageId}:`, error);
-      return new Response("Internal Server Error", { status: 500, headers });
+      return new Response("Internal Server Error", { status: 500 });
     }
   }),
 });
