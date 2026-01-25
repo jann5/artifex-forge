@@ -8,6 +8,9 @@ import { Id } from "@/convex/_generated/dataModel";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { ProductList } from "@/components/admin/ProductList";
 import { EditProductDialog } from "@/components/admin/EditProductDialog";
+import { Link } from "react-router";
+import { Button } from "@/components/ui/button";
+import { Package } from "lucide-react";
 
 export default function AdminPage() {
   const { isAuthenticated, user } = useAuth();
@@ -206,7 +209,15 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold mb-8">Panel Admina</h1>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <h1 className="text-3xl font-bold">Panel Admina</h1>
+          <Button asChild size="lg" className="shadow-sm">
+            <Link to="/admin/orders">
+              <Package className="mr-2 h-5 w-5" />
+              Zarządzaj Zamówieniami
+            </Link>
+          </Button>
+        </div>
         
         <div className="grid md:grid-cols-2 gap-12">
           <div>
