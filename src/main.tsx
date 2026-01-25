@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import ProductPage from "./pages/ProductPage";
 import ProductsPage from "./pages/ProductsPage";
 import AdminPage from "./pages/AdminPage";
+import AdminOrdersPage from "./pages/AdminOrdersPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
 import FavoritesPage from "./pages/FavoritesPage";
@@ -72,6 +73,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/products/:id" element={<ProductPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin/orders" element={<AdminOrdersPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />

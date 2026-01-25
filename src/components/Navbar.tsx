@@ -31,32 +31,39 @@ export function Navbar() {
     },
     {
       label: 'Opinie',
-      href: '/reviews', // Placeholder
+      href: '/reviews',
       icon: <MessageSquare className="h-full w-full" />,
     },
     {
       label: 'Adresy dostawy',
-      href: '/addresses', // Placeholder
+      href: '/addresses',
       icon: <MapPin className="h-full w-full" />,
     },
     {
       label: 'Ostatnio oglądane',
-      href: '/recent', // Placeholder
+      href: '/recent',
       icon: <Clock className="h-full w-full" />,
     },
     {
       label: 'Ulubione',
-      href: '/favorites', // Placeholder
+      href: '/favorites',
       icon: <Star className="h-full w-full" />,
     },
-    ...(user?.role === 'admin' ? [{
-      label: 'Panel Admina',
-      href: '/admin',
-      icon: <ShieldCheck className="h-full w-full" />,
-    }] : []),
+    ...(user?.role === 'admin' ? [
+      {
+        label: 'Panel Admina',
+        href: '/admin',
+        icon: <ShieldCheck className="h-full w-full" />,
+      },
+      {
+        label: 'Zarządzanie Zamówieniami',
+        href: '/admin/orders',
+        icon: <Package className="h-full w-full" />,
+      }
+    ] : []),
     {
       label: 'Ustawienia',
-      href: '/settings', // Placeholder
+      href: '/settings',
       icon: <Settings className="h-full w-full" />,
       isSeparator: true,
     },

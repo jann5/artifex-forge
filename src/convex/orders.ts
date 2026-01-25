@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, action } from "./_generated/server";
 import { getCurrentUser } from "./users";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 export const list = query({
   args: {},
@@ -89,5 +90,80 @@ export const createFromStripe = internalMutation({
     for (const item of cartItems) {
       await ctx.db.delete(item._id);
     }
+  },
+});
+
+export const updateStatus = mutation({
+  args: {
+    orderId: v.id("orders"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("paid"),
+      v.literal("shipped"),
+      v.literal("delivered"),
+      v.literal("cancelled")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized - Admin only");
+    }
+
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+
+    await ctx.db.patch(args.orderId, {
+      status: args.status,
+    });
+
+    // Get customer info for notification
+    const customer = await ctx.db.get(order.userId);
+    
+    // Send Telegram notification (scheduled to run after mutation completes)
+    // Note: Uncomment after Convex regenerates API types
+    try {
+      // @ts-ignore - Convex will regenerate this after deployment
+      await ctx.scheduler.runAfter(0, internal.notifications?.sendTelegramNotification, {
+        orderId: args.orderId,
+        customerEmail: customer?.email || "Unknown",
+        totalAmount: order.totalAmount,
+        status: args.status,
+      });
+    } catch (error) {
+      console.error("Failed to schedule Telegram notification:", error);
+      // Don't fail the mutation if notification fails
+    }
+
+    return { success: true };
+  },
+});
+
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized - Admin only");
+    }
+
+    const orders = await ctx.db
+      .query("orders")
+      .order("desc")
+      .take(100);
+
+    // Get customer info for each order
+    const ordersWithCustomers = await Promise.all(
+      orders.map(async (order) => {
+        const customer = await ctx.db.get(order.userId);
+        return {
+          ...order,
+          customerEmail: customer?.email || "Unknown",
+          customerName: customer?.name || "Unknown",
+        };
+      })
+    );
+
+    return ordersWithCustomers;
   },
 });
