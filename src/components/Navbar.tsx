@@ -14,11 +14,13 @@ import {
   MessageSquare 
 } from "lucide-react";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { UserProfileSidebar } from "@/components/ui/menu.tsx";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Navbar() {
   const { isAuthenticated, signOut, user } = useAuth();
@@ -69,12 +71,6 @@ export function Navbar() {
     },
   ];
 
-  const logoutItem = {
-    label: 'Wyloguj się',
-    icon: <LogOut className="h-full w-full" />,
-    onClick: () => signOut(),
-  };
-
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -104,23 +100,41 @@ export function Navbar() {
           <CartDrawer />
           
           {isAuthenticated ? (
-            <HoverCard openDelay={100} closeDelay={200}>
-              <HoverCardTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <User className="h-5 w-5" />
                 </Button>
-              </HoverCardTrigger>
-              <HoverCardContent align="end" className="w-72 p-0 border bg-card shadow-lg rounded-xl overflow-hidden" sideOffset={10}>
-                <UserProfileSidebar 
-                  user={{
-                    name: user?.name || user?.email?.split('@')[0] || 'Użytkownik',
-                    email: user?.email || '',
-                  }}
-                  navItems={navItems}
-                  logoutItem={logoutItem}
-                />
-              </HoverCardContent>
-            </HoverCard>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.name || user?.email?.split('@')[0] || 'Użytkownik'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {navItems.map((item, index) => (
+                  <div key={index}>
+                    {item.isSeparator && <DropdownMenuSeparator />}
+                    <DropdownMenuItem asChild>
+                      <Link to={item.href} className="cursor-pointer w-full flex items-center">
+                        <span className="mr-2 h-4 w-4">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </div>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                  onClick={() => signOut()}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Wyloguj się</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button variant="ghost" asChild>
               <Link to="/auth">Zaloguj się</Link>
