@@ -5,11 +5,14 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
-import { useState, useEffect } from "react";
-import { Minus, Plus, ShoppingBag } from "lucide-react";
+import { useState, useEffect, Suspense, lazy } from "react";
+import { Minus, Plus, ShoppingBag, Box } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getStorageUrl } from "@/lib/utils";
+
+// Lazy load ModelViewer to avoid breaking the page if it fails
+const ModelViewer = lazy(() => import("@/components/ModelViewer").then(module => ({ default: module.ModelViewer })).catch(() => ({ default: () => <div className="text-muted-foreground">Model 3D niedostępny</div> })));
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +23,7 @@ export default function ProductPage() {
   
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [show3D, setShow3D] = useState(false);
 
   useEffect(() => {
     if (product && isAuthenticated) {
@@ -70,6 +74,8 @@ export default function ProductPage() {
     }
   };
 
+  const has3DModel = product.model3d && product.model3d.length > 0;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -79,26 +85,52 @@ export default function ProductPage() {
           {/* Image Gallery */}
           <div className="space-y-4">
             <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden relative border">
-              <img 
-                src={getStorageUrl(product.images[activeImage])} 
-                alt={product.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  console.error('Image failed to load:', target.src);
-                  target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
-                }}
-              />
+              {show3D && has3DModel ? (
+                <Suspense fallback={
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    Ładowanie modelu 3D...
+                  </div>
+                }>
+                  <ModelViewer url={getStorageUrl(product.model3d!)} />
+                </Suspense>
+              ) : (
+                <img 
+                  src={getStorageUrl(product.images[activeImage])} 
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    console.error('Image failed to load:', target.src);
+                    target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
+                  }}
+                />
+              )}
             </div>
 
             {/* Thumbnails */}
             <div className="grid grid-cols-5 gap-2 sm:gap-4">
+              {has3DModel && (
+                <button
+                  onClick={() => {
+                    setShow3D(true);
+                    setActiveImage(-1);
+                  }}
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-primary/10 ${
+                    show3D ? "border-primary ring-2 ring-primary/20" : "border-transparent"
+                  }`}
+                >
+                  <Box className="h-6 w-6 text-primary" />
+                </button>
+              )}
               {product.images.map((img, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setActiveImage(idx)}
+                  onClick={() => {
+                    setActiveImage(idx);
+                    setShow3D(false);
+                  }}
                   className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                    activeImage === idx ? "border-primary ring-2 ring-primary/20" : "border-transparent"
+                    activeImage === idx && !show3D ? "border-primary ring-2 ring-primary/20" : "border-transparent"
                   }`}
                 >
                   <img 

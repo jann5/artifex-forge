@@ -16,17 +16,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Upload, X, Loader2, Box } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { getStorageUrl } from "@/lib/utils";
 
 interface EditingProduct {
-  id: Id<"products">;
+  _id: Id<"products">;
   name: string;
   description: string;
   price: number;
   category: string;
   images: string[];
+  model3d?: string;
   inventory: number;
   featured?: boolean;
 }
@@ -39,6 +40,8 @@ interface EditProductDialogProps {
   onProductChange: (updates: Partial<EditingProduct>) => void;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onImageRemove: (index: number) => void;
+  onModelUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onModelRemove?: () => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -50,6 +53,8 @@ export function EditProductDialog({
   onProductChange,
   onImageUpload,
   onImageRemove,
+  onModelUpload,
+  onModelRemove,
   onSubmit,
 }: EditProductDialogProps) {
   if (!product) return null;
@@ -125,6 +130,64 @@ export function EditProductDialog({
             />
             <Label htmlFor="edit-featured">Wyróżniony produkt</Label>
           </div>
+
+          {/* Model 3D Upload */}
+          {onModelUpload && onModelRemove && (
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Model 3D (opcjonalny)
+              </label>
+              {product.model3d ? (
+                <div className="relative p-4 rounded-lg border bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center">
+                      <Box className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Model 3D dodany</p>
+                      <p className="text-xs text-muted-foreground">Plik .glb</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onModelRemove}
+                      className="h-8 w-8 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <input
+                    type="file"
+                    accept=".glb,.gltf"
+                    onChange={onModelUpload}
+                    className="hidden"
+                    id="edit-model-upload"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('edit-model-upload')?.click()}
+                    disabled={isUploading}
+                    className="w-full"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Box className="mr-2 h-4 w-4" />
+                        Dodaj Model 3D (.glb)
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
           
           <div>
             <label className="block text-sm font-medium mb-2">

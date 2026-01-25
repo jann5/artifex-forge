@@ -39,6 +39,7 @@ const schema = defineSchema(
       price: v.number(),
       category: v.string(),
       images: v.array(v.string()), // Array of storage IDs or URLs
+      model3d: v.optional(v.string()), // Storage ID for .glb 3D model
       inventory: v.number(),
       featured: v.boolean(),
       isBestSeller: v.optional(v.boolean()),
