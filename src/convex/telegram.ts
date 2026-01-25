@@ -83,7 +83,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // COMMANDS
       if (text === "/start" || text === "/help") {
-        await sendMessage(chatId, "🤖 *Artifex Bot*\\n\\nKomendy:\\n/addproduct - Rozpocznij dodawanie produktu\\n/cancel - Anuluj dodawanie\\n/help - Pomoc");
+        await sendMessage(chatId, "🤖 *Artifex Bot*\n\nKomendy:\n/addproduct - Rozpocznij dodawanie produktu\n/cancel - Anuluj dodawanie\n/help - Pomoc");
         return new Response("OK", { status: 200 });
       }
 
@@ -106,7 +106,7 @@ export const webhook = httpAction(async (ctx, request) => {
         }
 
         await ctx.runMutation(internal.telegram_db.startSession, { chatId });
-        await sendMessage(chatId, "📦 *Nowy Produkt*\\n\\nPodaj nazwę produktu:");
+        await sendMessage(chatId, "📦 *Nowy Produkt*\n\nPodaj nazwę produktu:");
         return new Response("OK", { status: 200 });
       }
 
@@ -209,7 +209,7 @@ export const webhook = httpAction(async (ctx, request) => {
                 step: "IMAGES",
                 updates: { inventory }
               });
-              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\\n\\nKiedy skończysz, wpisz /done");
+              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\n\nKiedy skończysz, wpisz /done");
               break;
               
             case "IMAGES":
@@ -320,7 +320,7 @@ export const webhook = httpAction(async (ctx, request) => {
           });
 
           await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
-          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\\n\\n${p.name}\\n${p.price} PLN`);
+          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\n\n${p.name}\n${p.price} PLN`);
         }
       }
     }
