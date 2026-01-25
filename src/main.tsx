@@ -12,6 +12,11 @@ import ProductsPage from "./pages/ProductsPage";
 import AdminPage from "./pages/AdminPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
+import FavoritesPage from "./pages/FavoritesPage";
+import ReviewsPage from "./pages/ReviewsPage";
+import AddressesPage from "./pages/AddressesPage";
+import RecentPage from "./pages/RecentPage";
+import SettingsPage from "./pages/SettingsPage";
 import Demo from "./demo";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -68,6 +73,11 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/addresses" element={<AddressesPage />} />
+            <Route path="/recent" element={<RecentPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/demo" element={<Demo />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

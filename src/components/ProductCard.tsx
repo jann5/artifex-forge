@@ -1,12 +1,12 @@
 import { Link } from "react-router";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
-import { Id } from "@/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
+import { motion } from "framer-motion";
+import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
-import { ShoppingBag } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 interface ProductCardProps {
@@ -18,52 +18,68 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ id, name, price, image, category }: ProductCardProps) {
-  const addToCart = useMutation(api.cart.add);
   const { isAuthenticated } = useAuth();
+  const toggleFavorite = useMutation(api.favorites.toggle);
+  const isFavorite = useQuery(api.favorites.isFavorite, { productId: id });
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
+  const handleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (!isAuthenticated) {
-      toast.error("Please log in to add items to cart");
+      toast.error("Zaloguj się, aby dodać do ulubionych");
       return;
     }
 
     try {
-      await addToCart({ productId: id, quantity: 1 });
-      toast.success("Added to cart");
+      const added = await toggleFavorite({ productId: id });
+      toast.success(added ? "Dodano do ulubionych" : "Usunięto z ulubionych");
     } catch (error) {
-      toast.error("Failed to add to cart");
+      toast.error("Wystąpił błąd");
     }
   };
 
   return (
-    <Link to={`/products/${id}`} className="group">
-      <Card className="overflow-hidden border-none shadow-none bg-transparent">
-        <CardContent className="p-0">
-          <div className="aspect-[4/5] overflow-hidden rounded-lg bg-muted relative">
-            <img
-              src={image}
-              alt={name}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ y: -5 }}
+      transition={{ duration: 0.2 }}
+      className="group relative"
+    >
+      <Link to={`/products/${id}`} className="block">
+        <div className="aspect-[4/5] overflow-hidden rounded-xl bg-muted relative">
+          <img
+            src={image}
+            alt={name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute top-3 right-3 z-10">
             <Button
+              variant="secondary"
               size="icon"
-              className="absolute bottom-4 right-4 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg"
-              onClick={handleAddToCart}
+              className={`h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background transition-colors ${
+                isFavorite ? "text-red-500" : "text-muted-foreground"
+              }`}
+              onClick={handleFavorite}
             >
-              <ShoppingBag className="h-4 w-4" />
+              <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
             </Button>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col items-start p-4 gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">{category}</span>
-          <h3 className="font-medium text-lg leading-tight group-hover:text-primary transition-colors">{name}</h3>
-          <p className="font-semibold text-muted-foreground">{formatCurrency(price)}</p>
-        </CardFooter>
-      </Card>
-    </Link>
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+        </div>
+        <div className="mt-4 space-y-1">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+            {category}
+          </p>
+          <h3 className="font-medium text-lg leading-tight group-hover:text-primary transition-colors">
+            {name}
+          </h3>
+          <p className="font-bold text-primary">
+            {formatCurrency(price)}
+          </p>
+        </div>
+      </Link>
+    </motion.div>
   );
 }

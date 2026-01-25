@@ -86,6 +86,41 @@ const schema = defineSchema(
       stripeSessionId: v.optional(v.string()),
       shippingAddress: v.optional(v.any()), // Store as JSON object for flexibility
     }).index("by_user", ["userId"]),
+
+    favorites: defineTable({
+      userId: v.id("users"),
+      productId: v.id("products"),
+    })
+      .index("by_user", ["userId"])
+      .index("by_product", ["productId"])
+      .index("by_user_and_product", ["userId", "productId"]),
+
+    reviews: defineTable({
+      userId: v.id("users"),
+      productId: v.id("products"),
+      rating: v.number(),
+      comment: v.string(),
+    })
+      .index("by_product", ["productId"])
+      .index("by_user", ["userId"]),
+
+    addresses: defineTable({
+      userId: v.id("users"),
+      fullName: v.string(),
+      street: v.string(),
+      city: v.string(),
+      postalCode: v.string(),
+      country: v.string(),
+      isDefault: v.boolean(),
+    }).index("by_user", ["userId"]),
+
+    recentlyViewed: defineTable({
+      userId: v.id("users"),
+      productId: v.id("products"),
+      viewedAt: v.number(),
+    })
+      .index("by_user", ["userId"])
+      .index("by_user_and_viewed", ["userId", "viewedAt"]),
   },
   {
     schemaValidation: false,
