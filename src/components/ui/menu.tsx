@@ -13,7 +13,6 @@ export interface NavItem {
 export interface UserProfile {
   name?: string;
   email?: string;
-  avatarUrl?: string;
 }
 
 interface UserProfileSidebarProps {
@@ -39,18 +38,10 @@ export const UserProfileSidebar = React.forwardRef<HTMLDivElement, UserProfileSi
       >
         {/* User Info Header */}
         <div className="flex items-center gap-3 p-4 pb-2">
-          <div className="h-10 w-10 rounded-full bg-muted overflow-hidden flex items-center justify-center border shrink-0">
-            {user.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt={`${user.name}'s avatar`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-lg font-bold text-muted-foreground">
-                {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
-              </span>
-            )}
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border shrink-0">
+            <span className="text-lg font-bold text-primary">
+              {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
+            </span>
           </div>
           <div className="flex flex-col min-w-0 overflow-hidden">
             <span className="font-semibold text-sm truncate">{user.name || 'Użytkownik'}</span>

@@ -9,15 +9,23 @@ import { useState } from "react";
 import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const product = useQuery(api.products.get, { id: id as Id<"products"> });
   const addToCart = useMutation(api.cart.add);
+  const recordView = useMutation(api.recent.record);
   const { isAuthenticated } = useAuth();
   
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+
+  useEffect(() => {
+    if (product && isAuthenticated) {
+      recordView({ productId: product._id });
+    }
+  }, [product, isAuthenticated, recordView]);
 
   if (product === undefined) {
     return (

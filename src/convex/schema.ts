@@ -120,7 +120,8 @@ const schema = defineSchema(
       viewedAt: v.number(),
     })
       .index("by_user", ["userId"])
-      .index("by_user_and_viewed", ["userId", "viewedAt"]),
+      .index("by_user_and_viewed", ["userId", "viewedAt"])
+      .index("by_user_and_product", ["userId", "productId"]),
   },
   {
     schemaValidation: false,

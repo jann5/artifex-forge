@@ -5,7 +5,6 @@ export default function Demo() {
   const user = {
     name: "Jan Kowalski",
     email: "jan.kowalski@example.com",
-    avatarUrl: "https://github.com/shadcn.png",
   };
 
   const navItems = [

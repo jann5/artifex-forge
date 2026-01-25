@@ -110,7 +110,6 @@ export function Navbar() {
                   user={{
                     name: user?.name || user?.email?.split('@')[0] || 'Użytkownik',
                     email: user?.email || '',
-                    avatarUrl: user?.image,
                   }}
                   navItems={navItems}
                   logoutItem={logoutItem}
