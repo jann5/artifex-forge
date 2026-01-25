@@ -1,0 +1,85 @@
+import { internalMutation, internalQuery } from "./_generated/server";
+import { v } from "convex/values";
+
+export const getSession = internalQuery({
+  args: { chatId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("telegramSessions")
+      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .unique();
+  },
+});
+
+export const startSession = internalMutation({
+  args: { chatId: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("telegramSessions")
+      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+
+    await ctx.db.insert("telegramSessions", {
+      chatId: args.chatId,
+      step: "NAME",
+      productData: {
+        images: [],
+      },
+    });
+  },
+});
+
+export const updateSession = internalMutation({
+  args: {
+    chatId: v.string(),
+    step: v.string(),
+    updates: v.object({
+      name: v.optional(v.string()),
+      description: v.optional(v.string()),
+      category: v.optional(v.string()),
+      price: v.optional(v.number()),
+      inventory: v.optional(v.number()),
+      image: v.optional(v.string()), // Single image to add to array
+    }),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("telegramSessions")
+      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .unique();
+
+    if (!session) throw new Error("Session not found");
+
+    const currentImages = session.productData.images || [];
+    if (args.updates.image) {
+      currentImages.push(args.updates.image);
+    }
+
+    await ctx.db.patch(session._id, {
+      step: args.step,
+      productData: {
+        ...session.productData,
+        ...args.updates,
+        images: currentImages,
+      },
+    });
+  },
+});
+
+export const clearSession = internalMutation({
+  args: { chatId: v.string() },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("telegramSessions")
+      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .unique();
+
+    if (session) {
+      await ctx.db.delete(session._id);
+    }
+  },
+});

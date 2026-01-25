@@ -8,6 +8,19 @@ export const webhook = httpAction(async (ctx, request) => {
     return new Response("Bot token not configured", { status: 500 });
   }
 
+  const sendMessage = async (chatId: string | number, text: string, keyboard?: any) => {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: "Markdown",
+        reply_markup: keyboard,
+      }),
+    });
+  };
+
   try {
     const body = await request.json();
     
@@ -30,7 +43,7 @@ export const webhook = httpAction(async (ctx, request) => {
             status: status as any,
           });
           
-          // Answer callback (stop loading animation)
+          // Answer callback
           await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -40,7 +53,7 @@ export const webhook = httpAction(async (ctx, request) => {
             })
           });
 
-          // Update the message text to reflect the new status
+          // Update message
           const originalText = message.text || "";
           const updatedText = originalText.replace(/Status: .*/, `Status: ${status}`);
 
@@ -56,143 +69,166 @@ export const webhook = httpAction(async (ctx, request) => {
           });
         }
       }
+      return new Response("OK", { status: 200 });
     }
 
-    // Handle Messages (Commands)
+    // Handle Messages
     if (body.message) {
       const message = body.message;
-      const chatId = message.chat.id;
+      const chatId = String(message.chat.id);
       const text = message.text || message.caption || "";
 
-      // Help / Start command
-      if (text.startsWith("/start") || text.startsWith("/help")) {
-         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: "🤖 *Artifex Bot*\n\nMożesz zarządzać zamówieniami i dodawać produkty.\n\n*Dodawanie produktu:*\nWyślij zdjęcie z podpisem:\n`/addproduct Nazwa; Cena; Kategoria; Opis`\n\nPrzykład:\n`/addproduct Wazon; 150; decor; Piękny wazon`",
-              parse_mode: "Markdown"
-            }),
-          });
+      // Check for active session
+      const session = await ctx.runQuery(internal.telegram_db.getSession, { chatId });
+
+      // COMMANDS
+      if (text === "/start" || text === "/help") {
+        await sendMessage(chatId, "🤖 *Artifex Bot*\n\nKomendy:\n/addproduct - Rozpocznij dodawanie produktu\n/cancel - Anuluj dodawanie\n/help - Pomoc");
+        return new Response("OK", { status: 200 });
       }
 
-      // Add Product Command
-      if (text.startsWith("/addproduct")) {
-        // Verify if user is admin (simple check against env var if set, or allow all for now as requested)
-        // Ideally we should check if chatId matches TELEGRAM_CHAT_ID
+      if (text === "/cancel") {
+        if (session) {
+          await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+          await sendMessage(chatId, "❌ Anulowano dodawanie produktu.");
+        } else {
+          await sendMessage(chatId, "Nie ma aktywnej operacji do anulowania.");
+        }
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/addproduct") {
+        // Verify admin (optional, simple check)
         const adminChatId = process.env.TELEGRAM_CHAT_ID;
-        if (adminChatId && String(chatId) !== String(adminChatId)) {
-             await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  text: "⛔ Brak uprawnień. Tylko administrator może dodawać produkty.",
-                }),
-              });
-              return new Response("OK", { status: 200 });
+        if (adminChatId && chatId !== String(adminChatId)) {
+           await sendMessage(chatId, "⛔ Brak uprawnień.");
+           return new Response("OK", { status: 200 });
         }
 
-        if (!message.photo || message.photo.length === 0) {
-             await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  text: "❌ Proszę dołączyć zdjęcie do produktu (wyślij jako zdjęcie, nie plik).",
-                }),
+        await ctx.runMutation(internal.telegram_db.startSession, { chatId });
+        await sendMessage(chatId, "📦 *Nowy Produkt*\n\nPodaj nazwę produktu:");
+        return new Response("OK", { status: 200 });
+      }
+
+      // CONVERSATION FLOW
+      if (session) {
+        // Handle Text Inputs
+        if (text && !text.startsWith("/")) {
+          switch (session.step) {
+            case "NAME":
+              await ctx.runMutation(internal.telegram_db.updateSession, {
+                chatId,
+                step: "DESCRIPTION",
+                updates: { name: text }
               });
-              return new Response("OK", { status: 200 });
+              await sendMessage(chatId, "📝 Podaj opis produktu:");
+              break;
+
+            case "DESCRIPTION":
+              await ctx.runMutation(internal.telegram_db.updateSession, {
+                chatId,
+                step: "CATEGORY",
+                updates: { description: text }
+              });
+              await sendMessage(chatId, "📂 Podaj kategorię (np. decor, art, functional):");
+              break;
+
+            case "CATEGORY":
+              await ctx.runMutation(internal.telegram_db.updateSession, {
+                chatId,
+                step: "PRICE",
+                updates: { category: text.toLowerCase() }
+              });
+              await sendMessage(chatId, "💰 Podaj cenę (PLN):");
+              break;
+
+            case "PRICE":
+              const price = parseFloat(text.replace(",", "."));
+              if (isNaN(price)) {
+                await sendMessage(chatId, "❌ Cena musi być liczbą. Spróbuj ponownie:");
+                return new Response("OK", { status: 200 });
+              }
+              await ctx.runMutation(internal.telegram_db.updateSession, {
+                chatId,
+                step: "INVENTORY",
+                updates: { price }
+              });
+              await sendMessage(chatId, "🔢 Podaj ilość sztuk w magazynie:");
+              break;
+
+            case "INVENTORY":
+              const inventory = parseInt(text);
+              if (isNaN(inventory)) {
+                await sendMessage(chatId, "❌ Ilość musi być liczbą całkowitą. Spróbuj ponownie:");
+                return new Response("OK", { status: 200 });
+              }
+              await ctx.runMutation(internal.telegram_db.updateSession, {
+                chatId,
+                step: "IMAGES",
+                updates: { inventory }
+              });
+              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\n\nKiedy skończysz, wpisz /done");
+              break;
+              
+            case "IMAGES":
+              await sendMessage(chatId, "📸 Wyślij zdjęcie lub wpisz /done aby zakończyć.");
+              break;
+          }
         }
 
-        // Parse details
-        const content = text.replace("/addproduct", "").trim();
-        const parts = content.split(";").map((p: string) => p.trim());
-        
-        if (parts.length < 2) {
-             await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  text: "❌ Nieprawidłowy format.\nUżyj: `/addproduct Nazwa; Cena; Kategoria; Opis`",
-                  parse_mode: "Markdown"
-                }),
-              });
-              return new Response("OK", { status: 200 });
-        }
-
-        const name = parts[0];
-        const price = parseFloat(parts[1]);
-        const category = parts[2] || "decor";
-        const description = parts[3] || "Dodano przez Telegram";
-
-        if (isNaN(price)) {
-             await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  text: "❌ Cena musi być liczbą.",
-                }),
-              });
-              return new Response("OK", { status: 200 });
-        }
-
-        try {
-            // Get the largest photo
+        // Handle Image Inputs
+        if (message.photo && session.step === "IMAGES") {
+          try {
             const photo = message.photo[message.photo.length - 1];
             const fileId = photo.file_id;
 
-            // Get file path
             const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
             const fileData = await fileRes.json();
             
-            if (!fileData.ok) {
-                throw new Error("Failed to get file path from Telegram");
+            if (fileData.ok) {
+              const filePath = fileData.result.file_path;
+              const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+              
+              const imageRes = await fetch(fileUrl);
+              const imageBlob = await imageRes.blob();
+              const storageId = await ctx.storage.store(imageBlob);
+
+              await ctx.runMutation(internal.telegram_db.updateSession, {
+                chatId,
+                step: "IMAGES",
+                updates: { image: storageId }
+              });
+
+              await sendMessage(chatId, "✅ Zdjęcie dodane. Wyślij kolejne lub wpisz /done");
             }
+          } catch (e) {
+            console.error(e);
+            await sendMessage(chatId, "❌ Błąd podczas pobierania zdjęcia.");
+          }
+        }
 
-            const filePath = fileData.result.file_path;
-            const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+        // Handle Finish
+        if (text === "/done" && session.step === "IMAGES") {
+          const finalSession = await ctx.runQuery(internal.telegram_db.getSession, { chatId });
+          if (!finalSession || !finalSession.productData.images || finalSession.productData.images.length === 0) {
+            await sendMessage(chatId, "⚠️ Musisz dodać przynajmniej jedno zdjęcie!");
+            return new Response("OK", { status: 200 });
+          }
 
-            // Download file
-            const imageRes = await fetch(fileUrl);
-            const imageBlob = await imageRes.blob();
+          const p = finalSession.productData;
+          
+          await ctx.runMutation(api.products.create, {
+            name: p.name!,
+            description: p.description!,
+            category: p.category!,
+            price: p.price!,
+            inventory: p.inventory!,
+            images: p.images!,
+            featured: false,
+          });
 
-            // Store in Convex
-            const storageId = await ctx.storage.store(imageBlob);
-
-            // Create product
-            await ctx.runMutation(api.products.create, {
-                name,
-                price,
-                category,
-                description,
-                images: [storageId],
-                inventory: 10,
-                featured: false,
-            });
-
-            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  text: `✅ *Produkt dodany pomyślnie!*\n\n📦 ${name}\n💰 ${price} PLN\n📂 ${category}`,
-                  parse_mode: "Markdown"
-                }),
-            });
-        } catch (error: any) {
-            console.error("Error adding product via Telegram:", error);
-            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  text: `❌ Błąd podczas dodawania produktu: ${error.message}`,
-                }),
-            });
+          await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\n\n${p.name}\n${p.price} PLN`);
         }
       }
     }

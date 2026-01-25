@@ -22,6 +22,11 @@ import Demo from "./demo";
 import AboutPage from "./pages/AboutPage";
 import { Toaster } from "@/components/ui/sonner";
 
+// Debug log for user
+console.log("================================================");
+console.log("DEBUG: VITE_CONVEX_URL is:", import.meta.env.VITE_CONVEX_URL);
+console.log("================================================");
+
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean, error: Error | null }> {

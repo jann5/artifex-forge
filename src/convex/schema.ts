@@ -126,6 +126,19 @@ const schema = defineSchema(
       .index("by_user", ["userId"])
       .index("by_user_and_viewed", ["userId", "viewedAt"])
       .index("by_user_and_product", ["userId", "productId"]),
+
+    telegramSessions: defineTable({
+      chatId: v.string(), // Telegram chat ID (stored as string to be safe)
+      step: v.string(), // Current step: "NAME", "DESCRIPTION", "CATEGORY", "PRICE", "INVENTORY", "IMAGES"
+      productData: v.object({
+        name: v.optional(v.string()),
+        description: v.optional(v.string()),
+        category: v.optional(v.string()),
+        price: v.optional(v.number()),
+        inventory: v.optional(v.number()),
+        images: v.optional(v.array(v.string())),
+      }),
+    }).index("by_chatId", ["chatId"]),
   },
   {
     schemaValidation: false,

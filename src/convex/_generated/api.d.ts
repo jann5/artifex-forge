@@ -23,6 +23,7 @@ import type * as seed from "../seed.js";
 import type * as setup_telegram from "../setup_telegram.js";
 import type * as stripe from "../stripe.js";
 import type * as telegram from "../telegram.js";
+import type * as telegram_db from "../telegram_db.js";
 import type * as test_telegram from "../test_telegram.js";
 import type * as users from "../users.js";
 
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   setup_telegram: typeof setup_telegram;
   stripe: typeof stripe;
   telegram: typeof telegram;
+  telegram_db: typeof telegram_db;
   test_telegram: typeof test_telegram;
   users: typeof users;
 }>;
