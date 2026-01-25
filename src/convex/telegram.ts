@@ -139,6 +139,113 @@ export const webhook = httpAction(async (ctx, request) => {
         });
       }
 
+      // Handle Order Info
+      if (data && data.startsWith("order_info:")) {
+        const orderId = data.split(":")[1] as Id<"orders">;
+        const order = await ctx.runQuery(internal.orders.getById, { orderId });
+        
+        if (order) {
+          const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
+          const items = order.items.map(item => `  • ${item.name} x${item.quantity} - ${item.price} PLN`).join("\n");
+          const address = order.shippingAddress 
+            ? `\n\n📍 *Adres dostawy:*\n${order.shippingAddress.fullName}\n${order.shippingAddress.street}\n${order.shippingAddress.postalCode} ${order.shippingAddress.city}\n${order.shippingAddress.country}`
+            : "\n\n📍 Brak adresu dostawy";
+          
+          const msg = `📦 *Szczegóły zamówienia* (${date})\n\n` +
+                      `👤 Klient: ${order.customerName}\n` +
+                      `💰 Kwota: ${order.totalAmount} PLN\n` +
+                      `📊 Status: ${order.status}\n\n` +
+                      `*Produkty:*\n${items}${address}`;
+          
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: msg,
+              parse_mode: "Markdown",
+            }),
+          });
+        }
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: callbackQuery.id })
+        });
+      }
+
+      // Handle Order Delete
+      if (data && data.startsWith("order_delete:")) {
+        const orderId = data.split(":")[1] as Id<"orders">;
+        
+        // Show confirmation buttons
+        const confirmKeyboard = {
+          inline_keyboard: [
+            [
+              { text: "✅ Tak, usuń", callback_data: `order_delete_confirm:${orderId}` },
+              { text: "❌ Anuluj", callback_data: `order_delete_cancel:${orderId}` }
+            ]
+          ]
+        };
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: "⚠️ Czy na pewno chcesz usunąć to zamówienie?",
+            reply_markup: confirmKeyboard,
+          }),
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: callbackQuery.id })
+        });
+      }
+
+      // Handle Order Delete Confirmation
+      if (data && data.startsWith("order_delete_confirm:")) {
+        const orderId = data.split(":")[1] as Id<"orders">;
+        
+        await ctx.runMutation(internal.orders.deleteOrder, { orderId });
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: "✅ Zamówienie zostało usunięte.",
+          }),
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: callbackQuery.id })
+        });
+      }
+
+      // Handle Order Delete Cancel
+      if (data && data.startsWith("order_delete_cancel:")) {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: "❌ Anulowano usuwanie zamówienia.",
+          }),
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: callbackQuery.id })
+        });
+      }
+
       return new Response("OK", { status: 200 });
     }
 
@@ -185,7 +292,7 @@ export const webhook = httpAction(async (ctx, request) => {
                             `💰 ${order.totalAmount} PLN\n` +
                             `Status: ${order.status}`;
                 
-                // Add status buttons
+                // Add status buttons + info + delete
                 const keyboard = {
                     inline_keyboard: [
                         [
@@ -195,6 +302,10 @@ export const webhook = httpAction(async (ctx, request) => {
                         [
                             { text: "Wysłane", callback_data: `update_status:${order._id}:shipped` },
                             { text: "Dostarczone", callback_data: `update_status:${order._id}:delivered` }
+                        ],
+                        [
+                            { text: "ℹ️ Szczegóły", callback_data: `order_info:${order._id}` },
+                            { text: "🗑️ Usuń", callback_data: `order_delete:${order._id}` }
                         ]
                     ]
                 };

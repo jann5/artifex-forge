@@ -226,3 +226,21 @@ export const getRecent = internalQuery({
     }));
   }
 });
+
+export const getById = internalQuery({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) return null;
+    
+    const user = await ctx.db.get(order.userId);
+    return { ...order, customerName: user?.name || user?.email || "Unknown" };
+  }
+});
+
+export const deleteOrder = internalMutation({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.orderId);
+  }
+});
