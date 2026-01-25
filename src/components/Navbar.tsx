@@ -2,16 +2,41 @@ import { Link } from "react-router";
 import { CartDrawer } from "./CartDrawer";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { User } from "lucide-react";
+import { User, Package, Settings, LogOut, ShieldCheck } from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { UserProfileSidebar } from "@/components/ui/menu";
 
 export function Navbar() {
   const { isAuthenticated, signOut, user } = useAuth();
+
+  const navItems = [
+    {
+      label: 'Moje zamówienia',
+      href: '/orders',
+      icon: <Package className="h-full w-full" />,
+    },
+    ...(user?.role === 'admin' ? [{
+      label: 'Panel Admina',
+      href: '/admin',
+      icon: <ShieldCheck className="h-full w-full" />,
+    }] : []),
+    {
+      label: 'Ustawienia',
+      href: '/settings', // Placeholder, could be profile page
+      icon: <Settings className="h-full w-full" />,
+      isSeparator: true,
+    },
+  ];
+
+  const logoutItem = {
+    label: 'Wyloguj się',
+    icon: <LogOut className="h-full w-full" />,
+    onClick: () => signOut(),
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -42,29 +67,26 @@ export function Navbar() {
           <CartDrawer />
           
           {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
+            <HoverCard openDelay={100} closeDelay={200}>
+              <HoverCardTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Link to="/orders">
+                    <User className="h-5 w-5" />
+                  </Link>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem className="font-medium">
-                  {user?.email}
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/orders">Moje Zamówienia</Link>
-                </DropdownMenuItem>
-                {user?.role === "admin" && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin">Panel Admina</Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => signOut()}>
-                  Wyloguj się
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </HoverCardTrigger>
+              <HoverCardContent align="end" className="w-80 p-0 border-none bg-transparent shadow-none" sideOffset={10}>
+                <UserProfileSidebar 
+                  user={{
+                    name: user?.name || user?.email?.split('@')[0] || 'Użytkownik',
+                    email: user?.email || '',
+                    avatarUrl: user?.image,
+                  }}
+                  navItems={navItems}
+                  logoutItem={logoutItem}
+                />
+              </HoverCardContent>
+            </HoverCard>
           ) : (
             <Button variant="ghost" asChild>
               <Link to="/auth">Zaloguj się</Link>
