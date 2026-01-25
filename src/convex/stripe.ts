@@ -21,13 +21,27 @@ export const createCheckoutSession = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error("Stripe Secret Key is missing. Please add STRIPE_SECRET_KEY in the dashboard.");
-    }
-
     const domain = process.env.CONVEX_SITE_URL;
     if (!domain) {
       throw new Error("CONVEX_SITE_URL is missing. Please check your environment variables.");
+    }
+
+    // MOCK CHECKOUT MODE (If Stripe key is missing)
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.warn("Stripe Secret Key is missing. Using mock checkout mode.");
+      
+      const totalAmount = args.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+      const mockSessionId = `mock_session_${crypto.randomUUID()}`;
+
+      // Create order immediately for mock checkout
+      await ctx.runMutation(internal.orders.createFromStripe, {
+        sessionId: mockSessionId,
+        userId,
+        items: args.items,
+        totalAmount,
+      });
+
+      return { sessionId: mockSessionId, url: `${domain}/?success=true` };
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {

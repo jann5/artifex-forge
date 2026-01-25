@@ -120,7 +120,7 @@ export default function CheckoutPage() {
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12 items-start">
             {/* Left Column - Order Items */}
             <div className="md:col-span-2 space-y-6">
-              <Card className="border shadow-sm overflow-hidden bg-card">
+              <Card className="border shadow-none bg-card overflow-hidden">
                 <CardHeader className="bg-muted/30 border-b py-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Truck className="h-5 w-5 text-primary" />
@@ -185,7 +185,7 @@ export default function CheckoutPage() {
 
             {/* Right Column - Summary & Payment */}
             <div className="relative md:sticky md:top-24">
-              <Card className="border shadow-md bg-card overflow-hidden">
+              <Card className="border shadow-sm bg-card overflow-hidden">
                 <CardHeader className="bg-muted/30 border-b pb-4">
                   <CardTitle className="text-xl">Do zapłaty</CardTitle>
                   <CardDescription>Podsumowanie kosztów</CardDescription>
