@@ -14,34 +14,116 @@ export default function Landing() {
     <div className="min-h-screen bg-background flex flex-col overflow-hidden">
       <Navbar />
       
-      {/* Hero Section - Full Screen */}
+      {/* Hero Section - Full Screen with Rich Content */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        </div>
+
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 -z-10 opacity-[0.02]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `linear-gradient(to right, currentColor 1px, transparent 1px),
+                             linear-gradient(to bottom, currentColor 1px, transparent 1px)`,
+            backgroundSize: '4rem 4rem'
+          }} />
+        </div>
+
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center max-w-4xl mx-auto"
+            className="text-center max-w-5xl mx-auto"
           >
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-              Artifex Forge
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8"
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Premium Druk 3D w Polsce</span>
+            </motion.div>
+
+            {/* Main Heading with Gradient */}
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
+              <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent animate-gradient">
+                Artifex Forge
+              </span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-              Premium druk 3D
+
+            {/* Subheading */}
+            <p className="text-xl md:text-3xl text-muted-foreground mb-6 font-light">
+              Twórz. Inspiruj. Wyróżnij się.
             </p>
-            <Button size="lg" className="h-14 px-10 text-lg" asChild>
-              <Link to="/products">
-                Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
+
+            {/* Description */}
+            <p className="text-base md:text-lg text-muted-foreground/80 mb-10 max-w-3xl mx-auto leading-relaxed">
+              Odkryj świat unikalnych produktów drukowanych w technologii 3D. 
+              Łączymy precyzję inżynieryjną z artystyczną wizją, aby dostarczać przedmioty, 
+              które inspirują i zachwycają.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+              <Button size="lg" className="h-14 px-10 text-lg shadow-lg hover:shadow-xl transition-all" asChild>
+                <Link to="/products">
+                  Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="h-14 px-10 text-lg" asChild>
+                <Link to="/about">
+                  Poznaj Nas
+                </Link>
+              </Button>
+            </div>
+
+            {/* Feature Pills */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground"
+            >
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                <span>Darmowa Wysyłka</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                <span>30 Dni Zwrotu</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-purple-500" />
+                <span>Gwarancja Jakości</span>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
-        
-        {/* Background Elements */}
-        <div className="absolute top-0 left-0 -z-10 w-full h-full opacity-5">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary rounded-full blur-3xl" />
-        </div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 0.5 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <span className="text-xs uppercase tracking-wider">Przewiń w dół</span>
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="h-8 w-5 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-1"
+            >
+              <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
+            </motion.div>
+          </div>
+        </motion.div>
       </section>
 
       {/* Stats Section */}
