@@ -24,11 +24,12 @@ export default function Landing() {
       <Navbar />
       
       {/* Hero Section - Premium & Clean */}
-      <section ref={heroRef} className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-        {/* Subtle Background */}
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Animated Background */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/3 left-1/3 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/3 right-1/3 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[length:24px_24px]" />
         </div>
 
         <motion.div 
@@ -41,9 +42,20 @@ export default function Landing() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="text-center max-w-4xl mx-auto"
           >
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8"
+            >
+              <Zap className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Premium Druk 3D w Polsce</span>
+            </motion.div>
+
             {/* Main Heading */}
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
-              <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent animate-gradient">
                 Artifex Forge
               </span>
             </h1>
@@ -66,22 +78,62 @@ export default function Landing() {
               className="text-lg text-muted-foreground/80 mb-12 max-w-2xl mx-auto leading-relaxed"
             >
               Odkryj świat unikalnych produktów drukowanych w technologii 3D. 
-              Łączymy precyzję inżynieryjną z artystyczną wizją.
+              Łączymy precyzję inżynieryjną z artystyczną wizją, tworząc przedmioty, 
+              które inspirują i zachwycają swoją jakością.
             </motion.p>
 
-            {/* CTA Button */}
+            {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               <Button size="lg" className="h-14 px-12 text-lg shadow-lg hover:shadow-xl transition-all" asChild>
                 <Link to="/products">
                   Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
+              <Button size="lg" variant="outline" className="h-14 px-12 text-lg" asChild>
+                <Link to="/about">
+                  Poznaj Nas
+                </Link>
+              </Button>
+            </motion.div>
+
+            {/* Feature Pills */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9, duration: 0.6 }}
+              className="flex flex-wrap justify-center gap-4 mt-12"
+            >
+              {["Materiały Premium", "Precyzyjny Druk", "Szybka Wysyłka"].map((feature, i) => (
+                <div key={i} className="px-4 py-2 rounded-full bg-muted/50 text-sm font-medium">
+                  {feature}
+                </div>
+              ))}
             </motion.div>
           </motion.div>
+        </motion.div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <span className="text-xs uppercase tracking-wider">Przewiń w dół</span>
+            <div className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex items-start justify-center p-2">
+              <motion.div
+                animate={{ y: [0, 12, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full"
+              />
+            </div>
+          </div>
         </motion.div>
       </section>
 
