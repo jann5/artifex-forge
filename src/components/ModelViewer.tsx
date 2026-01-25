@@ -1,0 +1,38 @@
+import { Canvas } from "@react-three/fiber";
+import { Stage, OrbitControls, useGLTF } from "@react-three/drei";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
+
+interface ModelViewerProps {
+  url: string;
+}
+
+function Model({ url }: { url: string }) {
+  const { scene } = useGLTF(url);
+  return <primitive object={scene} />;
+}
+
+export function ModelViewer({ url }: ModelViewerProps) {
+  return (
+    <div className="w-full h-full min-h-[300px] bg-muted/20 rounded-xl overflow-hidden relative">
+      <Suspense
+        fallback={
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Ładowanie modelu 3D...</span>
+          </div>
+        }
+      >
+        <Canvas shadows dpr={[1, 2]} camera={{ fov: 50 }}>
+          <Stage environment="city" intensity={0.6}>
+            <Model url={url} />
+          </Stage>
+          <OrbitControls autoRotate />
+        </Canvas>
+      </Suspense>
+      <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
+        Interaktywny model 3D
+      </div>
+    </div>
+  );
+}

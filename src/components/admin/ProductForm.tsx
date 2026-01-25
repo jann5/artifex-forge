@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -19,12 +21,16 @@ interface ProductFormProps {
     price: number;
     category: string;
     inventory: number;
+    model3d?: string;
+    featured?: boolean;
   };
   images: string[];
   isUploading: boolean;
   onProductChange: (updates: Partial<ProductFormProps['product']>) => void;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onImageRemove: (index: number) => void;
+  onModelUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onModelRemove?: () => void;
   onSubmit: (e: React.FormEvent) => void;
   submitLabel: string;
 }
@@ -36,10 +42,13 @@ export function ProductForm({
   onProductChange,
   onImageUpload,
   onImageRemove,
+  onModelUpload,
+  onModelRemove,
   onSubmit,
   submitLabel,
 }: ProductFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modelInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 max-w-md">
@@ -97,6 +106,61 @@ export function ProductForm({
             <SelectItem value="other">Inne</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="featured"
+          checked={product.featured || false}
+          onCheckedChange={(checked) => onProductChange({ featured: checked })}
+        />
+        <Label htmlFor="featured">Wyróżniony produkt</Label>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2">Model 3D (.glb)</label>
+        {product.model3d ? (
+          <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-primary font-bold text-xs">3D</div>
+              <span className="text-sm truncate max-w-[200px]">Model załadowany</span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onModelRemove}
+              className="text-destructive hover:text-destructive"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <input
+              ref={modelInputRef}
+              type="file"
+              accept=".glb,.gltf"
+              onChange={onModelUpload}
+              className="hidden"
+              id="model-upload"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => modelInputRef.current?.click()}
+              disabled={isUploading}
+              className="w-full"
+            >
+              {isUploading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="mr-2 h-4 w-4" />
+              )}
+              Dodaj Model 3D
+            </Button>
+          </div>
+        )}
       </div>
       
       <div>

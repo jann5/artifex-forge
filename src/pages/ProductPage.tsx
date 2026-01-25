@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 import { getStorageUrl } from "@/lib/utils";
+import { ModelViewer } from "@/components/ModelViewer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Box, Image as ImageIcon } from "lucide-react";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -77,40 +80,94 @@ export default function ProductPage() {
       
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
-          {/* Image Gallery */}
+          {/* Image Gallery & 3D Model */}
           <div className="space-y-4">
-            <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden">
-              <img 
-                src={getStorageUrl(product.images[selectedImage])} 
-                alt={product.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  console.error('Image failed to load:', target.src);
-                  target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
-                }}
-              />
-            </div>
-            {product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-4">
-                {product.images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImage(idx)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                      selectedImage === idx ? "border-primary" : "border-transparent"
-                    }`}
-                  >
+            {product.model3d ? (
+              <Tabs defaultValue="images" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="images" className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" /> Zdjęcia
+                  </TabsTrigger>
+                  <TabsTrigger value="3d" className="flex items-center gap-2">
+                    <Box className="h-4 w-4" /> Model 3D
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="images" className="space-y-4 mt-0">
+                  <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden">
                     <img 
-                      src={getStorageUrl(img)} 
-                      alt="" 
-                      className="w-full h-full object-cover" 
+                      src={getStorageUrl(product.images[selectedImage])} 
+                      alt={product.name}
+                      className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = 'https://placehold.co/100';
+                        const target = e.currentTarget;
+                        console.error('Image failed to load:', target.src);
+                        target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
                       }}
                     />
-                  </button>
-                ))}
+                  </div>
+                  {product.images.length > 1 && (
+                    <div className="grid grid-cols-4 gap-4">
+                      {product.images.map((img, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedImage(idx)}
+                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                            selectedImage === idx ? "border-primary" : "border-transparent"
+                          }`}
+                        >
+                          <img 
+                            src={getStorageUrl(img)} 
+                            alt="" 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://placehold.co/100';
+                            }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="3d" className="mt-0 h-[500px]">
+                  <ModelViewer url={getStorageUrl(product.model3d)} />
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <div className="space-y-4">
+                <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden">
+                  <img 
+                    src={getStorageUrl(product.images[selectedImage])} 
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      console.error('Image failed to load:', target.src);
+                      target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
+                    }}
+                  />
+                </div>
+                {product.images.length > 1 && (
+                  <div className="grid grid-cols-4 gap-4">
+                    {product.images.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedImage(idx)}
+                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                          selectedImage === idx ? "border-primary" : "border-transparent"
+                        }`}
+                      >
+                        <img 
+                          src={getStorageUrl(img)} 
+                          alt="" 
+                          className="w-full h-full object-cover" 
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://placehold.co/100';
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
