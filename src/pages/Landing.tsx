@@ -27,97 +27,116 @@ export default function Landing() {
     <div ref={containerRef} className="min-h-screen bg-background flex flex-col overflow-hidden">
       <Navbar />
       
-      {/* Hero Section with Parallax */}
+      {/* Hero Section with Parallax and 3D Spline */}
       <section className="relative overflow-hidden py-20 lg:py-32 min-h-[90vh] flex items-center">
         <motion.div 
           style={{ y: ySpring, opacity, scale }}
           className="container mx-auto px-4 relative z-10"
         >
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Text Content */}
+            <div className="max-w-2xl">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="mb-4"
+              >
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.05, 1],
+                    rotate: [0, 2, -2, 0]
+                  }}
+                  transition={{ 
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-6"
+                >
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">Premium 3D Printing</span>
+                </motion.div>
+              </motion.div>
+
+              <motion.h1 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+                className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 leading-[1.1]"
+              >
+                Minimalistyczny luksus spotyka{" "}
+                <motion.span 
+                  className="text-primary/80 inline-block"
+                  animate={{ 
+                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                  }}
+                  transition={{ duration: 5, repeat: Infinity }}
+                  style={{
+                    backgroundImage: "linear-gradient(90deg, currentColor 0%, hsl(var(--primary)) 50%, currentColor 100%)",
+                    backgroundSize: "200% auto",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                  }}
+                >
+                  cyfrowe rzemiosło
+                </motion.span>
+                .
+              </motion.h1>
+
+              <motion.p 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl leading-relaxed"
+              >
+                Odkryj wyselekcjonowaną kolekcję premium produktów drukowanych 3D. 
+                Gdzie sztuka spotyka inżynierię w każdej warstwie.
+              </motion.p>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+                className="flex flex-wrap gap-4"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button size="lg" className="h-14 px-10 text-lg shadow-lg hover:shadow-xl transition-all" asChild>
+                    <Link to="/products">
+                      Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button size="lg" variant="outline" className="h-14 px-10 text-lg border-2" asChild>
+                    <Link to="/about">
+                      Nasza Historia
+                    </Link>
+                  </Button>
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Right: Spline 3D Animation */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="mb-4"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, delay: 0.4 }}
+              className="relative h-[500px] lg:h-[600px] rounded-2xl overflow-hidden"
             >
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.05, 1],
-                  rotate: [0, 2, -2, 0]
-                }}
-                transition={{ 
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-6"
-              >
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Premium 3D Printing</span>
-              </motion.div>
-            </motion.div>
-
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
-              className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 leading-[1.1]"
-            >
-              Minimalistyczny luksus spotyka{" "}
-              <motion.span 
-                className="text-primary/80 inline-block"
-                animate={{ 
-                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                }}
-                transition={{ duration: 5, repeat: Infinity }}
-                style={{
-                  backgroundImage: "linear-gradient(90deg, currentColor 0%, hsl(var(--primary)) 50%, currentColor 100%)",
-                  backgroundSize: "200% auto",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                }}
-              >
-                cyfrowe rzemiosło
-              </motion.span>
-              .
-            </motion.h1>
-
-            <motion.p 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-              className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed"
-            >
-              Odkryj wyselekcjonowaną kolekcję premium produktów drukowanych 3D. 
-              Gdzie sztuka spotyka inżynierię w każdej warstwie.
-            </motion.p>
-
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-              className="flex flex-wrap gap-4 justify-center"
-            >
-              <motion.div
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button size="lg" className="h-14 px-10 text-lg shadow-lg hover:shadow-xl transition-all" asChild>
-                  <Link to="/products">
-                    Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button size="lg" variant="outline" className="h-14 px-10 text-lg border-2" asChild>
-                  <Link to="/about">
-                    Nasza Historia
-                  </Link>
-                </Button>
-              </motion.div>
+              <iframe 
+                src="https://my.spline.design/676b9fecb6954a61a576c28bb43cb58c/" 
+                frameBorder="0" 
+                width="100%" 
+                height="100%"
+                className="rounded-2xl"
+              />
             </motion.div>
           </div>
         </motion.div>
