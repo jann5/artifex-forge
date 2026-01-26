@@ -1,24 +1,25 @@
 import { action, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { Doc, Id } from "./_generated/dataModel";
 
 export const getAnyUser = internalQuery({
     args: {},
-    handler: async (ctx) => {
+    handler: async (ctx): Promise<Doc<"users"> | null> => {
         return await ctx.db.query("users").first();
     }
 });
 
 export const getAnyProduct = internalQuery({
     args: {},
-    handler: async (ctx) => {
+    handler: async (ctx): Promise<Doc<"products"> | null> => {
         return await ctx.db.query("products").first();
     }
 });
 
 export const testOrderFlow = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<any> => {
     console.log("Starting debug test flow...");
     
     // 1. Check Env Vars
@@ -38,11 +39,11 @@ export const testOrderFlow = action({
     console.log("Environment Check:", envStatus);
 
     // 2. Get a user
-    const user = await ctx.runQuery(internal.debug.getAnyUser);
+    const user: Doc<"users"> | null = await ctx.runQuery(internal.debug.getAnyUser);
     if (!user) return { success: false, message: "No users found in database. Please sign up/login first.", envStatus };
 
     // 3. Get a product
-    const product = await ctx.runQuery(internal.debug.getAnyProduct);
+    const product: Doc<"products"> | null = await ctx.runQuery(internal.debug.getAnyProduct);
     if (!product) return { success: false, message: "No products found in database.", envStatus };
 
     console.log("Testing with user:", user._id);
@@ -51,7 +52,7 @@ export const testOrderFlow = action({
     const sessionId = "test_session_" + Date.now();
     
     try {
-        const orderId = await ctx.runMutation(internal.orders.createFromStripe, {
+        const orderId: Id<"orders"> = await ctx.runMutation(internal.orders.createFromStripe, {
             sessionId: sessionId,
             userId: user._id,
             items: [{

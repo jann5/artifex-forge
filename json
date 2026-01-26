@@ -1,4 +1,1 @@
-   {
-     "email": "twoj-email@example.com"
-   }
-   
+{"type":"tool_call","tool_number":2,"tool_name":"continueWithPlanTool","input_args":{"plan":"1. Run the debug command `npx convex run debug:testOrderFlow` to test the order creation and notification flow.\n2. Analyze the output to see if the order is created and if the Telegram notification is sent.\n3. If successful, inform the user. If not, investigate the error."},"results":""}
