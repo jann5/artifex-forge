@@ -230,6 +230,20 @@ export const webhook = httpAction(async (ctx, request) => {
           const originalText = message.text || "";
           const updatedText = originalText.replace(/Status: .*/, `Status: ${status}`);
 
+          // Re-add the inline keyboard buttons after status update
+          const keyboard = {
+            inline_keyboard: [
+              [
+                { text: "💰 Wyceniono", callback_data: `custom_quote:${orderId}` },
+                { text: "💬 Wiadomość", callback_data: `custom_message:${orderId}` }
+              ],
+              [
+                { text: "✅ Zaakceptowano", callback_data: `custom_status:${orderId}:accepted` },
+                { text: "🗑️ Usuń", callback_data: `delete_custom_order:${orderId}` }
+              ]
+            ]
+          };
+
           await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -238,6 +252,7 @@ export const webhook = httpAction(async (ctx, request) => {
               message_id: message.message_id,
               text: updatedText,
               parse_mode: "Markdown",
+              reply_markup: keyboard
             })
           });
         }
