@@ -1,12 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency } from "@/lib/format";
-import { Package, Clock, CheckCircle, XCircle, MessageSquare, Send } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -34,10 +32,6 @@ interface CustomOrderCardProps {
 export function CustomOrderCard({ order }: CustomOrderCardProps) {
   const navigate = useNavigate();
   const acceptQuote = useMutation(api.customOrders.acceptQuote);
-  const addMessage = useMutation(api.customOrders.addMessage);
-  const [newMessage, setNewMessage] = useState("");
-  const [showMessages, setShowMessages] = useState(false);
-  const [isSending, setIsSending] = useState(false);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -99,28 +93,6 @@ export function CustomOrderCard({ order }: CustomOrderCardProps) {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) {
-      toast.error("Wpisz wiadomość");
-      return;
-    }
-
-    setIsSending(true);
-    try {
-      await addMessage({
-        customOrderId: order._id,
-        message: newMessage,
-        isAdmin: false,
-      });
-      setNewMessage("");
-      toast.success("Wiadomość wysłana");
-    } catch (error) {
-      toast.error("Nie udało się wysłać wiadomości");
-    } finally {
-      setIsSending(false);
-    }
-  };
-
   return (
     <Card className="overflow-hidden">
       <CardHeader className="bg-muted/30 border-b">
@@ -167,71 +139,6 @@ export function CustomOrderCard({ order }: CustomOrderCardProps) {
             Zaakceptuj wycenę i przejdź do płatności
           </Button>
         )}
-
-        <div className="border-t pt-4">
-          <Button
-            variant="outline"
-            onClick={() => setShowMessages(!showMessages)}
-            className="w-full mb-4"
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            {showMessages ? "Ukryj wiadomości" : `Pokaż wiadomości (${order.messages?.length || 0})`}
-          </Button>
-
-          {showMessages && (
-            <div className="space-y-4">
-              <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
-                {order.messages && order.messages.length > 0 ? (
-                  order.messages.map((msg) => (
-                    <div
-                      key={msg._id}
-                      className={`p-3 rounded-lg ${
-                        msg.isAdmin
-                          ? "bg-primary/10 ml-4"
-                          : "bg-muted mr-4"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="text-xs font-medium">{msg.senderName}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(msg._creationTime).toLocaleDateString("pl-PL", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-sm">{msg.message}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Brak wiadomości
-                  </p>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <Textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Napisz wiadomość..."
-                  rows={2}
-                  disabled={isSending}
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={isSending || !newMessage.trim()}
-                  size="icon"
-                  className="h-auto"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
       </CardContent>
     </Card>
   );

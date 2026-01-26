@@ -145,8 +145,7 @@ export const sendCustomOrderNotification = internalAction({
     const keyboard = {
       inline_keyboard: [
         [
-          { text: "💰 Wyceniono", callback_data: `custom_quote:${order._id}` },
-          { text: "💬 Wyślij wiadomość", callback_data: `custom_message:${order._id}` }
+          { text: "💰 Wyceniono", callback_data: `custom_quote:${order._id}` }
         ],
         [
           { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` },

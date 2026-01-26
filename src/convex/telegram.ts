@@ -100,16 +100,10 @@ export const webhook = httpAction(async (ctx, request) => {
           text: `🗑️ Usuń standardowe: ${order._id.slice(-6)}`,
           callback_data: `delete_order:${order._id}`
         }]),
-        ...customOrders.flatMap((order: any) => [
-          [
-            { text: `💰 Wyceniono: ${order._id.slice(-6)}`, callback_data: `custom_quote:${order._id}` },
-            { text: `💬 Wiadomość: ${order._id.slice(-6)}`, callback_data: `custom_message:${order._id}` }
-          ],
-          [
-            { text: `✅ Zaakceptowano: ${order._id.slice(-6)}`, callback_data: `custom_status:${order._id}:accepted` },
-            { text: `🗑️ Usuń: ${order._id.slice(-6)}`, callback_data: `delete_custom_order:${order._id}` }
-          ]
-        ])
+        ...customOrders.map((order: any) => [{
+          text: `🗑️ Usuń niestandardowe: ${order._id.slice(-6)}`,
+          callback_data: `delete_custom_order:${order._id}`
+        }])
       ]
     };
 
@@ -130,12 +124,13 @@ export const webhook = httpAction(async (ctx, request) => {
       
       const customKeyboard = {
         inline_keyboard: [[
-          { text: "💰 Wyceniono", callback_data: `custom_quote:${order._id}` },
-          { text: "💬 Wiadomość", callback_data: `custom_message:${order._id}` }
+          { text: "💰 Wyceniono", callback_data: `custom_status:${order._id}:quoted` },
+          { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` }
         ], [
-          { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` },
-          { text: "🔨 W produkcji", callback_data: `custom_status:${order._id}:in_production` }
+          { text: "🔨 W produkcji", callback_data: `custom_status:${order._id}:in_production` },
+          { text: "✔️ Ukończono", callback_data: `custom_status:${order._id}:completed` }
         ], [
+          { text: "❌ Anulowano", callback_data: `custom_status:${order._id}:cancelled` },
           { text: "🗑️ Usuń", callback_data: `delete_custom_order:${order._id}` }
         ]]
       };
@@ -918,7 +913,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
         // Handle custom order message input
         if (session?.step === "awaiting_custom_order_message" && session.customOrderId) {
-          const messageText = text;
+          const messageText = text.trim();
           
           // Add message to database
           await ctx.runMutation(internal.customOrders.addMessageInternal, {
