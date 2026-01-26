@@ -1,56 +1,8 @@
-    const domain = process.env.CONVEX_SITE_URL;
-    if (!domain) {
-      throw new Error("CONVEX_SITE_URL is missing. Please check your environment variables.");
-    }
-    const cleanDomain = domain.replace(/\/$/, "");
+const user = await ctx.db
+  .query("users")
+  .withIndex("email", (q) => q.eq("email", identity.email))
+  .first();
 
-    // MOCK CHECKOUT MODE (If Stripe key is missing)
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.warn("Stripe Secret Key is missing. Using mock checkout mode.");
-      
-      const totalAmount = args.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-      const mockSessionId = `mock_session_${crypto.randomUUID()}`;
-
-      // Create order immediately for mock checkout
-      await ctx.runMutation(internal.orders.createFromStripe, {
-        sessionId: mockSessionId,
-        userId,
-        items: args.items,
-        totalAmount,
-        shippingAddress: args.shippingAddress,
-      });
-
-      return { sessionId: mockSessionId, url: `${cleanDomain}/?success=true` };
-    }
-
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-02-24.acacia",
-    });
-
-    const lineItems = args.items.map((item) => ({
-      price_data: {
-        currency: "pln",
-        product_data: {
-          name: item.name,
-          images: item.image ? [item.image] : [],
-        },
-        unit_amount: Math.round(item.price * 100),
-      },
-      quantity: item.quantity,
-    }));
-
-    try {
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card", "blik"],
-        line_items: lineItems,
-        mode: "payment",
-        success_url: `${cleanDomain}/?success=true`,
-        cancel_url: `${cleanDomain}/checkout?canceled=true`,
-        metadata: {
-          userId: userId,
-          items: JSON.stringify(args.items),
-          shippingAddress: JSON.stringify(args.shippingAddress),
-        },
-      });
-
-      return { sessionId: session.id, url: session.url };
+const orders = await ctx.db
+  .query("customOrders")
+  .withIndex("by_user", (q) => q.eq("userId", user._id))
