@@ -34,6 +34,9 @@ export const add = mutation({
     const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
 
+    const product = await ctx.db.get(args.productId);
+    if (!product) throw new Error("Product not found");
+
     const existing = await ctx.db
       .query("cartItems")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -44,6 +47,13 @@ export const add = mutation({
         )
       )
       .first();
+
+    const currentQuantity = existing ? existing.quantity : 0;
+    const newQuantity = currentQuantity + args.quantity;
+
+    if (newQuantity > product.inventory) {
+      throw new Error(`Niewystarczająca ilość produktu. Dostępne: ${product.inventory}`);
+    }
 
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -68,6 +78,16 @@ export const updateQuantity = mutation({
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
+
+    const cartItem = await ctx.db.get(args.id);
+    if (!cartItem) throw new Error("Cart item not found");
+
+    const product = await ctx.db.get(cartItem.productId);
+    if (!product) throw new Error("Product not found");
+
+    if (args.quantity > product.inventory) {
+      throw new Error(`Niewystarczająca ilość produktu. Dostępne: ${product.inventory}`);
+    }
 
     if (args.quantity <= 0) {
       await ctx.db.delete(args.id);

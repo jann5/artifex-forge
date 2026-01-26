@@ -55,9 +55,17 @@ export default function ProductPage() {
     );
   }
 
+  const isOutOfStock = product.inventory === 0;
+  const maxQuantity = product.inventory;
+
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       toast.error("Zaloguj się, aby dodać produkty do koszyka");
+      return;
+    }
+
+    if (isOutOfStock) {
+      toast.error("Produkt jest niedostępny");
       return;
     }
 
@@ -67,8 +75,8 @@ export default function ProductPage() {
         quantity 
       });
       toast.success("Dodano do koszyka");
-    } catch (error) {
-      toast.error("Nie udało się dodać do koszyka");
+    } catch (error: any) {
+      toast.error(error.message || "Nie udało się dodać do koszyka");
     }
   };
 
@@ -84,13 +92,18 @@ export default function ProductPage() {
               <img 
                 src={getStorageUrl(product.images[activeImage])} 
                 alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${isOutOfStock ? "grayscale" : ""}`}
                 onError={(e) => {
                   const target = e.currentTarget;
                   console.error('Image failed to load:', target.src);
                   target.src = 'https://placehold.co/600x750/f3f4f6/1f2937?text=Błąd+ładowania';
                 }}
               />
+              {isOutOfStock && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <span className="text-white font-bold text-2xl uppercase tracking-widest border-4 border-white px-6 py-2">Wyprzedane</span>
+                </div>
+              )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 rounded-full p-3">
                   <ZoomIn className="h-6 w-6" />
@@ -111,7 +124,7 @@ export default function ProductPage() {
                   <img 
                     src={getStorageUrl(img)} 
                     alt={`Widok ${idx + 1}`} 
-                    className="w-full h-full object-cover" 
+                    className={`w-full h-full object-cover ${isOutOfStock ? "grayscale" : ""}`}
                     onError={(e) => {
                       e.currentTarget.src = 'https://placehold.co/100';
                     }}
@@ -131,6 +144,11 @@ export default function ProductPage() {
               <p className="text-2xl font-medium text-primary">
                 {formatCurrency(product.price)}
               </p>
+              {!isOutOfStock && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Dostępne sztuk: {product.inventory}
+                </p>
+              )}
             </div>
 
             <div className="prose prose-neutral dark:prose-invert mb-8">
@@ -146,7 +164,7 @@ export default function ProductPage() {
                     size="icon" 
                     className="h-8 w-8"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
+                    disabled={quantity <= 1 || isOutOfStock}
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
@@ -155,7 +173,8 @@ export default function ProductPage() {
                     variant="ghost" 
                     size="icon" 
                     className="h-8 w-8"
-                    onClick={() => setQuantity(quantity + 1)}
+                    onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
+                    disabled={quantity >= maxQuantity || isOutOfStock}
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
@@ -163,8 +182,14 @@ export default function ProductPage() {
               </div>
 
               <div className="flex gap-4">
-                <Button size="lg" className="flex-1 h-14 text-lg" onClick={handleAddToCart}>
-                  <ShoppingBag className="mr-2 h-5 w-5" /> Dodaj do Koszyka
+                <Button 
+                  size="lg" 
+                  className="flex-1 h-14 text-lg" 
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock}
+                >
+                  <ShoppingBag className="mr-2 h-5 w-5" /> 
+                  {isOutOfStock ? "Wyprzedane" : "Dodaj do Koszyka"}
                 </Button>
               </div>
               

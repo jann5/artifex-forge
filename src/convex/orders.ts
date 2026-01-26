@@ -45,6 +45,15 @@ export const create = mutation({
       shippingAddress: args.shippingAddress,
     });
 
+    // Update inventory
+    for (const item of args.items) {
+      const product = await ctx.db.get(item.productId);
+      if (product) {
+        const newInventory = Math.max(0, product.inventory - item.quantity);
+        await ctx.db.patch(item.productId, { inventory: newInventory });
+      }
+    }
+
     // Clear cart
     const cartItems = await ctx.db
       .query("cartItems")
@@ -116,6 +125,19 @@ export const createFromStripe = internalMutation({
     });
 
     console.log(`[createFromStripe] ✅ Order created: ${orderId}`);
+
+    // Update inventory
+    console.log(`[createFromStripe] Updating inventory...`);
+    for (const item of args.items) {
+      if (item.productId) {
+        const product = await ctx.db.get(item.productId as Id<"products">);
+        if (product) {
+          const newInventory = Math.max(0, product.inventory - item.quantity);
+          await ctx.db.patch(item.productId, { inventory: newInventory });
+          console.log(`[createFromStripe] Updated inventory for ${product.name}: ${product.inventory} -> ${newInventory}`);
+        }
+      }
+    }
 
     // Clear cart
     console.log(`[createFromStripe] Clearing cart for user...`);

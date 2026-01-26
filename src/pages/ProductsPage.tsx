@@ -119,6 +119,7 @@ export default function ProductsPage() {
                   price={product.price}
                   image={product.images[0] || "https://placehold.co/400x500/f3f4f6/1f2937?text=Produkt"}
                   category={product.category}
+                  inventory={product.inventory}
                 />
               ))}
             </div>
