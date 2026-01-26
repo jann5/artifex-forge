@@ -79,17 +79,19 @@ export default function CustomOrderPage() {
     setIsSubmitting(true);
 
     try {
-      // Upload images
+      // Upload images (optional)
       const imageIds: string[] = [];
-      for (const image of images) {
-        const uploadUrl = await generateUploadUrl();
-        const result = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": image.type },
-          body: image,
-        });
-        const { storageId } = await result.json();
-        imageIds.push(storageId);
+      if (images.length > 0) {
+        for (const image of images) {
+          const uploadUrl = await generateUploadUrl();
+          const result = await fetch(uploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": image.type },
+            body: image,
+          });
+          const { storageId } = await result.json();
+          imageIds.push(storageId);
+        }
       }
 
       // Upload 3D files (optional)
@@ -237,52 +239,52 @@ export default function CustomOrderPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="images">Zdjęcia / Szkice (opcjonalnie)</Label>
-                    <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
-                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <Input
-                        id="images"
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageChange}
-                        className="hidden"
-                      />
-                      <Label htmlFor="images" className="cursor-pointer">
+                    <Label htmlFor="images" className="cursor-pointer block">
+                      <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
+                        <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <Input
+                          id="images"
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
                         <span className="text-sm text-muted-foreground">
                           Kliknij, aby dodać zdjęcia lub szkice
                         </span>
-                      </Label>
-                      {images.length > 0 && (
-                        <p className="text-sm text-primary mt-2">
-                          Wybrano {images.length} plik(ów)
-                        </p>
-                      )}
-                    </div>
+                        {images.length > 0 && (
+                          <p className="text-sm text-primary mt-2">
+                            Wybrano {images.length} plik(ów)
+                          </p>
+                        )}
+                      </div>
+                    </Label>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="files3D">Pliki 3D (opcjonalnie)</Label>
-                    <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
-                      <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <Input
-                        id="files3D"
-                        type="file"
-                        accept=".stl,.obj,.step,.stp,.iges,.igs,.3mf"
-                        multiple
-                        onChange={handleFiles3DChange}
-                        className="hidden"
-                      />
-                      <Label htmlFor="files3D" className="cursor-pointer">
+                    <Label htmlFor="files3D" className="cursor-pointer block">
+                      <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
+                        <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <Input
+                          id="files3D"
+                          type="file"
+                          accept=".stl,.obj,.step,.stp,.iges,.igs,.3mf"
+                          multiple
+                          onChange={handleFiles3DChange}
+                          className="hidden"
+                        />
                         <span className="text-sm text-muted-foreground">
                           Kliknij, aby dodać pliki 3D (.stl, .obj, .step, .3mf)
                         </span>
-                      </Label>
-                      {files3D.length > 0 && (
-                        <p className="text-sm text-primary mt-2">
-                          Wybrano {files3D.length} plik(ów) 3D
-                        </p>
-                      )}
-                    </div>
+                        {files3D.length > 0 && (
+                          <p className="text-sm text-primary mt-2">
+                            Wybrano {files3D.length} plik(ów) 3D
+                          </p>
+                        )}
+                      </div>
+                    </Label>
                   </div>
 
                   <Button 
