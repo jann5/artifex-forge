@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getStorageUrl } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Reviews } from "@/components/Reviews";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -85,7 +86,7 @@ export default function ProductPage() {
       <Navbar />
       
       <main className="flex-1 container mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
+        <div className="grid md:grid-cols-2 gap-12 lg:gap-20 mb-20">
           {/* Image Gallery */}
           <div className="space-y-4">
             <div className="aspect-[4/5] bg-muted rounded-xl overflow-hidden relative border group cursor-pointer" onClick={() => setIsImageModalOpen(true)}>
@@ -199,6 +200,11 @@ export default function ProductPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="max-w-4xl mx-auto border-t pt-12">
+          <Reviews productId={product._id} />
         </div>
       </main>
 
