@@ -258,6 +258,97 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Professional Equipment Section - NEW */}
+      <section className="py-24 bg-muted/30 relative overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+                <Package className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Profesjonalny Sprzęt</span>
+              </div>
+              
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Stratasys F170
+              </h2>
+              
+              <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
+                Wykorzystujemy profesjonalną drukarkę przemysłową <span className="font-semibold text-foreground">Stratasys F170</span> – 
+                standard w produkcji komercyjnej i prototypowaniu.
+              </p>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold mb-1">Precyzja Przemysłowa</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Technologia FDM z dokładnością warstwy do 0.127mm zapewnia wyjątkową jakość wykończenia
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold mb-1">Materiały Inżynieryjne</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Obsługa zaawansowanych materiałów jak ABS-M30, ASA, PC-ABS dla maksymalnej wytrzymałości
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold mb-1">Niezawodność 24/7</h4>
+                    <p className="text-sm text-muted-foreground">
+                      System zamkniętej komory i automatyczna kalibracja gwarantują powtarzalność produkcji
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/about">
+                  Dowiedz się więcej <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className="relative"
+            >
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <img 
+                  src="https://harmless-tapir-303.convex.cloud/api/storage/66c47355-3562-4bd0-ba2c-e6fda75ab2b1"
+                  alt="Stratasys F170 Professional 3D Printer"
+                  className="w-full h-auto"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <p className="text-white font-semibold text-lg">Stratasys F170</p>
+                  <p className="text-white/80 text-sm">Profesjonalna drukarka przemysłowa FDM</p>
+                </div>
+              </div>
+              
+              {/* Decorative elements */}
+              <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
+              <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-secondary/20 rounded-full blur-2xl" />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Featured Products */}
       <section className="py-24 bg-muted/20">
         <div className="container mx-auto px-4">
