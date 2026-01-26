@@ -36,6 +36,14 @@ export const webhook = httpAction(async (ctx, request) => {
 
   // Add this new handler for sending admin messages to custom orders
   const handleCustomOrderMessage = async (ctx: any, chatId: string, orderId: string) => {
+    // First check if there's already an active session to prevent spam
+    const existingSession = await ctx.runQuery(internal.telegram_db.getSession, { chatId });
+    
+    if (existingSession && existingSession.step === "awaiting_custom_order_message" && existingSession.customOrderId === orderId) {
+      // Session already exists for this order, don't send another prompt
+      return;
+    }
+    
     await sendTelegramMessage(chatId, "Wpisz wiadomość do klienta:");
     
     await ctx.runMutation(internal.telegram_db.updateSession, {
