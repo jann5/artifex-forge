@@ -197,12 +197,12 @@ export default function OrdersPage() {
                             })}
                           </p>
                         </div>
-                        <Badge className={getStatusColor(order.status)}>
-                          <span className="flex items-center gap-1">
-                            {getStatusIcon(order.status)}
-                            {getStatusText(order.status)}
-                          </span>
-                        </Badge>
+                  <Badge className={getStatusColor(order.status)}>
+                    <span className="flex items-center gap-1">
+                      {getStatusIcon(order.status)}
+                      {getStatusText(order.status)}
+                    </span>
+                  </Badge>
                       </div>
                     </CardHeader>
                     <CardContent className="p-6">

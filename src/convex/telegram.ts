@@ -114,6 +114,35 @@ export const webhook = httpAction(async (ctx, request) => {
     };
 
     await sendMessage(chatId, message, keyboard);
+    
+    // Send each custom order as a separate message with its own buttons
+    for (const order of customOrders) {
+      const statusEmoji = order.status === "pending" ? "⏳" : order.status === "quoted" ? "💰" : order.status === "accepted" ? "✅" : order.status === "in_production" ? "🔨" : "📋";
+      let orderMessage = `${statusEmoji} *Zamówienie niestandardowe*\n\n`;
+      orderMessage += `📋 *ID:* \`${order._id}\`\n`;
+      orderMessage += `🎨 *Projekt:* ${order.projectName}\n`;
+      orderMessage += `👤 *Klient:* ${order.customerName}\n`;
+      orderMessage += `📧 *Email:* ${order.customerEmail}\n`;
+      orderMessage += `📊 *Status:* ${order.status}\n`;
+      if (order.estimatedPrice) {
+        orderMessage += `💰 *Cena:* ${order.estimatedPrice} PLN\n`;
+      }
+      
+      const customKeyboard = {
+        inline_keyboard: [[
+          { text: "💰 Wyceniono", callback_data: `custom_quote:${order._id}` },
+          { text: "💬 Wiadomość", callback_data: `custom_message:${order._id}` }
+        ], [
+          { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` },
+          { text: "🔨 W produkcji", callback_data: `custom_status:${order._id}:in_production` }
+        ], [
+          { text: "🗑️ Usuń", callback_data: `delete_custom_order:${order._id}` }
+        ]]
+      };
+      
+      await sendMessage(chatId, orderMessage, customKeyboard);
+    }
+    
     } catch (error) {
       console.error("Error in handleOrderCommand:", error);
       await sendTelegramMessage(chatId, "❌ Błąd podczas pobierania zamówień.");
@@ -216,7 +245,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // Handle Custom Order Status Update
       if (data && data.startsWith("custom_status:")) {
-        await answerCallback();
+        await answerCallback("Aktualizacja statusu...");
         const parts = data.split(":");
         if (parts.length === 3) {
           const orderId = parts[1] as Id<"customOrders">;
@@ -558,13 +587,24 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // Handle delete custom order callback
       if (data && data.startsWith("delete_custom_order:")) {
-        await answerCallback();
+        await answerCallback("Usuwanie...");
         const orderId = data.split(":")[1];
         try {
           await ctx.runMutation(internal.customOrders.deleteOrderInternal, { 
             orderId: orderId as Id<"customOrders"> 
           });
-          await sendTelegramMessage(chatId, `✅ Zamówienie niestandardowe ${orderId} zostało usunięte z bazy danych.`);
+          
+          // Delete the message from chat
+          await fetch(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: message.chat.id,
+              message_id: message.message_id,
+            }),
+          });
+          
+          await sendTelegramMessage(chatId, `✅ Zamówienie niestandardowe zostało usunięte.`);
         } catch (error) {
           console.error("Error deleting custom order:", error);
           await sendTelegramMessage(chatId, "❌ Błąd podczas usuwania zamówienia niestandardowego.");
