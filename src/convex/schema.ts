@@ -65,14 +65,26 @@ const schema = defineSchema(
       projectName: v.string(),
       description: v.string(),
       material: v.string(),
-      images: v.array(v.string()), // Storage IDs
+      images: v.array(v.string()),
       contactInfo: v.optional(v.string()),
       status: v.string(), // pending, quoted, accepted, in_production, completed, cancelled
-      estimatedPrice: v.optional(v.number()),
-      adminNotes: v.optional(v.string()),
       customerName: v.string(),
       customerEmail: v.string(),
-    }).index("by_user", ["userId"]),
+      estimatedPrice: v.optional(v.number()),
+      adminNotes: v.optional(v.string()),
+      stripePaymentIntentId: v.optional(v.string()),
+      paidAt: v.optional(v.number()),
+    })
+      .index("by_user", ["userId"]),
+
+    customOrderMessages: defineTable({
+      customOrderId: v.id("customOrders"),
+      senderId: v.id("users"),
+      senderName: v.string(),
+      message: v.string(),
+      isAdmin: v.boolean(),
+    })
+      .index("by_order", ["customOrderId"]),
 
     cartItems: defineTable({
       userId: v.id("users"),
@@ -144,17 +156,18 @@ const schema = defineSchema(
       .index("by_user_and_product", ["userId", "productId"]),
 
     telegramSessions: defineTable({
-      chatId: v.string(), // Telegram chat ID (stored as string to be safe)
-      step: v.string(), // Current step: "NAME", "DESCRIPTION", "CATEGORY", "PRICE", "INVENTORY", "IMAGES"
-      editingProductId: v.optional(v.string()), // ID of the product being edited
+      chatId: v.string(),
+      step: v.string(),
       productData: v.object({
         name: v.optional(v.string()),
         description: v.optional(v.string()),
-        category: v.optional(v.string()),
         price: v.optional(v.number()),
-        inventory: v.optional(v.number()),
+        category: v.optional(v.string()),
         images: v.optional(v.array(v.string())),
+        inventory: v.optional(v.number()),
       }),
+      editingProductId: v.optional(v.string()),
+      customOrderId: v.optional(v.string()),
     }).index("by_chatId", ["chatId"]),
   },
   {

@@ -1,5 +1,5 @@
 "use node";
-import { action } from "./_generated/server";
+import { action, mutation, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import Stripe from "stripe";
@@ -163,6 +163,65 @@ export const verifyPayment = action({
       console.error(`[verifyPayment] Error verifying payment:`, error);
       return { success: false, error: error.message };
     }
+  },
+});
+
+export const createCustomOrderCheckoutSession = action({
+  args: {
+    customOrderId: v.id("customOrders"),
+    addressId: v.id("addresses"),
+    userId: v.id("users"),
+    amount: v.number(),
+  },
+  handler: async (ctx, args): Promise<{ url: string; sessionId: string }> => {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      throw new Error("Stripe not configured");
+    }
+
+    const customOrder = await ctx.runQuery(api.customOrders.getById, {
+      orderId: args.customOrderId,
+    });
+
+    if (!customOrder) {
+      throw new Error("Custom order not found");
+    }
+
+    const address = await ctx.runQuery(api.addresses.getById, {
+      addressId: args.addressId,
+    });
+
+    const siteUrl = process.env.SITE_URL || process.env.CONVEX_SITE_URL;
+
+    const response: Response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${stripeKey}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        "payment_method_types[0]": "card",
+        "line_items[0][price_data][currency]": "pln",
+        "line_items[0][price_data][product_data][name]": `Zamówienie niestandardowe: ${customOrder.projectName}`,
+        "line_items[0][price_data][product_data][description]": customOrder.description,
+        "line_items[0][price_data][unit_amount]": String(Math.round(args.amount * 100)),
+        "line_items[0][quantity]": "1",
+        mode: "payment",
+        success_url: `${siteUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&custom_order=${args.customOrderId}`,
+        cancel_url: `${siteUrl}/checkout?customOrder=${args.customOrderId}`,
+        "metadata[customOrderId]": args.customOrderId,
+        "metadata[userId]": args.userId,
+        "metadata[addressId]": args.addressId,
+      }),
+    });
+
+    const session: any = await response.json();
+
+    if (!response.ok) {
+      throw new Error(session.error?.message || "Failed to create checkout session");
+    }
+
+    return { url: session.url, sessionId: session.id };
   },
 });
 

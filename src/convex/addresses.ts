@@ -15,6 +15,13 @@ export const list = query({
   },
 });
 
+export const getById = query({
+  args: { addressId: v.id("addresses") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.addressId);
+  },
+});
+
 export const add = mutation({
   args: {
     fullName: v.string(),

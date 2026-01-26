@@ -1,6 +1,8 @@
 import { Navbar } from "@/components/Navbar";
-import { useQuery, useAction } from "convex/react";
+import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,12 +19,21 @@ import { Label } from "@/components/ui/label";
 import { getStorageUrl } from "@/lib/utils";
 
 export default function CheckoutPage() {
-  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const cartItems = useQuery(api.cart.get);
+  const [searchParams] = useSearchParams();
+  const customOrderId = searchParams.get("customOrder") as Id<"customOrders"> | null;
+  
+  const cart = useQuery(api.cart.get);
+  const addresses = useQuery(api.addresses.list);
+  const customOrder = customOrderId ? useQuery(api.customOrders.getById, { orderId: customOrderId }) : null;
+  
+  const { isAuthenticated } = useAuth();
   const createCheckout = useAction(api.stripe.createCheckoutSession);
+  const createCustomOrderCheckout = useMutation(api.customOrders.createCheckoutSession);
+  const createCustomOrderStripeSession = useAction(api.stripe.createCustomOrderCheckoutSession);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  const [selectedAddress, setSelectedAddress] = useState<Id<"addresses"> | null>(null);
   const [shippingDetails, setShippingDetails] = useState({
     fullName: "",
     street: "",
@@ -30,6 +41,10 @@ export default function CheckoutPage() {
     postalCode: "",
     phone: "",
   });
+
+  const totalAmount = customOrder 
+    ? customOrder.estimatedPrice || 0
+    : (cart?.reduce((sum: number, item: any) => sum + (item.product?.price || 0) * item.quantity, 0) || 0);
 
   if (!isAuthenticated) {
     return (
@@ -55,52 +70,81 @@ export default function CheckoutPage() {
     );
   }
 
-  const total = cartItems?.reduce((acc, item) => {
-    return acc + (item.product?.price || 0) * item.quantity;
-  }, 0) || 0;
-
   const handleCheckout = async () => {
-    if (!cartItems || cartItems.length === 0) {
-      toast.error("Twój koszyk jest pusty");
-      return;
-    }
+    if (customOrder) {
+      // Handle custom order checkout
+      if (!selectedAddress) {
+        toast.error("Wybierz adres dostawy");
+        return;
+      }
 
-    if (!shippingDetails.fullName || !shippingDetails.street || !shippingDetails.city || !shippingDetails.postalCode || !shippingDetails.phone) {
-      toast.error("Proszę uzupełnić wszystkie dane do wysyłki");
-      return;
-    }
+      setIsProcessing(true);
+      try {
+        const checkoutData = await createCustomOrderCheckout({
+          customOrderId: customOrder._id,
+          addressId: selectedAddress,
+        });
 
-    setIsProcessing(true);
-    try {
-      const items = cartItems.map((item) => ({
-        productId: item.productId,
-        name: item.product?.name || "Produkt",
-        price: item.product?.price || 0,
-        quantity: item.quantity,
-        image: item.product?.images?.[0],
-      }));
+        // Now call the Stripe action to create the checkout session
+        const result = await createCustomOrderStripeSession({
+          customOrderId: checkoutData.customOrderId,
+          addressId: checkoutData.addressId,
+          userId: checkoutData.userId,
+          amount: checkoutData.amount,
+        });
 
-      const result = await createCheckout({ 
-        items,
-        shippingAddress: shippingDetails
-      });
-      
-      if (result.url) {
-        window.location.href = result.url;
-      } else {
-        toast.error("Nie udało się utworzyć sesji płatności");
+        if (result.url) {
+          window.location.href = result.url;
+        } else {
+          toast.error("Nie udało się utworzyć sesji płatności");
+          setIsProcessing(false);
+        }
+      } catch (error: any) {
+        toast.error(error.message);
         setIsProcessing(false);
       }
-    } catch (error: any) {
-      console.error("Błąd płatności:", error);
-      // Show the actual error message from the backend if available
-      const errorMessage = error.message || "Nie udało się przetworzyć płatności";
-      toast.error(errorMessage);
-      setIsProcessing(false);
+    } else {
+      if (!cart || cart.length === 0) {
+        toast.error("Twój koszyk jest pusty");
+        return;
+      }
+
+      if (!shippingDetails.fullName || !shippingDetails.street || !shippingDetails.city || !shippingDetails.postalCode || !shippingDetails.phone) {
+        toast.error("Proszę uzupełnić wszystkie dane do wysyłki");
+        return;
+      }
+
+      setIsProcessing(true);
+      try {
+        const items = cart.map((item: any) => ({
+          productId: item.productId,
+          name: item.product?.name || "Produkt",
+          price: item.product?.price || 0,
+          quantity: item.quantity,
+          image: item.product?.images?.[0],
+        }));
+
+        const result = await createCheckout({ 
+          items,
+          shippingAddress: shippingDetails
+        });
+        
+        if (result.url) {
+          window.location.href = result.url;
+        } else {
+          toast.error("Nie udało się utworzyć sesji płatności");
+          setIsProcessing(false);
+        }
+      } catch (error: any) {
+        console.error("Błąd płatności:", error);
+        const errorMessage = error.message || "Nie udało się przetworzyć płatności";
+        toast.error(errorMessage);
+        setIsProcessing(false);
+      }
     }
   };
 
-  if (cartItems === undefined) {
+  if (cart === undefined) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -122,146 +166,181 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      
-      <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
-        <motion.div 
+
+      <main className="flex-1 container mx-auto px-4 py-12">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-6xl mx-auto"
+          className="max-w-4xl mx-auto"
         >
-          <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/products")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-3xl font-bold font-display">Podsumowanie Zamówienia</h1>
-          </div>
+          <h1 className="text-4xl font-bold mb-8">Finalizacja zamówienia</h1>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12 items-start">
-            {/* Left Column - Order Items & Shipping */}
-            <div className="md:col-span-2 space-y-6">
-              <Card className="border shadow-none bg-card overflow-hidden">
-                <CardHeader className="bg-muted/30 border-b py-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Truck className="h-5 w-5 text-primary" />
-                    Produkty w koszyku ({cartItems.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {cartItems.length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground">
-                      Twój koszyk jest pusty.
-                      <Button variant="link" onClick={() => navigate("/products")}>Wróć do sklepu</Button>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              {customOrder ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Zamówienie niestandardowe</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="font-medium">{customOrder.projectName}</p>
+                      <p className="text-sm text-muted-foreground">{customOrder.description}</p>
+                      <p className="text-sm">Materiał: {customOrder.material}</p>
+                      <p className="text-2xl font-bold mt-4">{customOrder.estimatedPrice} PLN</p>
                     </div>
-                  ) : (
-                    <div className="divide-y">
-                      {cartItems.map((item) => (
-                        <div key={item._id} className="p-6 flex gap-4 sm:gap-6 items-center hover:bg-muted/5 transition-colors">
-                          <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg bg-muted overflow-hidden flex-shrink-0 border">
-                            {item.product?.images?.[0] && (
-                              <img 
-                                src={getStorageUrl(item.product.images[0])} 
-                                alt={item.product.name}
-                                className="h-full w-full object-cover"
-                              />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-lg truncate">{item.product?.name}</h3>
-                            <p className="text-sm text-muted-foreground capitalize mb-1">{item.product?.category}</p>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge variant="outline" className="font-normal bg-background">
-                                Ilość: {item.quantity}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-lg">
-                              {formatCurrency((item.product?.price || 0) * item.quantity)}
-                            </p>
-                            {item.quantity > 1 && (
-                              <p className="text-xs text-muted-foreground">
-                                {formatCurrency(item.product?.price || 0)} / szt.
-                              </p>
-                            )}
-                          </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  <Card className="border shadow-none bg-card overflow-hidden">
+                    <CardHeader className="bg-muted/30 border-b py-4">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Truck className="h-5 w-5 text-primary" />
+                        Produkty w koszyku ({cart.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {cart.length === 0 ? (
+                        <div className="p-8 text-center text-muted-foreground">
+                          Twój koszyk jest pusty.
+                          <Button variant="link" onClick={() => navigate("/products")}>Wróć do sklepu</Button>
                         </div>
-                      ))}
+                      ) : (
+                        <div className="divide-y">
+                          {cart.map((item: any) => (
+                            <div key={item._id} className="p-6 flex gap-4 sm:gap-6 items-center hover:bg-muted/5 transition-colors">
+                              <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg bg-muted overflow-hidden flex-shrink-0 border">
+                                {item.product?.images?.[0] && (
+                                  <img 
+                                    src={getStorageUrl(item.product.images[0])} 
+                                    alt={item.product.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-medium text-lg truncate">{item.product?.name}</h3>
+                                <p className="text-sm text-muted-foreground capitalize mb-1">{item.product?.category}</p>
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Badge variant="outline" className="font-normal bg-background">
+                                    Ilość: {item.quantity}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-lg">
+                                  {formatCurrency((item.product?.price || 0) * item.quantity)}
+                                </p>
+                                {item.quantity > 1 && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatCurrency(item.product?.price || 0)} / szt.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border shadow-none bg-card">
+                    <CardHeader className="bg-muted/30 border-b py-4">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <MapPin className="h-5 w-5 text-primary" />
+                        Dane do wysyłki
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="fullName">Imię i Nazwisko</Label>
+                        <Input 
+                          id="fullName" 
+                          placeholder="Jan Kowalski"
+                          value={shippingDetails.fullName}
+                          onChange={(e) => setShippingDetails({...shippingDetails, fullName: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="street">Ulica i numer</Label>
+                        <Input 
+                          id="street" 
+                          placeholder="ul. Słoneczna 12/4"
+                          value={shippingDetails.street}
+                          onChange={(e) => setShippingDetails({...shippingDetails, street: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="postalCode">Kod pocztowy</Label>
+                          <Input 
+                            id="postalCode" 
+                            placeholder="00-000"
+                            value={shippingDetails.postalCode}
+                            onChange={(e) => setShippingDetails({...shippingDetails, postalCode: e.target.value})}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="city">Miasto</Label>
+                          <Input 
+                            id="city" 
+                            placeholder="Warszawa"
+                            value={shippingDetails.city}
+                            onChange={(e) => setShippingDetails({...shippingDetails, city: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="phone">Numer telefonu</Label>
+                        <Input 
+                          id="phone" 
+                          placeholder="+48 123 456 789"
+                          value={shippingDetails.phone}
+                          onChange={(e) => setShippingDetails({...shippingDetails, phone: e.target.value})}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                    <ShieldCheck className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold mb-1">Bezpieczna transakcja</p>
+                      <p className="opacity-90">
+                        Wszystkie transakcje są szyfrowane i bezpieczne. Gwarantujemy 100% satysfakcji lub zwrot pieniędzy.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <Label>Wybierz adres dostawy</Label>
+                <div className="space-y-2">
+                  {addresses && addresses.length > 0 ? (
+                    addresses.map((address) => (
+                      <div key={address._id} className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-muted/5 transition-colors" onClick={() => setSelectedAddress(address._id)}>
+                        <div className="flex-1">
+                          <p className="font-medium">{address.fullName}</p>
+                          <p className="text-sm text-muted-foreground">{address.street}, {address.city}, {address.postalCode}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                          <span className="text-xs text-muted-foreground">Darmowa</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground p-4">
+                      Brak adresów dostawy
                     </div>
                   )}
-                </CardContent>
-              </Card>
-
-              <Card className="border shadow-none bg-card">
-                <CardHeader className="bg-muted/30 border-b py-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    Dane do wysyłki
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="fullName">Imię i Nazwisko</Label>
-                    <Input 
-                      id="fullName" 
-                      placeholder="Jan Kowalski"
-                      value={shippingDetails.fullName}
-                      onChange={(e) => setShippingDetails({...shippingDetails, fullName: e.target.value})}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="street">Ulica i numer</Label>
-                    <Input 
-                      id="street" 
-                      placeholder="ul. Słoneczna 12/4"
-                      value={shippingDetails.street}
-                      onChange={(e) => setShippingDetails({...shippingDetails, street: e.target.value})}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="postalCode">Kod pocztowy</Label>
-                      <Input 
-                        id="postalCode" 
-                        placeholder="00-000"
-                        value={shippingDetails.postalCode}
-                        onChange={(e) => setShippingDetails({...shippingDetails, postalCode: e.target.value})}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="city">Miasto</Label>
-                      <Input 
-                        id="city" 
-                        placeholder="Warszawa"
-                        value={shippingDetails.city}
-                        onChange={(e) => setShippingDetails({...shippingDetails, city: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="phone">Numer telefonu</Label>
-                    <Input 
-                      id="phone" 
-                      placeholder="+48 123 456 789"
-                      value={shippingDetails.phone}
-                      onChange={(e) => setShippingDetails({...shippingDetails, phone: e.target.value})}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900/50">
-                <ShieldCheck className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold mb-1">Bezpieczna transakcja</p>
-                  <p className="opacity-90">
-                    Wszystkie transakcje są szyfrowane i bezpieczne. Gwarantujemy 100% satysfakcji lub zwrot pieniędzy.
-                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Right Column - Summary & Payment */}
-            <div className="relative md:sticky md:top-24">
+            <div>
               <Card className="border shadow-sm bg-card overflow-hidden">
                 <CardHeader className="bg-muted/30 border-b pb-4">
                   <CardTitle className="text-xl">Do zapłaty</CardTitle>
@@ -271,7 +350,7 @@ export default function CheckoutPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Wartość produktów</span>
-                      <span>{formatCurrency(total)}</span>
+                      <span>{formatCurrency(totalAmount)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Wysyłka</span>
@@ -287,7 +366,7 @@ export default function CheckoutPage() {
                   
                   <div className="flex justify-between items-end">
                     <span className="font-bold text-lg">Razem</span>
-                    <span className="font-bold text-3xl text-primary">{formatCurrency(total)}</span>
+                    <span className="font-bold text-3xl text-primary">{formatCurrency(totalAmount)}</span>
                   </div>
 
                   <div className="pt-4">
@@ -295,7 +374,7 @@ export default function CheckoutPage() {
                       className="w-full h-14 text-lg font-bold shadow-md hover:shadow-lg transition-all" 
                       size="lg" 
                       onClick={handleCheckout}
-                      disabled={!cartItems?.length || isProcessing}
+                      disabled={!cart?.length || isProcessing}
                     >
                       {isProcessing ? (
                         <>

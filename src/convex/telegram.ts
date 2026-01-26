@@ -30,6 +30,8 @@ export const webhook = httpAction(async (ctx, request) => {
       const data = callbackQuery.data;
       const message = callbackQuery.message;
       const chatId = String(message.chat.id);
+      const messageId = message.message_id;
+      const callbackQueryId = callbackQuery.id;
       
       // Format: update_status:ORDER_ID:STATUS
       if (data && data.startsWith("update_status:")) {
@@ -204,8 +206,8 @@ export const webhook = httpAction(async (ctx, request) => {
         const endIdx = Math.min(startIdx + pageSize, allProducts.length);
         const productsPage = allProducts.slice(startIdx, endIdx);
         
-        const buttons = productsPage.map(p => ([
-          { text: `${p.name} (${p.price} PLN)`, callback_data: `delete_select:${p._id}` }
+        const buttons = productsPage.map((p: any) => ([
+          { text: `${p.name} (${p.stock} szt.)`, callback_data: `delete_product_${p._id}` }
         ]));
         
         // Add navigation buttons
@@ -249,8 +251,8 @@ export const webhook = httpAction(async (ctx, request) => {
         const endIdx = Math.min(startIdx + pageSize, allProducts.length);
         const productsPage = allProducts.slice(startIdx, endIdx);
         
-        const buttons = productsPage.map(p => ([
-          { text: `${p.name} (${p.price} PLN)`, callback_data: `edit_select:${p._id}` }
+        const buttons = productsPage.map((p: any) => ([
+          { text: `${p.name} (${p.stock} szt.)`, callback_data: `edit_product_${p._id}` }
         ]));
         
         // Add navigation buttons
@@ -291,7 +293,7 @@ export const webhook = httpAction(async (ctx, request) => {
         
         if (order) {
           const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
-          const items = order.items.map(item => `  • ${item.name} x${item.quantity} - ${item.price} PLN`).join("\n");
+          const items = order.items.map((item: any) => `  • ${item.name} x${item.quantity} - ${item.price} PLN`).join("\n");
           const address = order.shippingAddress 
             ? `\n\n📍 *Adres dostawy:*\n${order.shippingAddress.fullName}\n${order.shippingAddress.street}\n${order.shippingAddress.postalCode} ${order.shippingAddress.city}\n${order.shippingAddress.country}`
             : "\n\n📍 Brak adresu dostawy";
@@ -436,6 +438,71 @@ export const webhook = httpAction(async (ctx, request) => {
         });
       }
 
+      // Custom order quote with price input
+      if (data.startsWith("custom_quote:")) {
+        const orderId = data.split(":")[1] as Id<"customOrders">;
+        
+        await ctx.runMutation(internal.telegram_db.updateSession, {
+          chatId: chatId.toString(),
+          step: "CUSTOM_QUOTE_PRICE",
+          updates: { customOrderId: orderId },
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: "💰 Podaj cenę wyceny (tylko liczba w PLN):",
+            parse_mode: "Markdown",
+          }),
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            callback_query_id: callbackQueryId,
+            text: "Wprowadź cenę",
+          }),
+        });
+        return new Response("OK");
+      }
+
+      // Custom order status update
+      if (data.startsWith("custom_status:")) {
+        const [, orderId, status] = data.split(":");
+        
+        await ctx.runMutation(internal.customOrders.updateStatus, {
+          orderId: orderId as Id<"customOrders">,
+          status,
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/editMessageReplyMarkup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: messageId,
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: `✅ Status: ${status}`, callback_data: "noop" }]
+              ]
+            },
+          }),
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            callback_query_id: callbackQueryId,
+            text: `Status zmieniony na: ${status}`,
+          }),
+        });
+        return new Response("OK");
+      }
+
       return new Response("OK", { status: 200 });
     }
 
@@ -553,7 +620,7 @@ export const webhook = httpAction(async (ctx, request) => {
         if (stats.lowStockCount === 0) {
             await sendMessage(chatId, "✅ Wszystkie produkty mają odpowiedni stan magazynowy.");
         } else {
-            const list = stats.lowStockNames.map(n => `- ${n}`).join("\n");
+            const list = stats.lowStockNames.map((n: string) => `- ${n}`).join("\n");
             await sendMessage(chatId, `⚠️ *Niski stan magazynowy (<5):\n\n${list}`);
         }
         return new Response("OK", { status: 200 });
@@ -604,8 +671,8 @@ export const webhook = httpAction(async (ctx, request) => {
         const endIdx = Math.min(startIdx + pageSize, allProducts.length);
         const productsPage = allProducts.slice(startIdx, endIdx);
         
-        const buttons = productsPage.map(p => ([
-          { text: `${p.name} (${p.price} PLN)`, callback_data: `delete_select:${p._id}` }
+        const buttons = productsPage.map((p: any) => ([
+          { text: `${p.name} (${p.stock} szt.)`, callback_data: `delete_product_${p._id}` }
         ]));
         
         // Add navigation buttons if needed
@@ -643,8 +710,8 @@ export const webhook = httpAction(async (ctx, request) => {
         const endIdx = Math.min(startIdx + pageSize, allProducts.length);
         const productsPage = allProducts.slice(startIdx, endIdx);
         
-        const buttons = productsPage.map(p => ([
-          { text: `${p.name} (${p.price} PLN)`, callback_data: `edit_select:${p._id}` }
+        const buttons = productsPage.map((p: any) => ([
+          { text: `${p.name} (${p.stock} szt.)`, callback_data: `edit_product_${p._id}` }
         ]));
         
         // Add navigation buttons if needed
@@ -660,322 +727,374 @@ export const webhook = httpAction(async (ctx, request) => {
         return new Response("OK", { status: 200 });
       }
 
-      // CONVERSATION FLOW
-      if (session) {
-        // Handle Text Inputs
-        if (text && !text.startsWith("/")) {
-          switch (session.step) {
-            case "EDIT_CHOOSE_FIELD":
-              let nextStep = "EDIT_VALUE";
-              let prompt = "";
-              
-              switch(text) {
-                case "Nazwa": prompt = "Podaj nową nazwę:"; break;
-                case "Opis": prompt = "Podaj nowy opis:"; break;
-                case "Cena": prompt = "Podaj nową cenę (PLN):"; break;
-                case "Ilość": prompt = "Podaj nową ilość:"; break;
-                case "Kategoria": prompt = "Podaj nową kategorię:"; break;
-                default: 
-                  await sendMessage(chatId, "❌ Nieznane pole. Wybierz z klawiatury.");
-                  return new Response("OK", { status: 200 });
-              }
+      // Handle text messages with sessions
+      if (message?.text) {
+        const text = message.text;
+        const chatId = message.chat.id;
 
-              await ctx.runMutation(internal.telegram_db.updateSession, {
-                chatId,
-                step: `EDIT_VALUE_${text.toUpperCase()}`, // e.g. EDIT_VALUE_CENA
-                updates: {}
-              });
-              await sendMessage(chatId, prompt, { remove_keyboard: true });
-              break;
+        // Check for active session
+        const session = await ctx.runQuery(internal.telegram_db.getSession, {
+          chatId: chatId.toString(),
+        });
 
-            case "EDIT_VALUE_NAZWA":
-            case "EDIT_VALUE_OPIS":
-            case "EDIT_VALUE_CENA":
-            case "EDIT_VALUE_ILOŚĆ": // Handle polish chars in step name if needed, but better to map
-            case "EDIT_VALUE_ILOSC":
-            case "EDIT_VALUE_KATEGORIA":
-              // We need to map the step back to the field
-              const fieldMap: Record<string, string> = {
-                "EDIT_VALUE_NAZWA": "name",
-                "EDIT_VALUE_OPIS": "description",
-                "EDIT_VALUE_CENA": "price",
-                "EDIT_VALUE_ILOŚĆ": "inventory",
-                "EDIT_VALUE_ILOSC": "inventory",
-                "EDIT_VALUE_KATEGORIA": "category"
-              };
-              
-              const field = fieldMap[session.step];
-              if (!field || !session.editingProductId) {
-                 await sendMessage(chatId, "❌ Błąd sesji. Wpisz /cancel");
-                 return new Response("OK", { status: 200 });
-              }
-
-              const updates: Record<string, any> = {};
-              if (field === "price") {
-                const val = parseFloat(text.replace(",", "."));
-                if (isNaN(val)) {
-                  await sendMessage(chatId, "❌ Cena musi być liczbą.");
-                  return new Response("OK", { status: 200 });
-                }
-                updates.price = val;
-              } else if (field === "inventory") {
-                const val = parseInt(text);
-                if (isNaN(val)) {
-                  await sendMessage(chatId, "❌ Ilość musi być liczbą.");
-                  return new Response("OK", { status: 200 });
-                }
-                updates.inventory = val;
-              } else {
-                updates[field] = text;
-              }
-
-              // Apply update
-              await ctx.runMutation(api.products.update, {
-                id: session.editingProductId as Id<"products">,
-                updates: updates
-              });
-
-              await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
-              await sendMessage(chatId, "✅ Zaktualizowano produkt!");
-              break;
-
-            case "NAME":
-              await ctx.runMutation(internal.telegram_db.updateSession, {
-                chatId,
-                step: "CHOOSE_DESCRIPTION_TYPE",
-                updates: { name: text }
-              });
-              
-              const descKeyboard = {
-                keyboard: [
-                  [{ text: "✍️ Ręcznie" }, { text: "✨ AI (ulepsz opis)" }]
-                ],
-                one_time_keyboard: true,
-                resize_keyboard: true
-              };
-              
-              await sendMessage(chatId, "📝 Jak chcesz dodać opis?", descKeyboard);
-              break;
-
-            case "CHOOSE_DESCRIPTION_TYPE":
-               if (text === "✨ AI (ulepsz opis)") {
-                  await ctx.runMutation(internal.telegram_db.updateSession, {
-                    chatId,
-                    step: "DESCRIPTION_FOR_AI",
-                    updates: {}
-                  });
-                  await sendMessage(chatId, "📝 Wpisz podstawowy opis produktu, a AI go ulepszy i rozbuduje:", { remove_keyboard: true });
-               } else {
-                  // Default to manual
-                  await ctx.runMutation(internal.telegram_db.updateSession, {
-                    chatId,
-                    step: "DESCRIPTION",
-                    updates: {}
-                  });
-                  await sendMessage(chatId, "📝 Podaj opis produktu:", { remove_keyboard: true });
-               }
-               break;
-
-            case "DESCRIPTION_FOR_AI":
-              await sendMessage(chatId, "🤖 Ulepszam opis... Proszę czekać.");
-              
-              // Call AI Action to improve description
-              // @ts-ignore
-              const improvedDescription = await ctx.runAction(internal.ai.generateProductDescription, {
-                name: session.productData.name || "Produkt",
-                imageUrl: text // Using text as the base description to improve
-              });
-
-              await ctx.runMutation(internal.telegram_db.updateSession, {
-                chatId,
-                step: "CATEGORY",
-                updates: { 
-                  description: improvedDescription
-                }
-              });
-
-              const categoryKeyboardAI = {
-                keyboard: [
-                  [{ text: "art" }, { text: "decor" }],
-                  [{ text: "functional" }, { text: "gadgets" }],
-                  [{ text: "other" }]
-                ],
-                one_time_keyboard: true,
-                resize_keyboard: true
-              };
-
-              await sendMessage(chatId, `✨ *Ulepszony opis:*\n${improvedDescription}\n\n📂 Wybierz kategorię:`, categoryKeyboardAI);
-              break;
-
-            case "DESCRIPTION":
-              await ctx.runMutation(internal.telegram_db.updateSession, {
-                chatId,
-                step: "CATEGORY",
-                updates: { description: text }
-              });
-              
-              const categoryKeyboardManual = {
-                keyboard: [
-                  [{ text: "art" }, { text: "decor" }],
-                  [{ text: "functional" }, { text: "gadgets" }],
-                  [{ text: "other" }]
-                ],
-                one_time_keyboard: true,
-                resize_keyboard: true
-              };
-              
-              await sendMessage(chatId, "📂 Wybierz kategorię:", categoryKeyboardManual);
-              break;
-
-            case "CATEGORY":
-              await ctx.runMutation(internal.telegram_db.updateSession, {
-                chatId,
-                step: "PRICE",
-                updates: { category: text.toLowerCase() }
-              });
-              
-              // Remove keyboard by sending a new one or removing it
-              const removeKeyboard = { remove_keyboard: true };
-              await sendMessage(chatId, "💰 Podaj cenę (PLN):", removeKeyboard);
-              break;
-
-            case "PRICE":
-              const price = parseFloat(text.replace(",", "."));
-              if (isNaN(price)) {
-                await sendMessage(chatId, "❌ Cena musi być liczbą. Spróbuj ponownie:");
-                return new Response("OK", { status: 200 });
-              }
-              await ctx.runMutation(internal.telegram_db.updateSession, {
-                chatId,
-                step: "INVENTORY",
-                updates: { price }
-              });
-              await sendMessage(chatId, "🔢 Podaj ilość sztuk w magazynie:");
-              break;
-
-            case "INVENTORY":
-              const inventory = parseInt(text);
-              if (isNaN(inventory)) {
-                await sendMessage(chatId, "❌ Ilość musi być liczbą całkowitą. Spróbuj ponownie:");
-                return new Response("OK", { status: 200 });
-              }
-              await ctx.runMutation(internal.telegram_db.updateSession, {
-                chatId,
-                step: "IMAGES",
-                updates: { inventory }
-              });
-              await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\n\nKiedy skończysz, wpisz /done");
-              break;
-              
-            case "IMAGES":
-              await sendMessage(chatId, "📸 Wyślij zdjęcie lub wpisz /done aby zakończyć.");
-              break;
-          }
-        }
-
-        // Handle Image Inputs
-        if (message.photo) {
-          if (session.step === "IMAGES" || session.step === "DESCRIPTION_AI_WAIT_IMAGE") {
-            try {
-              const photo = message.photo[message.photo.length - 1];
-              const fileId = photo.file_id;
-
-              const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
-              const fileData = await fileRes.json();
-              
-              if (fileData.ok) {
-                const filePath = fileData.result.file_path;
-                const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
-                
-                const imageRes = await fetch(fileUrl);
-                const imageBlob = await imageRes.blob();
-                
-                // Ensure we have a content type
-                let blobToStore = imageBlob;
-                if (!imageBlob.type || imageBlob.type === 'application/octet-stream') {
-                   // Try to guess from file path extension
-                   const ext = filePath.split('.').pop()?.toLowerCase();
-                   let type = 'image/jpeg';
-                   if (ext === 'png') type = 'image/png';
-                   if (ext === 'webp') type = 'image/webp';
-                   if (ext === 'jpg' || ext === 'jpeg') type = 'image/jpeg';
-                   
-                   blobToStore = new Blob([await imageBlob.arrayBuffer()], { type });
-                }
-
-                const storageId = await ctx.storage.store(blobToStore);
-
-                if (session.step === "DESCRIPTION_AI_WAIT_IMAGE") {
-                  // AI Generation Flow
-                  await sendMessage(chatId, "🤖 Generuję opis na podstawie zdjęcia... Proszę czekać.");
-                  
-                  // Call AI Action
-                  // @ts-ignore
-                  const description = await ctx.runAction(internal.ai.generateProductDescription, {
-                    name: session.productData.name || "Produkt",
-                    imageUrl: fileUrl
-                  });
-
-                  await ctx.runMutation(internal.telegram_db.updateSession, {
-                    chatId,
-                    step: "CATEGORY",
-                    updates: { 
-                      description: description,
-                      images: [storageId] // Add this image as the first image
-                    }
-                  });
-
-                  const categoryKeyboard = {
-                    keyboard: [
-                      [{ text: "art" }, { text: "decor" }],
-                      [{ text: "functional" }, { text: "gadgets" }],
-                      [{ text: "other" }]
-                    ],
-                    one_time_keyboard: true,
-                    resize_keyboard: true
-                  };
-
-                  await sendMessage(chatId, `✨ *Wygenerowany opis:*\n${description}\n\n📂 Wybierz kategorię:`, categoryKeyboard);
-
-                } else {
-                  // Standard Image Upload Flow
-                  await ctx.runMutation(internal.telegram_db.updateSession, {
-                    chatId,
-                    step: "IMAGES",
-                    updates: { image: storageId }
-                  });
-                  await sendMessage(chatId, "✅ Zdjęcie dodane. Wyślij kolejne lub wpisz /done");
-                }
-              }
-            } catch (e: any) {
-              console.error(e);
-              await sendMessage(chatId, "❌ Błąd podczas pobierania zdjęcia.");
-            }
-          }
-        }
-
-        // Handle Finish
-        if (text === "/done" && session.step === "IMAGES") {
-          const finalSession = await ctx.runQuery(internal.telegram_db.getSession, { chatId });
-          if (!finalSession || !finalSession.productData.images || finalSession.productData.images.length === 0) {
-            await sendMessage(chatId, "⚠️ Musisz dodać przynajmniej jedno zdjęcie!");
-            return new Response("OK", { status: 200 });
-          }
-
-          const p = finalSession.productData;
+        // Handle custom quote price input
+        if (session?.step === "CUSTOM_QUOTE_PRICE") {
+          const price = parseFloat(text);
           
-          await ctx.runMutation(api.products.create, {
-            name: p.name!,
-            description: p.description!,
-            category: p.category!,
-            price: p.price!,
-            inventory: p.inventory!,
-            images: p.images!,
-            featured: false,
+          if (isNaN(price) || price <= 0) {
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: "❌ Nieprawidłowa cena. Podaj liczbę większą od 0:",
+              }),
+            });
+            return new Response("OK");
+          }
+
+          const orderId = session.customOrderId as Id<"customOrders">;
+          
+          await ctx.runMutation(internal.customOrders.updateStatus, {
+            orderId,
+            status: "quoted",
+            estimatedPrice: price,
           });
 
-          await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
-          await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\n\n${p.name}\n${p.price} PLN`);
+          await ctx.runMutation(internal.telegram_db.clearSession, {
+            chatId: chatId.toString(),
+          });
+
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: `✅ Wycena zapisana: ${price} PLN\n\nKlient otrzyma powiadomienie i będzie mógł zaakceptować wycenę.`,
+              parse_mode: "Markdown",
+            }),
+          });
+
+          return new Response("OK");
+        }
+
+        // CONVERSATION FLOW
+        if (session) {
+          // Handle Text Inputs
+          if (text && !text.startsWith("/")) {
+            switch (session.step) {
+              case "EDIT_CHOOSE_FIELD":
+                let nextStep = "EDIT_VALUE";
+                let prompt = "";
+                
+                switch(text) {
+                  case "Nazwa": prompt = "Podaj nową nazwę:"; break;
+                  case "Opis": prompt = "Podaj nowy opis:"; break;
+                  case "Cena": prompt = "Podaj nową cenę (PLN):"; break;
+                  case "Ilość": prompt = "Podaj nową ilość:"; break;
+                  case "Kategoria": prompt = "Podaj nową kategorię:"; break;
+                  default: 
+                    await sendMessage(chatId, "❌ Nieznane pole. Wybierz z klawiatury.");
+                    return new Response("OK", { status: 200 });
+                }
+
+                await ctx.runMutation(internal.telegram_db.updateSession, {
+                  chatId,
+                  step: `EDIT_VALUE_${text.toUpperCase()}`, // e.g. EDIT_VALUE_CENA
+                  updates: {}
+                });
+                await sendMessage(chatId, prompt, { remove_keyboard: true });
+                break;
+
+              case "EDIT_VALUE_NAZWA":
+              case "EDIT_VALUE_OPIS":
+              case "EDIT_VALUE_CENA":
+              case "EDIT_VALUE_ILOŚĆ": // Handle polish chars in step name if needed, but better to map
+              case "EDIT_VALUE_ILOSC":
+              case "EDIT_VALUE_KATEGORIA":
+                // We need to map the step back to the field
+                const fieldMap: Record<string, string> = {
+                  "EDIT_VALUE_NAZWA": "name",
+                  "EDIT_VALUE_OPIS": "description",
+                  "EDIT_VALUE_CENA": "price",
+                  "EDIT_VALUE_ILOŚĆ": "inventory",
+                  "EDIT_VALUE_ILOSC": "inventory",
+                  "EDIT_VALUE_KATEGORIA": "category"
+                };
+                
+                const field = fieldMap[session.step];
+                if (!field || !session.editingProductId) {
+                   await sendMessage(chatId, "❌ Błąd sesji. Wpisz /cancel");
+                   return new Response("OK", { status: 200 });
+                }
+
+                const updates: Record<string, any> = {};
+                if (field === "price") {
+                  const val = parseFloat(text.replace(",", "."));
+                  if (isNaN(val)) {
+                    await sendMessage(chatId, "❌ Cena musi być liczbą.");
+                    return new Response("OK", { status: 200 });
+                  }
+                  updates.price = val;
+                } else if (field === "inventory") {
+                  const val = parseInt(text);
+                  if (isNaN(val)) {
+                    await sendMessage(chatId, "❌ Ilość musi być liczbą.");
+                    return new Response("OK", { status: 200 });
+                  }
+                  updates.inventory = val;
+                } else {
+                  updates[field] = text;
+                }
+
+                // Apply update
+                await ctx.runMutation(api.products.update, {
+                  id: session.editingProductId as Id<"products">,
+                  updates: updates
+                });
+
+                await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+                await sendMessage(chatId, "✅ Zaktualizowano produkt!");
+                break;
+
+              case "NAME":
+                await ctx.runMutation(internal.telegram_db.updateSession, {
+                  chatId,
+                  step: "CHOOSE_DESCRIPTION_TYPE",
+                  updates: { name: text }
+                });
+                
+                const descKeyboard = {
+                  keyboard: [
+                    [{ text: "✍️ Ręcznie" }, { text: "✨ AI (ulepsz opis)" }]
+                  ],
+                  one_time_keyboard: true,
+                  resize_keyboard: true
+                };
+                
+                await sendMessage(chatId, "📝 Jak chcesz dodać opis?", descKeyboard);
+                break;
+
+              case "CHOOSE_DESCRIPTION_TYPE":
+                 if (text === "✨ AI (ulepsz opis)") {
+                    await ctx.runMutation(internal.telegram_db.updateSession, {
+                      chatId,
+                      step: "DESCRIPTION_FOR_AI",
+                      updates: {}
+                    });
+                    await sendMessage(chatId, "📝 Wpisz podstawowy opis produktu, a AI go ulepszy i rozbuduje:", { remove_keyboard: true });
+                 } else {
+                    // Default to manual
+                    await ctx.runMutation(internal.telegram_db.updateSession, {
+                      chatId,
+                      step: "DESCRIPTION",
+                      updates: {}
+                    });
+                    await sendMessage(chatId, "📝 Podaj opis produktu:", { remove_keyboard: true });
+                 }
+                 break;
+
+              case "DESCRIPTION_FOR_AI":
+                await sendMessage(chatId, "🤖 Ulepszam opis... Proszę czekać.");
+                
+                // Call AI Action to improve description
+                // @ts-ignore
+                const improvedDescription = await ctx.runAction(internal.ai.generateProductDescription, {
+                  name: session.productData.name || "Produkt",
+                  imageUrl: text // Using text as the base description to improve
+                });
+
+                await ctx.runMutation(internal.telegram_db.updateSession, {
+                  chatId,
+                  step: "CATEGORY",
+                  updates: { 
+                    description: improvedDescription
+                  }
+                });
+
+                const categoryKeyboardAI = {
+                  keyboard: [
+                    [{ text: "art" }, { text: "decor" }],
+                    [{ text: "functional" }, { text: "gadgets" }],
+                    [{ text: "other" }]
+                  ],
+                  one_time_keyboard: true,
+                  resize_keyboard: true
+                };
+
+                await sendMessage(chatId, `✨ *Ulepszony opis:*\n${improvedDescription}\n\n📂 Wybierz kategorię:`, categoryKeyboardAI);
+                break;
+
+              case "DESCRIPTION":
+                await ctx.runMutation(internal.telegram_db.updateSession, {
+                  chatId,
+                  step: "CATEGORY",
+                  updates: { description: text }
+                });
+                
+                const categoryKeyboardManual = {
+                  keyboard: [
+                    [{ text: "art" }, { text: "decor" }],
+                    [{ text: "functional" }, { text: "gadgets" }],
+                    [{ text: "other" }]
+                  ],
+                  one_time_keyboard: true,
+                  resize_keyboard: true
+                };
+                
+                await sendMessage(chatId, "📂 Wybierz kategorię:", categoryKeyboardManual);
+                break;
+
+              case "CATEGORY":
+                await ctx.runMutation(internal.telegram_db.updateSession, {
+                  chatId,
+                  step: "PRICE",
+                  updates: { category: text.toLowerCase() }
+                });
+                
+                // Remove keyboard by sending a new one or removing it
+                const removeKeyboard = { remove_keyboard: true };
+                await sendMessage(chatId, "💰 Podaj cenę (PLN):", removeKeyboard);
+                break;
+
+              case "PRICE":
+                const price = parseFloat(text.replace(",", "."));
+                if (isNaN(price)) {
+                  await sendMessage(chatId, "❌ Cena musi być liczbą. Spróbuj ponownie:");
+                  return new Response("OK", { status: 200 });
+                }
+                await ctx.runMutation(internal.telegram_db.updateSession, {
+                  chatId,
+                  step: "INVENTORY",
+                  updates: { price }
+                });
+                await sendMessage(chatId, "🔢 Podaj ilość sztuk w magazynie:");
+                break;
+
+              case "INVENTORY":
+                const inventory = parseInt(text);
+                if (isNaN(inventory)) {
+                  await sendMessage(chatId, "❌ Ilość musi być liczbą całkowitą. Spróbuj ponownie:");
+                  return new Response("OK", { status: 200 });
+                }
+                await ctx.runMutation(internal.telegram_db.updateSession, {
+                  chatId,
+                  step: "IMAGES",
+                  updates: { inventory }
+                });
+                await sendMessage(chatId, "📸 Wyślij zdjęcie produktu (możesz wysłać kilka pojedynczo).\n\nKiedy skończysz, wpisz /done");
+                break;
+                
+              case "IMAGES":
+                await sendMessage(chatId, "📸 Wyślij zdjęcie lub wpisz /done aby zakończyć.");
+                break;
+            }
+          }
+
+          // Handle Image Inputs
+          if (message.photo) {
+            if (session.step === "IMAGES" || session.step === "DESCRIPTION_AI_WAIT_IMAGE") {
+              try {
+                const photo = message.photo[message.photo.length - 1];
+                const fileId = photo.file_id;
+
+                const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+                const fileData = await fileRes.json();
+                
+                if (fileData.ok) {
+                  const filePath = fileData.result.file_path;
+                  const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+                  
+                  const imageRes = await fetch(fileUrl);
+                  const imageBlob = await imageRes.blob();
+                  
+                  // Ensure we have a content type
+                  let blobToStore = imageBlob;
+                  if (!imageBlob.type || imageBlob.type === 'application/octet-stream') {
+                     // Try to guess from file path extension
+                     const ext = filePath.split('.').pop()?.toLowerCase();
+                     let type = 'image/jpeg';
+                     if (ext === 'png') type = 'image/png';
+                     if (ext === 'webp') type = 'image/webp';
+                     if (ext === 'jpg' || ext === 'jpeg') type = 'image/jpeg';
+                     
+                     blobToStore = new Blob([await imageBlob.arrayBuffer()], { type });
+                  }
+
+                  const storageId = await ctx.storage.store(blobToStore);
+
+                  if (session.step === "DESCRIPTION_AI_WAIT_IMAGE") {
+                    // AI Generation Flow
+                    await sendMessage(chatId, "🤖 Generuję opis na podstawie zdjęcia... Proszę czekać.");
+                    
+                    // Call AI Action
+                    // @ts-ignore
+                    const description = await ctx.runAction(internal.ai.generateProductDescription, {
+                      name: session.productData.name || "Produkt",
+                      imageUrl: fileUrl
+                    });
+
+                    await ctx.runMutation(internal.telegram_db.updateSession, {
+                      chatId,
+                      step: "CATEGORY",
+                      updates: { 
+                        description: description,
+                        images: [storageId] // Add this image as the first image
+                      }
+                    });
+
+                    const categoryKeyboard = {
+                      keyboard: [
+                        [{ text: "art" }, { text: "decor" }],
+                        [{ text: "functional" }, { text: "gadgets" }],
+                        [{ text: "other" }]
+                      ],
+                      one_time_keyboard: true,
+                      resize_keyboard: true
+                    };
+
+                    await sendMessage(chatId, `✨ *Wygenerowany opis:*\n${description}\n\n📂 Wybierz kategorię:`, categoryKeyboard);
+
+                  } else {
+                    // Standard Image Upload Flow
+                    await ctx.runMutation(internal.telegram_db.updateSession, {
+                      chatId,
+                      step: "IMAGES",
+                      updates: { image: storageId }
+                    });
+                    await sendMessage(chatId, "✅ Zdjęcie dodane. Wyślij kolejne lub wpisz /done");
+                  }
+                }
+              } catch (e: any) {
+                console.error(e);
+                await sendMessage(chatId, "❌ Błąd podczas pobierania zdjęcia.");
+              }
+            }
+          }
+
+          // Handle Finish
+          if (text === "/done" && session.step === "IMAGES") {
+            const finalSession = await ctx.runQuery(internal.telegram_db.getSession, { chatId });
+            if (!finalSession || !finalSession.productData.images || finalSession.productData.images.length === 0) {
+              await sendMessage(chatId, "⚠️ Musisz dodać przynajmniej jedno zdjęcie!");
+              return new Response("OK", { status: 200 });
+            }
+
+            const p = finalSession.productData;
+            
+            await ctx.runMutation(api.products.create, {
+              name: p.name!,
+              description: p.description!,
+              category: p.category!,
+              price: p.price!,
+              inventory: p.inventory!,
+              images: p.images!,
+              featured: false,
+            });
+
+            await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+            await sendMessage(chatId, `✅ *Produkt utworzony pomyślnie!*\n\n${p.name}\n${p.price} PLN`);
+          }
         }
       }
     }

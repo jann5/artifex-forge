@@ -121,7 +121,7 @@ export const sendCustomOrderNotification = internalAction({
       return;
     }
 
-    const order = await ctx.runQuery(internal.customOrders.getById, {
+    const order = await ctx.runQuery(internal.customOrders.getByIdInternal, {
       orderId: args.customOrderId,
     });
 
@@ -139,12 +139,13 @@ export const sendCustomOrderNotification = internalAction({
                 `📧 Email: ${order.customerEmail}\n` +
                 `🧱 Materiał: ${order.material}\n` +
                 `📝 Opis:\n${order.description}${contactInfo}\n\n` +
-                `📸 Zdjęcia: ${order.images.length} załącznik(ów)`;
+                `📸 Zdjęcia: ${order.images.length} załącznik(ów)\n\n` +
+                `ID: \`${order._id}\``;
 
     const keyboard = {
       inline_keyboard: [
         [
-          { text: "💰 Wyceniono", callback_data: `custom_status:${order._id}:quoted` },
+          { text: "💰 Wyceniono", callback_data: `custom_quote:${order._id}` },
           { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` }
         ],
         [
@@ -184,6 +185,40 @@ export const sendCustomOrderNotification = internalAction({
         });
       }
     }
+  },
+});
+
+export const sendCustomOrderUpdate = internalAction({
+  args: {
+    customOrderId: v.id("customOrders"),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (!botToken || !chatId) return;
+
+    const order = await ctx.runQuery(internal.customOrders.getByIdInternal, {
+      orderId: args.customOrderId,
+    });
+
+    if (!order) return;
+
+    const msg = `📬 *Aktualizacja zamówienia niestandardowego*\n\n` +
+                `📦 Projekt: ${order.projectName}\n` +
+                `👤 Klient: ${order.customerEmail}\n` +
+                `💬 Wiadomość: ${args.message}`;
+
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: msg,
+        parse_mode: "Markdown",
+      }),
+    });
   },
 });
 
