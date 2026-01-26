@@ -1,7 +1,8 @@
 import React, { Component, ReactNode, StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexReactClient } from "convex/react";
+import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { Toaster } from "sonner";
 import "./index.css";
 
@@ -153,10 +154,10 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
-      <ConvexProvider client={convex}>
+      <ConvexAuthProvider client={convex}>
         <RouterProvider router={router} />
         <Toaster />
-      </ConvexProvider>
+      </ConvexAuthProvider>
     </ErrorBoundary>
   </StrictMode>,
 );
