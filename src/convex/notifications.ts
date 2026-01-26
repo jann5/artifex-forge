@@ -57,6 +57,7 @@ Zarządzaj statusem poniżej:
     };
 
     try {
+      console.log(`[sendTelegramNotification] Sending message to Telegram...`);
       const response = await fetch(
         `https://api.telegram.org/bot${botToken}/sendMessage`,
         {
@@ -71,16 +72,19 @@ Zarządzaj statusem poniżej:
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`Telegram API error: ${response.statusText}`);
+      const result = await response.json();
+      console.log(`[sendTelegramNotification] Telegram API response:`, JSON.stringify(result));
+
+      if (!response.ok || !result.ok) {
+        console.error(`[sendTelegramNotification] Telegram API error:`, result);
+        throw new Error(`Telegram API error: ${result.description || response.statusText}`);
       }
 
-      const result = await response.json();
-      console.log(`[sendTelegramNotification] Telegram API response:`, result);
       console.log(`[sendTelegramNotification] Notification sent successfully for order ${args.orderId}`);
       return { success: true };
     } catch (error: any) {
-      console.error("Failed to send Telegram notification:", error);
+      console.error(`[sendTelegramNotification] Failed to send notification:`, error);
+      console.error(`[sendTelegramNotification] Error details:`, error.message);
       return { success: false, message: error.message };
     }
   },

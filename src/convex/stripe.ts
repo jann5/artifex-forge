@@ -41,14 +41,24 @@ export const createCheckoutSession = action({
       const totalAmount = args.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
       const mockSessionId = `mock_session_${crypto.randomUUID()}`;
 
+      console.log(`[MOCK CHECKOUT] Creating order for user: ${userId}`);
+      console.log(`[MOCK CHECKOUT] Total amount: ${totalAmount} PLN`);
+      console.log(`[MOCK CHECKOUT] Items:`, args.items);
+
       // Create order immediately for mock checkout
-      await ctx.runMutation(internal.orders.createFromStripe, {
-        sessionId: mockSessionId,
-        userId,
-        items: args.items,
-        totalAmount,
-        shippingAddress: args.shippingAddress,
-      });
+      try {
+        const orderId = await ctx.runMutation(internal.orders.createFromStripe, {
+          sessionId: mockSessionId,
+          userId,
+          items: args.items,
+          totalAmount,
+          shippingAddress: args.shippingAddress,
+        });
+        console.log(`[MOCK CHECKOUT] Order created successfully: ${orderId}`);
+      } catch (error) {
+        console.error(`[MOCK CHECKOUT] Failed to create order:`, error);
+        throw error;
+      }
 
       return { sessionId: mockSessionId, url: `${domain}/payment-success` };
     }
@@ -120,14 +130,24 @@ export const handleWebhook = action({
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       
+      console.log(`[STRIPE WEBHOOK] Checkout session completed: ${session.id}`);
+      console.log(`[STRIPE WEBHOOK] User ID: ${session.metadata?.userId}`);
+      console.log(`[STRIPE WEBHOOK] Amount: ${(session.amount_total || 0) / 100} PLN`);
+      
       // Create order in database
-      await ctx.runMutation(internal.orders.createFromStripe, {
-        sessionId: session.id,
-        userId: session.metadata?.userId!,
-        items: JSON.parse(session.metadata?.items || "[]"),
-        totalAmount: (session.amount_total || 0) / 100,
-        shippingAddress: session.metadata?.shippingAddress ? JSON.parse(session.metadata.shippingAddress) : undefined,
-      });
+      try {
+        const orderId = await ctx.runMutation(internal.orders.createFromStripe, {
+          sessionId: session.id,
+          userId: session.metadata?.userId!,
+          items: JSON.parse(session.metadata?.items || "[]"),
+          totalAmount: (session.amount_total || 0) / 100,
+          shippingAddress: session.metadata?.shippingAddress ? JSON.parse(session.metadata.shippingAddress) : undefined,
+        });
+        console.log(`[STRIPE WEBHOOK] Order created successfully: ${orderId}`);
+      } catch (error) {
+        console.error(`[STRIPE WEBHOOK] Failed to create order:`, error);
+        throw error;
+      }
     }
 
     return { received: true };
