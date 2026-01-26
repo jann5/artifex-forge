@@ -1,1 +1,1 @@
-npx convex env set CONVEX_SITE_URL https://your-project.vercel.app
+npx convex run debug:testOrderFlow
