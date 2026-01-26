@@ -29,10 +29,13 @@ export const createCheckoutSession = action({
     if (!userId) throw new Error("Not authenticated");
 
     // Use SITE_URL (which is already configured in vly)
-    const domain = process.env.SITE_URL;
+    let domain = process.env.SITE_URL;
     if (!domain) {
       throw new Error("SITE_URL is missing. Please check your environment variables in vly.");
     }
+    
+    // Remove trailing slash to prevent double slashes in URLs
+    domain = domain.replace(/\/$/, '');
 
     // MOCK CHECKOUT MODE (If Stripe key is missing)
     if (!process.env.STRIPE_SECRET_KEY) {
