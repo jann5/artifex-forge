@@ -28,10 +28,10 @@ export const createCheckoutSession = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    // Use VERCEL_URL if available, otherwise fall back to CONVEX_SITE_URL
-    const domain = process.env.VERCEL_URL || process.env.CONVEX_SITE_URL;
+    // Use SITE_URL (which is already configured in vly)
+    const domain = process.env.SITE_URL;
     if (!domain) {
-      throw new Error("VERCEL_URL or CONVEX_SITE_URL is missing. Please check your environment variables.");
+      throw new Error("SITE_URL is missing. Please check your environment variables in vly.");
     }
 
     // MOCK CHECKOUT MODE (If Stripe key is missing)
