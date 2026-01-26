@@ -413,7 +413,50 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // COMMANDS
       if (text === "/start" || text === "/help") {
-        await sendMessage(chatId, "🤖 *Artifex Bot*\n\nKomendy:\n/orders - Ostatnie zamówienia\n/stats - Statystyki sklepu\n/lowstock - Niskie stany magazynowe\n/addproduct - Dodaj produkt\n/editproduct - Edytuj produkt\n/deleteproduct - Usuń produkt\n/cancel - Anuluj\n/help - Pomoc");
+        await sendMessage(chatId, "🤖 *Artifex Bot*\\n\\nKomendy:\\n/orders - Ostatnie zamówienia\\n/stats - Statystyki sklepu\\n/lowstock - Niskie stany magazynowe\\n/addproduct - Dodaj produkt\\n/editproduct - Edytuj produkt\\n/deleteproduct - Usuń produkt\\n/cancel - Anuluj\\n\\n🛠️ *Developer:*\\n/dev_ping - Status serwera\\n/dev_info - Twoje ID\\n/dev_db - Statystyki bazy\\n/dev_reset - Reset sesji\\n/help - Pomoc");
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/dev_ping") {
+        const start = Date.now();
+        const stats = await ctx.runQuery(internal.dev.getSystemStats);
+        const latency = Date.now() - start;
+        
+        const msg = `🏓 *Pong!*\\n\\n` +
+                    `⏱️ Latency: ${latency}ms\\n` +
+                    `🕒 Server Time: ${new Date(stats.serverTime).toISOString()}\\n` +
+                    `🔗 URL: ${stats.convexSiteUrl || "Not set"}`;
+        
+        await sendMessage(chatId, msg);
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/dev_info") {
+        const msg = `🕵️ *Developer Info*\\n\\n` +
+                    `🆔 Chat ID: \`${chatId}\`\\n` +
+                    `👤 User: ${message.from?.first_name} ${message.from?.last_name || ""} (@${message.from?.username || "none"})\\n` +
+                    `📝 Message ID: ${message.message_id}`;
+        
+        await sendMessage(chatId, msg);
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/dev_db") {
+        const stats = await ctx.runQuery(internal.dev.getSystemStats);
+        
+        const msg = `💾 *Database Stats*\\n\\n` +
+                    `👥 Users: ${stats.users}\\n` +
+                    `🛍️ Products: ${stats.products}\\n` +
+                    `📦 Orders: ${stats.orders}\\n` +
+                    `⭐ Reviews: ${stats.reviews}`;
+        
+        await sendMessage(chatId, msg);
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/dev_reset") {
+        const result = await ctx.runMutation(internal.dev.debugClearSession, { chatId });
+        await sendMessage(chatId, result ? "✅ Session cleared (Hard Reset)." : "ℹ️ No active session found.");
         return new Response("OK", { status: 200 });
       }
 
