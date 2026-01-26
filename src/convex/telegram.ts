@@ -210,6 +210,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // Handle Custom Order Status Update
       if (data && data.startsWith("custom_status:")) {
+        await answerCallback();
         const parts = data.split(":");
         if (parts.length === 3) {
           const orderId = parts[1] as Id<"customOrders">;
@@ -219,8 +220,6 @@ export const webhook = httpAction(async (ctx, request) => {
             orderId: orderId,
             status: status,
           });
-          
-          await answerCallback(`Status zmieniony na ${status}`);
 
           const originalText = message.text || "";
           const updatedText = originalText.replace(/Status: .*/, `Status: ${status}`);
@@ -554,6 +553,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // Custom order quote with price input
       if (data.startsWith("custom_quote:")) {
+        await answerCallback("Wprowadź cenę");
         const orderId = data.split(":")[1] as Id<"customOrders">;
         
         await ctx.runMutation(internal.telegram_db.updateSession, {
@@ -572,16 +572,15 @@ export const webhook = httpAction(async (ctx, request) => {
           }),
         });
 
-        await answerCallback("Wprowadź cenę");
         return new Response("OK", { status: 200 });
       }
 
       // Handle Custom Order Message
       if (data.startsWith("custom_message:")) {
+        await answerCallback("Wpisz wiadomość");
         const orderId = data.replace("custom_message:", "");
         await handleCustomOrderMessage(ctx, chatId, orderId);
         
-        await answerCallback("Wpisz wiadomość");
         return new Response("OK", { status: 200 });
       }
 
