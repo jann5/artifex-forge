@@ -372,6 +372,7 @@ export default function Landing() {
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li><Link to="/about" className="hover:text-foreground transition-colors">O Nas</Link></li>
                 <li><Link to="/contact" className="hover:text-foreground transition-colors">Kontakt</Link></li>
+                <li><Link to="/contact#faq-section" className="hover:text-foreground transition-colors">FAQ</Link></li>
                 <li><Link to="/terms" className="hover:text-foreground transition-colors">Regulamin</Link></li>
               </ul>
             </div>
