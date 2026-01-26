@@ -1,167 +1,207 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { formatCurrency } from "@/lib/format";
+import { Package, Clock, CheckCircle, XCircle, MessageSquare, Send } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import { useState } from "react";
 import { toast } from "sonner";
-import { MessageCircle, Package, DollarSign, CheckCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router";
+import type { Id } from "@/convex/_generated/dataModel";
 
 interface CustomOrderCardProps {
   order: {
     _id: Id<"customOrders">;
+    _creationTime: number;
     projectName: string;
-    description: string;
+    customerName: string;
     material: string;
+    description: string;
     status: string;
     estimatedPrice?: number;
-    adminNotes?: string;
-    _creationTime: number;
     messages?: Array<{
       _id: Id<"customOrderMessages">;
-      message: string;
-      senderName: string;
-      isAdmin: boolean;
       _creationTime: number;
+      message: string;
+      isAdmin: boolean;
+      senderName: string;
     }>;
   };
 }
 
-const statusLabels: Record<string, { label: string; color: string }> = {
-  pending: { label: "Oczekuje", color: "bg-yellow-500" },
-  quoted: { label: "Wycenione", color: "bg-blue-500" },
-  accepted: { label: "Zaakceptowane", color: "bg-green-500" },
-  in_production: { label: "W produkcji", color: "bg-purple-500" },
-  completed: { label: "Ukończone", color: "bg-green-600" },
-  cancelled: { label: "Anulowane", color: "bg-red-500" },
-};
-
 export function CustomOrderCard({ order }: CustomOrderCardProps) {
-  const [showMessages, setShowMessages] = useState(false);
-  const [newMessage, setNewMessage] = useState("");
-  const addMessage = useMutation(api.customOrders.addMessage);
+  const navigate = useNavigate();
   const acceptQuote = useMutation(api.customOrders.acceptQuote);
+  const addMessage = useMutation(api.customOrders.addMessage);
+  const [newMessage, setNewMessage] = useState("");
+  const [showMessages, setShowMessages] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-
-    try {
-      await addMessage({
-        customOrderId: order._id,
-        message: newMessage,
-      });
-      setNewMessage("");
-      toast.success("Wiadomość wysłana");
-    } catch (error: any) {
-      toast.error(error.message);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Clock className="h-4 w-4" />;
+      case "quoted":
+        return <Package className="h-4 w-4" />;
+      case "accepted":
+        return <CheckCircle className="h-4 w-4" />;
+      case "in_production":
+        return <Package className="h-4 w-4" />;
+      case "completed":
+        return <CheckCircle className="h-4 w-4" />;
+      case "cancelled":
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return <Clock className="h-4 w-4" />;
     }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+      case "quoted":
+        return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+      case "accepted":
+        return "bg-green-500/10 text-green-500 border-green-500/20";
+      case "in_production":
+        return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+      case "completed":
+        return "bg-green-500/10 text-green-500 border-green-500/20";
+      case "cancelled":
+        return "bg-red-500/10 text-red-500 border-red-500/20";
+      default:
+        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    const statusMap: Record<string, string> = {
+      pending: "Oczekuje na wycenę",
+      quoted: "Wyceniono",
+      accepted: "Zaakceptowano",
+      in_production: "W produkcji",
+      completed: "Ukończono",
+      cancelled: "Anulowano"
+    };
+    return statusMap[status] || status;
   };
 
   const handleAcceptQuote = async () => {
     try {
-      const result = await acceptQuote({ customOrderId: order._id });
-      toast.success("Wycena zaakceptowana! Przekierowanie do płatności...");
-      
-      // Redirect to checkout with custom order
-      window.location.href = `/checkout?customOrder=${result.orderId}`;
-    } catch (error: any) {
-      toast.error(error.message);
+      await acceptQuote({ orderId: order._id });
+      toast.success("Wycena zaakceptowana! Przejdź do płatności.");
+      navigate(`/checkout?customOrderId=${order._id}`);
+    } catch (error) {
+      toast.error("Nie udało się zaakceptować wyceny");
     }
   };
 
-  const statusInfo = statusLabels[order.status] || { label: order.status, color: "bg-gray-500" };
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) {
+      toast.error("Wpisz wiadomość");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await addMessage({
+        customOrderId: order._id,
+        message: newMessage,
+        isAdmin: false,
+      });
+      setNewMessage("");
+      toast.success("Wiadomość wysłana");
+    } catch (error) {
+      toast.error("Nie udało się wysłać wiadomości");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
-    <Card className="mb-4">
-      <CardHeader>
-        <div className="flex items-start justify-between">
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-muted/30 border-b">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              {order.projectName}
-            </CardTitle>
-            <CardDescription>
-              {new Date(order._creationTime).toLocaleDateString("pl-PL")}
-            </CardDescription>
+            <CardTitle className="text-lg">{order.projectName}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {new Date(order._creationTime).toLocaleDateString("pl-PL", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
           </div>
-          <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+          <Badge className={getStatusColor(order.status)}>
+            <span className="flex items-center gap-1">
+              {getStatusIcon(order.status)}
+              {getStatusText(order.status)}
+            </span>
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <p className="text-sm text-muted-foreground mb-1">Materiał:</p>
-          <p className="font-medium">{order.material}</p>
+      <CardContent className="p-6 space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Materiał</p>
+            <p className="font-medium">{order.material}</p>
+          </div>
+          {order.estimatedPrice && (
+            <div>
+              <p className="text-sm text-muted-foreground">Szacowana cena</p>
+              <p className="font-bold text-lg text-primary">{formatCurrency(order.estimatedPrice)}</p>
+            </div>
+          )}
         </div>
 
         <div>
-          <p className="text-sm text-muted-foreground mb-1">Opis:</p>
+          <p className="text-sm text-muted-foreground mb-1">Opis</p>
           <p className="text-sm">{order.description}</p>
         </div>
 
-        {order.estimatedPrice && (
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            <DollarSign className="h-5 w-5 text-green-600" />
-            <div>
-              <p className="text-sm text-muted-foreground">Wycena:</p>
-              <p className="text-xl font-bold">{order.estimatedPrice} PLN</p>
-            </div>
-          </div>
-        )}
-
-        {order.adminNotes && (
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-            <p className="text-sm font-medium mb-1">Notatka od administratora:</p>
-            <p className="text-sm">{order.adminNotes}</p>
-          </div>
-        )}
-
         {order.status === "quoted" && order.estimatedPrice && (
-          <Button onClick={handleAcceptQuote} className="w-full" size="lg">
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Akceptuj wycenę i przejdź do płatności
+          <Button onClick={handleAcceptQuote} className="w-full">
+            Zaakceptuj wycenę i przejdź do płatności
           </Button>
         )}
 
-        <Button
-          variant="outline"
-          onClick={() => setShowMessages(!showMessages)}
-          className="w-full"
-        >
-          <MessageCircle className="mr-2 h-4 w-4" />
-          {showMessages ? "Ukryj wiadomości" : "Pokaż wiadomości"}
-          {order.messages && order.messages.length > 0 && (
-            <Badge variant="secondary" className="ml-2">
-              {order.messages.length}
-            </Badge>
-          )}
-        </Button>
+        <div className="border-t pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowMessages(!showMessages)}
+            className="w-full mb-4"
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            {showMessages ? "Ukryj wiadomości" : `Pokaż wiadomości (${order.messages?.length || 0})`}
+          </Button>
 
-        <AnimatePresence>
           {showMessages && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-3"
-            >
-              <div className="max-h-64 overflow-y-auto space-y-2 p-3 bg-muted rounded-lg">
+            <div className="space-y-4">
+              <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
                 {order.messages && order.messages.length > 0 ? (
                   order.messages.map((msg) => (
                     <div
                       key={msg._id}
-                      className={`p-2 rounded ${
+                      className={`p-3 rounded-lg ${
                         msg.isAdmin
-                          ? "bg-blue-100 dark:bg-blue-900 ml-4"
-                          : "bg-white dark:bg-gray-800 mr-4"
+                          ? "bg-primary/10 ml-4"
+                          : "bg-muted mr-4"
                       }`}
                     >
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {msg.senderName} •{" "}
-                        {new Date(msg._creationTime).toLocaleString("pl-PL")}
-                      </p>
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="text-xs font-medium">{msg.senderName}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(msg._creationTime).toLocaleDateString("pl-PL", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
                       <p className="text-sm">{msg.message}</p>
                     </div>
                   ))
@@ -178,14 +218,20 @@ export function CustomOrderCard({ order }: CustomOrderCardProps) {
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Napisz wiadomość..."
                   rows={2}
+                  disabled={isSending}
                 />
-                <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                  Wyślij
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={isSending || !newMessage.trim()}
+                  size="icon"
+                  className="h-auto"
+                >
+                  <Send className="h-4 w-4" />
                 </Button>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
       </CardContent>
     </Card>
   );

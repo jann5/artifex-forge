@@ -146,13 +146,14 @@ export const sendCustomOrderNotification = internalAction({
       inline_keyboard: [
         [
           { text: "💰 Wyceniono", callback_data: `custom_quote:${order._id}` },
-          { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` }
+          { text: "💬 Wyślij wiadomość", callback_data: `custom_message:${order._id}` }
         ],
         [
-          { text: "🔨 W produkcji", callback_data: `custom_status:${order._id}:in_production` },
-          { text: "✔️ Ukończono", callback_data: `custom_status:${order._id}:completed` }
+          { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` },
+          { text: "🔨 W produkcji", callback_data: `custom_status:${order._id}:in_production` }
         ],
         [
+          { text: "✔️ Ukończono", callback_data: `custom_status:${order._id}:completed` },
           { text: "❌ Anulowano", callback_data: `custom_status:${order._id}:cancelled` }
         ]
       ]

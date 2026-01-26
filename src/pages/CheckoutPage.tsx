@@ -89,7 +89,7 @@ export default function CheckoutPage() {
         const result = await createCustomOrderStripeSession({
           customOrderId: checkoutData.customOrderId,
           addressId: checkoutData.addressId,
-          userId: checkoutData.userId,
+          userId: checkoutData.userId as Id<"users">,
           amount: checkoutData.amount,
         });
 

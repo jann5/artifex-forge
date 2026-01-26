@@ -1,48 +1,40 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 export const create = mutation({
   args: {
     projectName: v.string(),
-    description: v.string(),
+    customerName: v.string(),
+    customerEmail: v.string(),
     material: v.string(),
-    images: v.array(v.string()), // Storage IDs
+    description: v.string(),
     contactInfo: v.optional(v.string()),
+    images: v.array(v.string()),
+    files3D: v.array(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Musisz być zalogowany");
-    }
+    if (!identity) throw new Error("Not authenticated");
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email))
-      .first();
-
-    if (!user) {
-      throw new Error("Użytkownik nie znaleziony");
-    }
-
-    const customOrderId = await ctx.db.insert("customOrders", {
-      userId: user._id,
+    const orderId = await ctx.db.insert("customOrders", {
+      userId: identity.subject as any,
       projectName: args.projectName,
-      description: args.description,
+      customerName: args.customerName,
+      customerEmail: args.customerEmail,
       material: args.material,
-      images: args.images,
+      description: args.description,
       contactInfo: args.contactInfo,
+      images: args.images,
+      files3D: args.files3D,
       status: "pending",
-      customerName: user.name || user.email || "Nieznany",
-      customerEmail: user.email || "",
     });
 
-    // Send notification to Telegram
     await ctx.scheduler.runAfter(0, internal.notifications.sendCustomOrderNotification, {
-      customOrderId,
+      customOrderId: orderId,
     });
 
-    return customOrderId;
+    return orderId;
   },
 });
 
@@ -114,60 +106,98 @@ export const addMessage = mutation({
   args: {
     customOrderId: v.id("customOrders"),
     message: v.string(),
+    isAdmin: v.boolean(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Musisz być zalogowany");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email))
-      .first();
-
-    if (!user) {
-      throw new Error("Użytkownik nie znaleziony");
-    }
+    if (!identity) throw new Error("Not authenticated");
 
     await ctx.db.insert("customOrderMessages", {
       customOrderId: args.customOrderId,
-      senderId: user._id,
-      senderName: user.name || user.email || "Użytkownik",
+      senderId: identity.subject as any,
       message: args.message,
-      isAdmin: false,
+      isAdmin: args.isAdmin,
+      senderName: args.isAdmin ? "Admin" : identity.name || "Klient",
+    });
+  },
+});
+
+export const addMessageInternal = internalMutation({
+  args: {
+    customOrderId: v.id("customOrders"),
+    message: v.string(),
+    isAdmin: v.boolean(),
+    senderName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("customOrderMessages", {
+      customOrderId: args.customOrderId,
+      senderId: "system" as any,
+      message: args.message,
+      isAdmin: args.isAdmin,
+      senderName: args.senderName,
+    });
+  },
+});
+
+export const updateStatus = mutation({
+  args: {
+    orderId: v.id("customOrders"),
+    status: v.string(),
+    estimatedPrice: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const updates: any = { status: args.status };
+    if (args.estimatedPrice !== undefined) {
+      updates.estimatedPrice = args.estimatedPrice;
+    }
+    await ctx.db.patch(args.orderId, updates);
+  },
+});
+
+export const updateStatusInternal = internalMutation({
+  args: {
+    orderId: v.id("customOrders"),
+    status: v.string(),
+    estimatedPrice: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const updates: any = { status: args.status };
+    if (args.estimatedPrice !== undefined) {
+      updates.estimatedPrice = args.estimatedPrice;
+    }
+    await ctx.db.patch(args.orderId, updates);
+  },
+});
+
+export const updatePrice = mutation({
+  args: {
+    orderId: v.id("customOrders"),
+    estimatedPrice: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.orderId, {
+      estimatedPrice: args.estimatedPrice,
+      status: "quoted",
     });
   },
 });
 
 export const acceptQuote = mutation({
   args: {
-    customOrderId: v.id("customOrders"),
+    orderId: v.id("customOrders"),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Musisz być zalogowany");
-    }
+    if (!identity) throw new Error("Not authenticated");
 
-    const order = await ctx.db.get(args.customOrderId);
-    if (!order) {
-      throw new Error("Zamówienie nie znalezione");
-    }
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+    if (order.userId !== identity.subject) throw new Error("Unauthorized");
 
-    if (order.status !== "quoted") {
-      throw new Error("Zamówienie nie jest w stanie wycenione");
-    }
-
-    if (!order.estimatedPrice) {
-      throw new Error("Brak ceny");
-    }
-
-    await ctx.db.patch(args.customOrderId, {
+    await ctx.db.patch(args.orderId, {
       status: "accepted",
     });
-
-    return { orderId: args.customOrderId, amount: order.estimatedPrice };
   },
 });
 
@@ -178,60 +208,19 @@ export const createCheckoutSession = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Musisz być zalogowany");
-    }
+    if (!identity) throw new Error("Not authenticated");
 
-    const customOrder = await ctx.db.get(args.customOrderId);
-    if (!customOrder) {
-      throw new Error("Zamówienie nie znalezione");
-    }
+    const order = await ctx.db.get(args.customOrderId);
+    if (!order) throw new Error("Order not found");
+    if (order.userId !== identity.subject) throw new Error("Unauthorized");
+    if (!order.estimatedPrice) throw new Error("No price set");
 
-    if (customOrder.status !== "accepted") {
-      throw new Error("Zamówienie nie jest zaakceptowane");
-    }
-
-    if (!customOrder.estimatedPrice) {
-      throw new Error("Brak ceny");
-    }
-
-    const address = await ctx.db.get(args.addressId);
-    if (!address) {
-      throw new Error("Adres nie znaleziony");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email))
-      .first();
-
-    if (!user) {
-      throw new Error("Użytkownik nie znaleziony");
-    }
-
-    // Return the data needed for checkout - the action will be called from frontend
-    return { 
+    return {
       customOrderId: args.customOrderId,
       addressId: args.addressId,
-      userId: user._id,
-      amount: customOrder.estimatedPrice
+      userId: identity.subject,
+      amount: order.estimatedPrice,
     };
-  },
-});
-
-export const updateStatus = internalMutation({
-  args: {
-    orderId: v.id("customOrders"),
-    status: v.string(),
-    estimatedPrice: v.optional(v.number()),
-    notes: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.orderId, {
-      status: args.status,
-      estimatedPrice: args.estimatedPrice,
-      adminNotes: args.notes,
-    });
   },
 });
 

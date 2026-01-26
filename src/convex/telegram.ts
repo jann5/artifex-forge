@@ -21,6 +21,30 @@ export const webhook = httpAction(async (ctx, request) => {
     });
   };
 
+  // Helper to send Telegram messages
+  const sendTelegramMessage = async (chatId: number | string, text: string) => {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: "Markdown",
+      }),
+    });
+  };
+
+  // Add this new handler for sending admin messages to custom orders
+  const handleCustomOrderMessage = async (ctx: any, chatId: string, orderId: string) => {
+    await sendTelegramMessage(chatId, "Wpisz wiadomość do klienta:");
+    
+    await ctx.runMutation(internal.telegram_db.updateSession, {
+      chatId: chatId,
+      step: "awaiting_custom_order_message",
+      updates: { customOrderId: orderId },
+    });
+  };
+
   try {
     const body = await request.json() as any;
     
@@ -98,7 +122,7 @@ export const webhook = httpAction(async (ctx, request) => {
           const orderId = parts[1] as Id<"customOrders">;
           const status = parts[2];
           
-          await ctx.runMutation(internal.customOrders.updateStatus, {
+          await ctx.runMutation(internal.customOrders.updateStatusInternal, {
             orderId: orderId,
             status: status,
           });
@@ -469,11 +493,27 @@ export const webhook = httpAction(async (ctx, request) => {
         return new Response("OK");
       }
 
+      // Handle Custom Order Message
+      if (data.startsWith("custom_message:")) {
+        const orderId = data.replace("custom_message:", "");
+        await handleCustomOrderMessage(ctx, chatId, orderId);
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            callback_query_id: callbackQueryId,
+            text: "Wpisz wiadomość",
+          }),
+        });
+        return new Response("OK");
+      }
+
       // Custom order status update
       if (data.startsWith("custom_status:")) {
         const [, orderId, status] = data.split(":");
         
-        await ctx.runMutation(internal.customOrders.updateStatus, {
+        await ctx.runMutation(internal.customOrders.updateStatusInternal, {
           orderId: orderId as Id<"customOrders">,
           status,
         });
@@ -755,11 +795,11 @@ export const webhook = httpAction(async (ctx, request) => {
 
           const orderId = session.customOrderId as Id<"customOrders">;
           
-          await ctx.runMutation(internal.customOrders.updateStatus, {
-            orderId,
-            status: "quoted",
-            estimatedPrice: price,
-          });
+        await ctx.runMutation(internal.customOrders.updateStatusInternal, {
+          orderId,
+          status: "quoted",
+          estimatedPrice: price,
+        });
 
           await ctx.runMutation(internal.telegram_db.clearSession, {
             chatId: chatId.toString(),
@@ -775,6 +815,25 @@ export const webhook = httpAction(async (ctx, request) => {
             }),
           });
 
+          return new Response("OK");
+        }
+
+        // Handle custom order message input
+        if (session?.step === "awaiting_custom_order_message" && session.customOrderId) {
+          const messageText = text;
+          
+          await ctx.runMutation(internal.customOrders.addMessageInternal, {
+            customOrderId: session.customOrderId as any,
+            message: messageText,
+            isAdmin: true,
+            senderName: "Admin",
+          });
+          
+          await ctx.runMutation(internal.telegram_db.clearSession, {
+            chatId: chatId.toString(),
+          });
+          
+          await sendMessage(chatId, "✅ Wiadomość wysłana do klienta");
           return new Response("OK");
         }
 

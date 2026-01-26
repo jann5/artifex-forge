@@ -66,6 +66,7 @@ const schema = defineSchema(
       description: v.string(),
       material: v.string(),
       images: v.array(v.string()),
+      files3D: v.array(v.string()),
       contactInfo: v.optional(v.string()),
       status: v.string(), // pending, quoted, accepted, in_production, completed, cancelled
       customerName: v.string(),
