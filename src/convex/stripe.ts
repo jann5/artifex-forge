@@ -28,25 +28,32 @@ export const createCheckoutSession = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    console.log(`[createCheckoutSession] Starting checkout for user: ${userId}`);
+    console.log(`[createCheckoutSession] Items count: ${args.items.length}`);
+    console.log(`[createCheckoutSession] Shipping address:`, args.shippingAddress);
+
     // Use SITE_URL (which is already configured in vly)
     let domain = process.env.SITE_URL;
     if (!domain) {
+      console.error("[createCheckoutSession] SITE_URL is missing!");
       throw new Error("SITE_URL is missing. Please check your environment variables in vly.");
     }
     
     // Remove trailing slash to prevent double slashes in URLs
     domain = domain.replace(/\/$/, '');
+    console.log(`[createCheckoutSession] Using domain: ${domain}`);
 
     // MOCK CHECKOUT MODE (If Stripe key is missing)
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.warn("Stripe Secret Key is missing. Using mock checkout mode.");
+      console.warn("[createCheckoutSession] Stripe Secret Key is missing. Using mock checkout mode.");
       
       const totalAmount = args.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
       const mockSessionId = `mock_session_${crypto.randomUUID()}`;
 
       console.log(`[MOCK CHECKOUT] Creating order for user: ${userId}`);
       console.log(`[MOCK CHECKOUT] Total amount: ${totalAmount} PLN`);
-      console.log(`[MOCK CHECKOUT] Items:`, args.items);
+      console.log(`[MOCK CHECKOUT] Items:`, JSON.stringify(args.items));
+      console.log(`[MOCK CHECKOUT] Mock session ID: ${mockSessionId}`);
 
       // Create order immediately for mock checkout
       try {
@@ -57,15 +64,16 @@ export const createCheckoutSession = action({
           totalAmount,
           shippingAddress: args.shippingAddress,
         });
-        console.log(`[MOCK CHECKOUT] Order created successfully: ${orderId}`);
+        console.log(`[MOCK CHECKOUT] ✅ Order created successfully: ${orderId}`);
       } catch (error) {
-        console.error(`[MOCK CHECKOUT] Failed to create order:`, error);
+        console.error(`[MOCK CHECKOUT] ❌ Failed to create order:`, error);
         throw error;
       }
 
       return { sessionId: mockSessionId, url: `${domain}/payment-success` };
     }
 
+    console.log("[createCheckoutSession] Using real Stripe checkout");
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2025-02-24.acacia",
     });
@@ -82,6 +90,8 @@ export const createCheckoutSession = action({
       quantity: item.quantity,
     }));
 
+    console.log(`[createCheckoutSession] Creating Stripe session with ${lineItems.length} line items`);
+
     try {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card", "blik"],
@@ -96,9 +106,11 @@ export const createCheckoutSession = action({
         },
       });
 
+      console.log(`[createCheckoutSession] ✅ Stripe session created: ${session.id}`);
+      console.log(`[createCheckoutSession] Session URL: ${session.url}`);
       return { sessionId: session.id, url: session.url };
     } catch (err: any) {
-      console.error("Stripe error:", err);
+      console.error("[createCheckoutSession] ❌ Stripe error:", err);
       throw new Error(`Stripe error: ${err.message}`);
     }
   },
@@ -110,8 +122,16 @@ export const handleWebhook = action({
     payload: v.string(),
   },
   handler: async (ctx, args) => {
+    console.log("[handleWebhook] Received Stripe webhook");
+    
     if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("[handleWebhook] Stripe Secret Key is missing");
       throw new Error("Stripe Secret Key is missing");
+    }
+
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error("[handleWebhook] Stripe Webhook Secret is missing");
+      throw new Error("Stripe Webhook Secret is missing");
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -126,7 +146,9 @@ export const handleWebhook = action({
         args.signature,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
+      console.log(`[handleWebhook] ✅ Webhook verified. Event type: ${event.type}`);
     } catch (err) {
+      console.error("[handleWebhook] ❌ Webhook signature verification failed:", err);
       throw new Error(`Webhook signature verification failed: ${err}`);
     }
 
@@ -136,6 +158,7 @@ export const handleWebhook = action({
       console.log(`[STRIPE WEBHOOK] Checkout session completed: ${session.id}`);
       console.log(`[STRIPE WEBHOOK] User ID: ${session.metadata?.userId}`);
       console.log(`[STRIPE WEBHOOK] Amount: ${(session.amount_total || 0) / 100} PLN`);
+      console.log(`[STRIPE WEBHOOK] Payment status: ${session.payment_status}`);
       
       // Create order in database
       try {
@@ -146,11 +169,13 @@ export const handleWebhook = action({
           totalAmount: (session.amount_total || 0) / 100,
           shippingAddress: session.metadata?.shippingAddress ? JSON.parse(session.metadata.shippingAddress) : undefined,
         });
-        console.log(`[STRIPE WEBHOOK] Order created successfully: ${orderId}`);
+        console.log(`[STRIPE WEBHOOK] ✅ Order created successfully: ${orderId}`);
       } catch (error) {
-        console.error(`[STRIPE WEBHOOK] Failed to create order:`, error);
+        console.error(`[STRIPE WEBHOOK] ❌ Failed to create order:`, error);
         throw error;
       }
+    } else {
+      console.log(`[handleWebhook] Ignoring event type: ${event.type}`);
     }
 
     return { received: true };

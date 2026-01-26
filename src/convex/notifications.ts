@@ -11,11 +11,21 @@ export const sendTelegramNotification = internalAction({
     shippingAddress: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    console.log(`[sendTelegramNotification] ========== START ==========`);
+    console.log(`[sendTelegramNotification] Order ID: ${args.orderId}`);
+    console.log(`[sendTelegramNotification] Customer: ${args.customerEmail}`);
+    console.log(`[sendTelegramNotification] Amount: ${args.totalAmount} PLN`);
+    console.log(`[sendTelegramNotification] Status: ${args.status}`);
+
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
+    console.log(`[sendTelegramNotification] Bot Token: ${botToken ? 'SET (' + botToken.substring(0, 10) + '...)' : 'NOT SET'}`);
+    console.log(`[sendTelegramNotification] Chat ID: ${chatId ? chatId : 'NOT SET'}`);
+
     if (!botToken || !chatId) {
-      console.warn("Telegram credentials not configured");
+      console.warn("[sendTelegramNotification] ⚠️ Telegram credentials not configured");
+      console.warn("[sendTelegramNotification] Please set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in API Keys");
       return { success: false, message: "Telegram not configured" };
     }
 
@@ -27,10 +37,7 @@ mj. ${args.shippingAddress.postalCode} ${args.shippingAddress.city}
 📞 ${args.shippingAddress.phone}
 ` : "";
 
-    console.log(`[sendTelegramNotification] Preparing notification for order ${args.orderId}`);
-    console.log(`[sendTelegramNotification] Bot Token: ${botToken ? 'SET' : 'NOT SET'}`);
-    console.log(`[sendTelegramNotification] Chat ID: ${chatId ? chatId : 'NOT SET'}`);
-    console.log(`[sendTelegramNotification] Has address: ${!!args.shippingAddress}`);
+    console.log(`[sendTelegramNotification] Has shipping address: ${!!args.shippingAddress}`);
 
     const message = `
 🛍️ *Nowe Zamówienie / Aktualizacja*
@@ -57,7 +64,9 @@ Zarządzaj statusem poniżej:
     };
 
     try {
-      console.log(`[sendTelegramNotification] Sending message to Telegram...`);
+      console.log(`[sendTelegramNotification] Sending message to Telegram API...`);
+      console.log(`[sendTelegramNotification] URL: https://api.telegram.org/bot${botToken.substring(0, 10)}...`);
+      
       const response = await fetch(
         `https://api.telegram.org/bot${botToken}/sendMessage`,
         {
@@ -73,18 +82,22 @@ Zarządzaj statusem poniżej:
       );
 
       const result = await response.json();
-      console.log(`[sendTelegramNotification] Telegram API response:`, JSON.stringify(result));
+      console.log(`[sendTelegramNotification] Telegram API response status: ${response.status}`);
+      console.log(`[sendTelegramNotification] Telegram API response:`, JSON.stringify(result, null, 2));
 
       if (!response.ok || !result.ok) {
-        console.error(`[sendTelegramNotification] Telegram API error:`, result);
+        console.error(`[sendTelegramNotification] ❌ Telegram API error:`, result);
         throw new Error(`Telegram API error: ${result.description || response.statusText}`);
       }
 
-      console.log(`[sendTelegramNotification] Notification sent successfully for order ${args.orderId}`);
+      console.log(`[sendTelegramNotification] ✅ Notification sent successfully`);
+      console.log(`[sendTelegramNotification] ========== END ==========`);
       return { success: true };
     } catch (error: any) {
-      console.error(`[sendTelegramNotification] Failed to send notification:`, error);
-      console.error(`[sendTelegramNotification] Error details:`, error.message);
+      console.error(`[sendTelegramNotification] ❌ Failed to send notification:`, error);
+      console.error(`[sendTelegramNotification] Error message:`, error.message);
+      console.error(`[sendTelegramNotification] Error stack:`, error.stack);
+      console.log(`[sendTelegramNotification] ========== END (ERROR) ==========`);
       return { success: false, message: error.message };
     }
   },

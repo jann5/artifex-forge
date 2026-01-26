@@ -77,15 +77,34 @@ export const createFromStripe = internalMutation({
     shippingAddress: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    console.log(`[createFromStripe] ========== START ==========`);
+    console.log(`[createFromStripe] Session ID: ${args.sessionId}`);
+    console.log(`[createFromStripe] User ID: ${args.userId}`);
+    console.log(`[createFromStripe] Total Amount: ${args.totalAmount} PLN`);
+    console.log(`[createFromStripe] Items count: ${args.items.length}`);
+    
     const userId = args.userId as Id<"users">;
     const dbUser = await ctx.db.get(userId);
 
     if (!dbUser) {
-      console.error(`[createFromStripe] User not found: ${userId}`);
+      console.error(`[createFromStripe] ❌ User not found: ${userId}`);
       throw new Error("User not found");
     }
 
-    console.log(`[createFromStripe] Creating order for user: ${dbUser.email}, session: ${args.sessionId}`);
+    console.log(`[createFromStripe] User found: ${dbUser.email}`);
+
+    // Check if order already exists for this session
+    const existingOrder = await ctx.db
+      .query("orders")
+      .filter((q) => q.eq(q.field("stripeSessionId"), args.sessionId))
+      .first();
+
+    if (existingOrder) {
+      console.log(`[createFromStripe] ⚠️ Order already exists for session ${args.sessionId}: ${existingOrder._id}`);
+      return existingOrder._id;
+    }
+
+    console.log(`[createFromStripe] Creating new order...`);
 
     const orderId = await ctx.db.insert("orders", {
       userId: dbUser._id,
@@ -96,22 +115,24 @@ export const createFromStripe = internalMutation({
       shippingAddress: args.shippingAddress,
     });
 
-    console.log(`[createFromStripe] Order created: ${orderId}`);
+    console.log(`[createFromStripe] ✅ Order created: ${orderId}`);
 
     // Clear cart
+    console.log(`[createFromStripe] Clearing cart for user...`);
     const cartItems = await ctx.db
       .query("cartItems")
       .withIndex("by_user", (q) => q.eq("userId", dbUser._id))
       .collect();
 
+    console.log(`[createFromStripe] Found ${cartItems.length} cart items to delete`);
     for (const item of cartItems) {
       await ctx.db.delete(item._id);
     }
 
-    console.log(`[createFromStripe] Cart cleared for user: ${dbUser.email}`);
+    console.log(`[createFromStripe] ✅ Cart cleared`);
 
     // Send Telegram notification - schedule immediately
-    console.log(`[createFromStripe] Scheduling Telegram notification for order: ${orderId}`);
+    console.log(`[createFromStripe] Scheduling Telegram notification...`);
     await ctx.scheduler.runAfter(0, internal.notifications.sendTelegramNotification, {
       orderId: orderId,
       customerEmail: dbUser.email || "Unknown",
@@ -119,6 +140,9 @@ export const createFromStripe = internalMutation({
       status: "paid",
       shippingAddress: args.shippingAddress,
     });
+
+    console.log(`[createFromStripe] ✅ Telegram notification scheduled`);
+    console.log(`[createFromStripe] ========== END ==========`);
 
     return orderId;
   },
