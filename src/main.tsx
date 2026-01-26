@@ -20,6 +20,7 @@ import RecentPage from "./pages/RecentPage";
 import SettingsPage from "./pages/SettingsPage";
 import Demo from "./demo";
 import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -89,6 +90,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/recent" element={<RecentPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/demo" element={<Demo />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

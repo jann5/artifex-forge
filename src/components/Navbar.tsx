@@ -94,6 +94,9 @@ export function Navbar() {
           <Link to="/about" className="hover:text-foreground transition-colors">
             O Nas
           </Link>
+          <Link to="/contact" className="hover:text-foreground transition-colors">
+            Kontakt
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">
