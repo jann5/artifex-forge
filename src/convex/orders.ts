@@ -96,7 +96,7 @@ export const createFromStripe = internalMutation({
     // Check if order already exists for this session
     const existingOrder = await ctx.db
       .query("orders")
-      .filter((q) => q.eq(q.field("stripeSessionId"), args.sessionId))
+      .withIndex("by_stripe_session", (q) => q.eq("stripeSessionId", args.sessionId))
       .first();
 
     if (existingOrder) {

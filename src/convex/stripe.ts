@@ -130,7 +130,7 @@ export const handleWebhook = action({
     }
 
     if (!process.env.STRIPE_WEBHOOK_SECRET) {
-      console.error("[handleWebhook] Stripe Webhook Secret is missing");
+      console.error("[handleWebhook] CRITICAL: Stripe Webhook Secret is missing in env variables");
       throw new Error("Stripe Webhook Secret is missing");
     }
 
@@ -148,7 +148,10 @@ export const handleWebhook = action({
       );
       console.log(`[handleWebhook] ✅ Webhook verified. Event type: ${event.type}`);
     } catch (err) {
-      console.error("[handleWebhook] ❌ Webhook signature verification failed:", err);
+      console.error(`[handleWebhook] ❌ Webhook signature verification failed. 
+        1. Check if STRIPE_WEBHOOK_SECRET in Convex matches the one in Stripe Dashboard.
+        2. Ensure you are using the correct Webhook URL.
+        Error:`, err);
       throw new Error(`Webhook signature verification failed: ${err}`);
     }
 
@@ -156,15 +159,21 @@ export const handleWebhook = action({
       const session = event.data.object as Stripe.Checkout.Session;
       
       console.log(`[STRIPE WEBHOOK] Checkout session completed: ${session.id}`);
-      console.log(`[STRIPE WEBHOOK] User ID: ${session.metadata?.userId}`);
+      
+      const userId = session.metadata?.userId;
+      if (!userId) {
+        console.error("[STRIPE WEBHOOK] ❌ Missing userId in session metadata");
+        return { success: false, error: "Missing userId" };
+      }
+
+      console.log(`[STRIPE WEBHOOK] User ID: ${userId}`);
       console.log(`[STRIPE WEBHOOK] Amount: ${(session.amount_total || 0) / 100} PLN`);
-      console.log(`[STRIPE WEBHOOK] Payment status: ${session.payment_status}`);
       
       // Create order in database
       try {
         const orderId = await ctx.runMutation(internal.orders.createFromStripe, {
           sessionId: session.id,
-          userId: session.metadata?.userId!,
+          userId: userId,
           items: JSON.parse(session.metadata?.items || "[]"),
           totalAmount: (session.amount_total || 0) / 100,
           shippingAddress: session.metadata?.shippingAddress ? JSON.parse(session.metadata.shippingAddress) : undefined,

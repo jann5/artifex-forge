@@ -89,7 +89,9 @@ const schema = defineSchema(
       ),
       stripeSessionId: v.optional(v.string()),
       shippingAddress: v.optional(v.any()), // Store as JSON object for flexibility
-    }).index("by_user", ["userId"]),
+    })
+      .index("by_user", ["userId"])
+      .index("by_stripe_session", ["stripeSessionId"]),
 
     favorites: defineTable({
       userId: v.id("users"),

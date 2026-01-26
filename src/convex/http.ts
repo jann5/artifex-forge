@@ -15,6 +15,7 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     const signature = request.headers.get("Stripe-Signature");
     if (!signature) {
+      console.error("[HTTP] Missing Stripe-Signature header");
       return new Response("Missing Signature", { status: 400 });
     }
     const payload = await request.text();
@@ -26,7 +27,7 @@ http.route({
       });
       return new Response("OK", { status: 200 });
     } catch (error) {
-      console.error("Stripe webhook error:", error);
+      console.error("[HTTP] Stripe webhook error:", error);
       return new Response("Webhook Error", { status: 400 });
     }
   }),
