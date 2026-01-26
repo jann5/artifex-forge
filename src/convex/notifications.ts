@@ -59,6 +59,10 @@ Zarządzaj statusem poniżej:
         [
           { text: "✅ Dostarczone", callback_data: `update_status:${args.orderId}:delivered` },
           { text: "❌ Anulowane", callback_data: `update_status:${args.orderId}:cancelled` }
+        ],
+        [
+          { text: "ℹ️ Szczegóły", callback_data: `order_info:${args.orderId}` },
+          { text: "🗑️ Usuń z czatu", callback_data: `order_delete:${args.orderId}` }
         ]
       ]
     };

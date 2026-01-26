@@ -58,6 +58,24 @@ export const webhook = httpAction(async (ctx, request) => {
           const originalText = message.text || "";
           const updatedText = originalText.replace(/Status: .*/, `Status: ${status}`);
 
+          // Define keyboard explicitly to ensure Delete button is present
+          const keyboard = {
+            inline_keyboard: [
+                [
+                    { text: "💰 Opłacone", callback_data: `update_status:${orderId}:paid` },
+                    { text: "🚚 Wysłane", callback_data: `update_status:${orderId}:shipped` }
+                ],
+                [
+                    { text: "✅ Dostarczone", callback_data: `update_status:${orderId}:delivered` },
+                    { text: "❌ Anulowane", callback_data: `update_status:${orderId}:cancelled` }
+                ],
+                [
+                     { text: "ℹ️ Szczegóły", callback_data: `order_info:${orderId}` },
+                     { text: "🗑️ Usuń z czatu", callback_data: `order_delete:${orderId}` }
+                ]
+            ]
+          };
+
           await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -65,7 +83,7 @@ export const webhook = httpAction(async (ctx, request) => {
               chat_id: message.chat.id,
               message_id: message.message_id,
               text: updatedText,
-              reply_markup: message.reply_markup
+              reply_markup: keyboard
             })
           });
         }
