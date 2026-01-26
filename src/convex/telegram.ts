@@ -615,7 +615,7 @@ export const webhook = httpAction(async (ctx, request) => {
       // Custom order quote with price input
       if (data.startsWith("custom_quote:")) {
         const orderId = data.split(":")[1] as Id<"customOrders">;
-        await answerCallback("Wprowadź cenę");
+        await answerCallback("💰 Wprowadź cenę");
         
         await ctx.runMutation(internal.telegram_db.updateSession, {
           chatId: chatId.toString(),
@@ -623,15 +623,7 @@ export const webhook = httpAction(async (ctx, request) => {
           updates: { customOrderId: orderId },
         });
 
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: "💰 Podaj cenę wyceny (tylko liczba w PLN):",
-            parse_mode: "Markdown",
-          }),
-        });
+        await sendTelegramMessage(chatId, "💰 *Podaj cenę wyceny*\\n\\nWpisz tylko liczbę (np. 150 dla 150 PLN):");
 
         return new Response("OK", { status: 200 });
       }
@@ -928,6 +920,7 @@ export const webhook = httpAction(async (ctx, request) => {
         if (session?.step === "awaiting_custom_order_message" && session.customOrderId) {
           const messageText = text;
           
+          // Add message to database
           await ctx.runMutation(internal.customOrders.addMessageInternal, {
             customOrderId: session.customOrderId as any,
             message: messageText,
@@ -935,11 +928,13 @@ export const webhook = httpAction(async (ctx, request) => {
             senderName: "Admin",
           });
           
+          // Clear session
           await ctx.runMutation(internal.telegram_db.clearSession, {
             chatId: chatId.toString(),
           });
           
-          await sendMessage(chatId, "✅ Wiadomość wysłana do klienta");
+          // Send confirmation
+          await sendTelegramMessage(chatId, "✅ *Wiadomość wysłana*\\n\\nKlient zobaczy ją na stronie zamówienia.");
           return new Response("OK");
         }
 
