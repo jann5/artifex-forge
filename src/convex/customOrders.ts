@@ -17,16 +17,8 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
-    // Get the user from database
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email))
-      .first();
-
-    if (!user) throw new Error("User not found");
-
     const orderId = await ctx.db.insert("customOrders", {
-      userId: user._id,
+      userId: identity.subject as any,
       projectName: args.projectName,
       customerName: args.customerName,
       customerEmail: args.customerEmail,
@@ -54,18 +46,9 @@ export const list = query({
       return [];
     }
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email))
-      .first();
-
-    if (!user) {
-      return [];
-    }
-
     const orders = await ctx.db
       .query("customOrders")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject as any))
       .order("desc")
       .collect();
 
@@ -81,18 +64,9 @@ export const listWithMessages = query({
       return [];
     }
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email))
-      .first();
-
-    if (!user) {
-      return [];
-    }
-
     const orders = await ctx.db
       .query("customOrders")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject as any))
       .order("desc")
       .collect();
 
@@ -119,6 +93,10 @@ export const addMessage = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
+
+    const order = await ctx.db.get(args.customOrderId);
+    if (!order) throw new Error("Order not found");
+    if (order.userId !== identity.subject) throw new Error("Unauthorized");
 
     await ctx.db.insert("customOrderMessages", {
       customOrderId: args.customOrderId,
@@ -155,6 +133,13 @@ export const updateStatus = mutation({
     estimatedPrice: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+    if (order.userId !== identity.subject) throw new Error("Unauthorized");
+
     const updates: any = { status: args.status };
     if (args.estimatedPrice !== undefined) {
       updates.estimatedPrice = args.estimatedPrice;
@@ -184,6 +169,13 @@ export const updatePrice = mutation({
     estimatedPrice: v.number(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+    if (order.userId !== identity.subject) throw new Error("Unauthorized");
+
     await ctx.db.patch(args.orderId, {
       estimatedPrice: args.estimatedPrice,
       status: "quoted",
@@ -235,7 +227,14 @@ export const createCheckoutSession = mutation({
 export const getById = query({
   args: { orderId: v.id("customOrders") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.orderId);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const order = await ctx.db.get(args.orderId);
+    if (!order) return null;
+    if (order.userId !== identity.subject) return null;
+
+    return order;
   },
 });
 
