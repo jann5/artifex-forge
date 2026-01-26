@@ -269,22 +269,23 @@ export const webhook = httpAction(async (ctx, request) => {
       if (data && data.startsWith("order_delete:")) {
         const orderId = data.split(":")[1] as Id<"orders">;
         
-        // Show confirmation buttons
+        // Show confirmation buttons by EDITING the message
         const confirmKeyboard = {
           inline_keyboard: [
             [
-              { text: "✅ Tak, usuń", callback_data: `order_delete_confirm:${orderId}` },
+              { text: "✅ Tak, usuń z czatu", callback_data: `order_delete_confirm:${orderId}` },
               { text: "❌ Anuluj", callback_data: `order_delete_cancel:${orderId}` }
             ]
           ]
         };
         
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: chatId,
-            text: "⚠️ Czy na pewno chcesz usunąć to zamówienie?",
+            message_id: message.message_id,
+            text: "⚠️ Czy na pewno chcesz usunąć to powiadomienie z czatu? (Zamówienie pozostanie w systemie)",
             reply_markup: confirmKeyboard,
           }),
         });
@@ -298,36 +299,80 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // Handle Order Delete Confirmation
       if (data && data.startsWith("order_delete_confirm:")) {
-        const orderId = data.split(":")[1] as Id<"orders">;
-        
-        await ctx.runMutation(internal.orders.deleteOrder, { orderId });
-        
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        // Just delete the message from Telegram
+        await fetch(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: chatId,
-            text: "✅ Zamówienie zostało usunięte.",
+            message_id: message.message_id,
           }),
         });
 
         await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ callback_query_id: callbackQuery.id })
+          body: JSON.stringify({ callback_query_id: callbackQuery.id, text: "Usunięto wiadomość" })
         });
       }
 
       // Handle Order Delete Cancel
       if (data && data.startsWith("order_delete_cancel:")) {
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: "❌ Anulowano usuwanie zamówienia.",
-          }),
-        });
+        const orderId = data.split(":")[1] as Id<"orders">;
+        const order = await ctx.runQuery(internal.orders.getById, { orderId });
+        
+        if (order) {
+            const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
+            const items = order.items.map((item: any) => `  • ${item.name} x${item.quantity} - ${item.price} PLN`).join("\n");
+            const address = order.shippingAddress 
+                ? `\n\n📍 *Adres dostawy:*\n${order.shippingAddress.fullName}\n${order.shippingAddress.street}\n${order.shippingAddress.postalCode} ${order.shippingAddress.city}\n${order.shippingAddress.country}`
+                : "\n\n📍 Brak adresu dostawy";
+              
+            const msg = `📦 *Szczegóły zamówienia* (${date})\n\n` +
+                          `👤 Klient: ${order.customerName}\n` +
+                          `💰 Kwota: ${order.totalAmount} PLN\n` +
+                          `📊 Status: ${order.status}\n\n` +
+                          `*Produkty:*\n${items}${address}`;
+
+            const keyboard = {
+                inline_keyboard: [
+                    [
+                        { text: "💰 Opłacone", callback_data: `update_status:${order._id}:paid` },
+                        { text: "🚚 Wysłane", callback_data: `update_status:${order._id}:shipped` }
+                    ],
+                    [
+                        { text: "✅ Dostarczone", callback_data: `update_status:${order._id}:delivered` },
+                        { text: "❌ Anulowane", callback_data: `update_status:${order._id}:cancelled` }
+                    ],
+                    [
+                         { text: "ℹ️ Szczegóły", callback_data: `order_info:${order._id}` },
+                         { text: "🗑️ Usuń z czatu", callback_data: `order_delete:${order._id}` }
+                    ]
+                ]
+            };
+
+            await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    message_id: message.message_id,
+                    text: msg,
+                    parse_mode: "Markdown",
+                    reply_markup: keyboard
+                }),
+            });
+        } else {
+             await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    message_id: message.message_id,
+                    text: "❌ Nie znaleziono zamówienia.",
+                }),
+            });
+        }
 
         await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
           method: "POST",

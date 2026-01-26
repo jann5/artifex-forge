@@ -51,6 +51,14 @@ export const create = mutation({
       if (product) {
         const newInventory = Math.max(0, product.inventory - item.quantity);
         await ctx.db.patch(item.productId, { inventory: newInventory });
+        
+        if (newInventory <= 5) {
+           await ctx.scheduler.runAfter(0, internal.notifications.sendLowStockNotification, {
+             productId: item.productId,
+             productName: product.name,
+             currentInventory: newInventory
+           });
+        }
       }
     }
 
@@ -135,6 +143,14 @@ export const createFromStripe = internalMutation({
           const newInventory = Math.max(0, product.inventory - item.quantity);
           await ctx.db.patch(item.productId, { inventory: newInventory });
           console.log(`[createFromStripe] Updated inventory for ${product.name}: ${product.inventory} -> ${newInventory}`);
+
+          if (newInventory <= 5) {
+             await ctx.scheduler.runAfter(0, internal.notifications.sendLowStockNotification, {
+               productId: item.productId,
+               productName: product.name,
+               currentInventory: newInventory
+             });
+          }
         }
       }
     }
