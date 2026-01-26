@@ -419,7 +419,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
       if (text === "/dev_ping") {
         const start = Date.now();
-        const stats = await ctx.runQuery(internal.dev.getSystemStats);
+        const stats = await ctx.runQuery(internal.dev.getSystemStats, {});
         const latency = Date.now() - start;
         
         const msg = `🏓 *Pong!*\n\n` +
@@ -442,7 +442,7 @@ export const webhook = httpAction(async (ctx, request) => {
       }
 
       if (text === "/dev_db") {
-        const stats = await ctx.runQuery(internal.dev.getSystemStats);
+        const stats = await ctx.runQuery(internal.dev.getSystemStats, {});
         
         const msg = `💾 *Database Stats*\n\n` +
                     `👥 Users: ${stats.users}\n` +
