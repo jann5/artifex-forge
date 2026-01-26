@@ -100,10 +100,16 @@ export const webhook = httpAction(async (ctx, request) => {
           text: `🗑️ Usuń standardowe: ${order._id.slice(-6)}`,
           callback_data: `delete_order:${order._id}`
         }]),
-        ...customOrders.map((order: any) => [{
-          text: `🗑️ Usuń niestandardowe: ${order._id.slice(-6)}`,
-          callback_data: `delete_custom_order:${order._id}`
-        }])
+        ...customOrders.flatMap((order: any) => [
+          [
+            { text: `💰 Wyceniono: ${order._id.slice(-6)}`, callback_data: `custom_quote:${order._id}` },
+            { text: `💬 Wiadomość: ${order._id.slice(-6)}`, callback_data: `custom_message:${order._id}` }
+          ],
+          [
+            { text: `✅ Zaakceptowano: ${order._id.slice(-6)}`, callback_data: `custom_status:${order._id}:accepted` },
+            { text: `🗑️ Usuń: ${order._id.slice(-6)}`, callback_data: `delete_custom_order:${order._id}` }
+          ]
+        ])
       ]
     };
 
