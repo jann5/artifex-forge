@@ -55,8 +55,7 @@ export const create = mutation({
       await ctx.db.delete(item._id);
     }
 
-    // Send Telegram notification
-    // @ts-expect-error - Convex API types will regenerate on next deployment
+    // Send Telegram notification - schedule immediately
     await ctx.scheduler.runAfter(0, internal.notifications.sendTelegramNotification, {
       orderId: orderId,
       customerEmail: user.email || "Unknown",
@@ -81,7 +80,12 @@ export const createFromStripe = internalMutation({
     const userId = args.userId as Id<"users">;
     const dbUser = await ctx.db.get(userId);
 
-    if (!dbUser) throw new Error("User not found");
+    if (!dbUser) {
+      console.error(`[createFromStripe] User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+
+    console.log(`[createFromStripe] Creating order for user: ${dbUser.email}, session: ${args.sessionId}`);
 
     const orderId = await ctx.db.insert("orders", {
       userId: dbUser._id,
@@ -91,6 +95,8 @@ export const createFromStripe = internalMutation({
       stripeSessionId: args.sessionId,
       shippingAddress: args.shippingAddress,
     });
+
+    console.log(`[createFromStripe] Order created: ${orderId}`);
 
     // Clear cart
     const cartItems = await ctx.db
@@ -102,8 +108,10 @@ export const createFromStripe = internalMutation({
       await ctx.db.delete(item._id);
     }
 
-    // Send Telegram notification
-    // @ts-expect-error - Convex API types will regenerate on next deployment
+    console.log(`[createFromStripe] Cart cleared for user: ${dbUser.email}`);
+
+    // Send Telegram notification - schedule immediately
+    console.log(`[createFromStripe] Scheduling Telegram notification for order: ${orderId}`);
     await ctx.scheduler.runAfter(0, internal.notifications.sendTelegramNotification, {
       orderId: orderId,
       customerEmail: dbUser.email || "Unknown",
@@ -111,6 +119,8 @@ export const createFromStripe = internalMutation({
       status: "paid",
       shippingAddress: args.shippingAddress,
     });
+
+    return orderId;
   },
 });
 
@@ -142,7 +152,6 @@ export const updateStatus = mutation({
     const customer = await ctx.db.get(order.userId);
     
     // Send Telegram notification (scheduled to run after mutation completes)
-    // @ts-expect-error - Convex API types will regenerate on next deployment
     await ctx.scheduler.runAfter(0, internal.notifications.sendTelegramNotification, {
       orderId: args.orderId,
       customerEmail: customer?.email || "Unknown",

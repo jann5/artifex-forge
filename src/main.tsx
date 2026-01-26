@@ -20,6 +20,7 @@ import RecentPage from "./pages/RecentPage";
 import SettingsPage from "./pages/SettingsPage";
 import Demo from "./demo";
 import AboutPage from "./pages/AboutPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import { Toaster } from "@/components/ui/sonner";
 
 // Debug log for user
@@ -81,6 +82,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/addresses" element={<AddressesPage />} />

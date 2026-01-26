@@ -1,8 +1,8 @@
 "use node";
-import { action } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 
-export const sendTelegramNotification = action({
+export const sendTelegramNotification = internalAction({
   args: {
     orderId: v.string(),
     customerEmail: v.string(),
@@ -27,7 +27,10 @@ mj. ${args.shippingAddress.postalCode} ${args.shippingAddress.city}
 📞 ${args.shippingAddress.phone}
 ` : "";
 
-    console.log(`Preparing Telegram notification for order ${args.orderId}. Has address: ${!!args.shippingAddress}`);
+    console.log(`[sendTelegramNotification] Preparing notification for order ${args.orderId}`);
+    console.log(`[sendTelegramNotification] Bot Token: ${botToken ? 'SET' : 'NOT SET'}`);
+    console.log(`[sendTelegramNotification] Chat ID: ${chatId ? chatId : 'NOT SET'}`);
+    console.log(`[sendTelegramNotification] Has address: ${!!args.shippingAddress}`);
 
     const message = `
 🛍️ *Nowe Zamówienie / Aktualizacja*
@@ -72,7 +75,9 @@ Zarządzaj statusem poniżej:
         throw new Error(`Telegram API error: ${response.statusText}`);
       }
 
-      console.log(`Telegram notification sent for order ${args.orderId}`);
+      const result = await response.json();
+      console.log(`[sendTelegramNotification] Telegram API response:`, result);
+      console.log(`[sendTelegramNotification] Notification sent successfully for order ${args.orderId}`);
       return { success: true };
     } catch (error: any) {
       console.error("Failed to send Telegram notification:", error);
