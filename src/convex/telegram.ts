@@ -53,42 +53,61 @@ export const webhook = httpAction(async (ctx, request) => {
     });
   };
 
-  async function handleOrderCommand(ctx: any, chatId: number) {
+  async function handleOrderCommand(chatId: number, ctx: any) {
     try {
-      const orders = await ctx.runQuery(internal.orders.getRecent);
+      // Fetch both standard and custom orders
+      const standardOrders = await ctx.runQuery(internal.orders.getRecent);
       const customOrders = await ctx.runQuery(internal.customOrders.listAllInternal);
       
-      if (orders.length === 0 && customOrders.length === 0) {
-        await sendTelegramMessage(chatId, "📦 Brak zamówień do wyświetlenia.");
+      if (standardOrders.length === 0 && customOrders.length === 0) {
+        await sendTelegramMessage(chatId, "📦 Brak zamówień w systemie.");
         return;
       }
 
-      let message = "📦 *Ostatnie Zamówienia:*\n\n";
+      let message = "📦 *Ostatnie zamówienia:*\n\n";
       
-      // Standard orders
-      if (orders.length > 0) {
-        message += "*Standardowe:*\n";
-        orders.forEach((order: any, idx: number) => {
-          const statusEmoji = order.status === "paid" ? "✅" : order.status === "pending" ? "⏳" : "📦";
-          message += `${idx + 1}. ${statusEmoji} #${order._id.slice(-6)} - ${order.customerName}\n`;
-          message += `   Kwota: ${order.totalAmount} PLN | Status: ${order.status}\n`;
-          message += `   /delete_${order._id}\n\n`;
-        });
+      // Display standard orders
+      if (standardOrders.length > 0) {
+        message += "*Standardowe zamówienia:*\n";
+        for (const order of standardOrders) {
+          const statusEmoji = order.status === "paid" ? "✅" : order.status === "shipped" ? "🚚" : "⏳";
+          message += `${statusEmoji} ID: \`${order._id}\`\n`;
+          message += `   Klient: ${order.customerName}\n`;
+          message += `   Kwota: ${order.totalAmount} PLN\n`;
+          message += `   Status: ${order.status}\n\n`;
+        }
       }
-
-      // Custom orders
+      
+      // Display custom orders
       if (customOrders.length > 0) {
-        message += "\n*Niestandardowe:*\n";
-        customOrders.forEach((order: any, idx: number) => {
-          const statusEmoji = order.status === "pending" ? "⏳" : order.status === "quoted" ? "💰" : order.status === "accepted" ? "✅" : "📦";
-          message += `${idx + 1}. ${statusEmoji} #${order._id.slice(-6)} - ${order.customerName}\n`;
+        message += "*Zamówienia niestandardowe:*\n";
+        for (const order of customOrders) {
+          const statusEmoji = order.status === "pending" ? "⏳" : order.status === "quoted" ? "💰" : order.status === "accepted" ? "✅" : "📋";
+          message += `${statusEmoji} ID: \`${order._id}\`\n`;
           message += `   Projekt: ${order.projectName}\n`;
-          message += `   Status: ${order.status}${order.estimatedPrice ? ` | ${order.estimatedPrice} PLN` : ""}\n`;
-          message += `   /delete_custom_${order._id}\n\n`;
-        });
+          message += `   Klient: ${order.customerName}\n`;
+          message += `   Status: ${order.status}\n`;
+          if (order.estimatedPrice) {
+            message += `   Cena: ${order.estimatedPrice} PLN\n`;
+          }
+          message += `\n`;
+        }
       }
 
-      await sendTelegramMessage(chatId, message);
+    const keyboard = {
+      inline_keyboard: [
+        ...standardOrders.map((order: any) => [{
+          text: `🗑️ Usuń standardowe: ${order._id.slice(-6)}`,
+          callback_data: `delete_order:${order._id}`
+        }]),
+        ...customOrders.map((order: any) => [{
+          text: `🗑️ Usuń niestandardowe: ${order._id.slice(-6)}`,
+          callback_data: `delete_custom_order:${order._id}`
+        }])
+      ]
+    };
+
+    await sendMessage(chatId, message, keyboard);
     } catch (error) {
       console.error("Error in handleOrderCommand:", error);
       await sendTelegramMessage(chatId, "❌ Błąd podczas pobierania zamówień.");
@@ -499,6 +518,38 @@ export const webhook = httpAction(async (ctx, request) => {
 
         await answerCallback();
         return new Response("OK", { status: 200 });
+      }
+
+      // Handle delete order callback
+      if (data && data.startsWith("delete_order:")) {
+        await answerCallback();
+        const orderId = data.split(":")[1];
+        try {
+          await ctx.runMutation(internal.orders.deleteOrder, { 
+            orderId: orderId as Id<"orders"> 
+          });
+          await sendTelegramMessage(chatId, `✅ Zamówienie ${orderId} zostało usunięte z bazy danych.`);
+        } catch (error) {
+          console.error("Error deleting order:", error);
+          await sendTelegramMessage(chatId, "❌ Błąd podczas usuwania zamówienia.");
+        }
+        return new Response("OK");
+      }
+
+      // Handle delete custom order callback
+      if (data && data.startsWith("delete_custom_order:")) {
+        await answerCallback();
+        const orderId = data.split(":")[1];
+        try {
+          await ctx.runMutation(internal.customOrders.deleteOrderInternal, { 
+            orderId: orderId as Id<"customOrders"> 
+          });
+          await sendTelegramMessage(chatId, `✅ Zamówienie niestandardowe ${orderId} zostało usunięte z bazy danych.`);
+        } catch (error) {
+          console.error("Error deleting custom order:", error);
+          await sendTelegramMessage(chatId, "❌ Błąd podczas usuwania zamówienia niestandardowego.");
+        }
+        return new Response("OK");
       }
 
       // Custom order quote with price input
