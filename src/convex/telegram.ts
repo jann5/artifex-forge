@@ -45,6 +45,70 @@ export const webhook = httpAction(async (ctx, request) => {
     });
   };
 
+  async function handleOrderCommand(ctx: any, chatId: number) {
+    try {
+      const orders = await ctx.runQuery(internal.orders.getRecent);
+      const customOrders = await ctx.runQuery(internal.customOrders.listAllInternal);
+      
+      if (orders.length === 0 && customOrders.length === 0) {
+        await sendTelegramMessage(chatId, "📦 Brak zamówień do wyświetlenia.");
+        return;
+      }
+
+      let message = "📦 *Ostatnie Zamówienia:*\n\n";
+      
+      // Standard orders
+      if (orders.length > 0) {
+        message += "*Standardowe:*\n";
+        orders.forEach((order: any, idx: number) => {
+          const statusEmoji = order.status === "paid" ? "✅" : order.status === "pending" ? "⏳" : "📦";
+          message += `${idx + 1}. ${statusEmoji} #${order._id.slice(-6)} - ${order.customerName}\n`;
+          message += `   Kwota: ${order.totalAmount} PLN | Status: ${order.status}\n`;
+          message += `   /delete_${order._id}\n\n`;
+        });
+      }
+
+      // Custom orders
+      if (customOrders.length > 0) {
+        message += "\n*Niestandardowe:*\n";
+        customOrders.forEach((order: any, idx: number) => {
+          const statusEmoji = order.status === "pending" ? "⏳" : order.status === "quoted" ? "💰" : order.status === "accepted" ? "✅" : "📦";
+          message += `${idx + 1}. ${statusEmoji} #${order._id.slice(-6)} - ${order.customerName}\n`;
+          message += `   Projekt: ${order.projectName}\n`;
+          message += `   Status: ${order.status}${order.estimatedPrice ? ` | ${order.estimatedPrice} PLN` : ""}\n`;
+          message += `   /delete_custom_${order._id}\n\n`;
+        });
+      }
+
+      await sendTelegramMessage(chatId, message);
+    } catch (error) {
+      console.error("Error in handleOrderCommand:", error);
+      await sendTelegramMessage(chatId, "❌ Błąd podczas pobierania zamówień.");
+    }
+  }
+
+  async function handleDeleteCommand(ctx: any, chatId: number, orderId: string) {
+    try {
+      const isCustomOrder = orderId.startsWith("custom_");
+      const actualOrderId = isCustomOrder ? orderId.replace("custom_", "") : orderId;
+      
+      if (isCustomOrder) {
+        await ctx.runMutation(internal.customOrders.deleteOrderInternal, { 
+          orderId: actualOrderId as any 
+        });
+        await sendTelegramMessage(chatId, `✅ Zamówienie niestandardowe #${actualOrderId.slice(-6)} zostało usunięte.`);
+      } else {
+        await ctx.runMutation(internal.orders.deleteOrder, { 
+          orderId: actualOrderId as any 
+        });
+        await sendTelegramMessage(chatId, `✅ Zamówienie #${actualOrderId.slice(-6)} zostało usunięte.`);
+      }
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      await sendTelegramMessage(chatId, "❌ Błąd podczas usuwania zamówienia.");
+    }
+  }
+
   try {
     const body = await request.json() as any;
     

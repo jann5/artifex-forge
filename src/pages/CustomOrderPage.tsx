@@ -92,17 +92,19 @@ export default function CustomOrderPage() {
         imageIds.push(storageId);
       }
 
-      // Upload 3D files
+      // Upload 3D files (optional)
       const file3DIds: string[] = [];
-      for (const file of files3D) {
-        const uploadUrl = await generateUploadUrl();
-        const result = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-        const { storageId } = await result.json();
-        file3DIds.push(storageId);
+      if (files3D.length > 0) {
+        for (const file of files3D) {
+          const uploadUrl = await generateUploadUrl();
+          const result = await fetch(uploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": file.type },
+            body: file,
+          });
+          const { storageId } = await result.json();
+          file3DIds.push(storageId);
+        }
       }
 
       await createOrder({

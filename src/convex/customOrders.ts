@@ -17,8 +17,16 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
+    // Get the user from database
+    const user = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", identity.email))
+      .first();
+
+    if (!user) throw new Error("User not found");
+
     const orderId = await ctx.db.insert("customOrders", {
-      userId: identity.subject as any,
+      userId: user._id,
       projectName: args.projectName,
       customerName: args.customerName,
       customerEmail: args.customerEmail,
@@ -235,5 +243,34 @@ export const getByIdInternal = internalQuery({
   args: { orderId: v.id("customOrders") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.orderId);
+  },
+});
+
+export const listAllInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const orders = await ctx.db
+      .query("customOrders")
+      .order("desc")
+      .take(20);
+    return orders;
+  },
+});
+
+export const deleteOrderInternal = internalMutation({
+  args: { orderId: v.id("customOrders") },
+  handler: async (ctx, args) => {
+    // Delete associated messages first
+    const messages = await ctx.db
+      .query("customOrderMessages")
+      .withIndex("by_order", (q) => q.eq("customOrderId", args.orderId))
+      .collect();
+    
+    for (const message of messages) {
+      await ctx.db.delete(message._id);
+    }
+    
+    // Delete the order
+    await ctx.db.delete(args.orderId);
   },
 });
