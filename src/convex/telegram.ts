@@ -129,6 +129,18 @@ export const webhook = httpAction(async (ctx, request) => {
       const messageId = message.message_id;
       const callbackQueryId = callbackQuery.id;
       
+      // ALWAYS answer callback query first to stop loading animation
+      const answerCallback = async (text?: string) => {
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            callback_query_id: callbackQueryId, 
+            text: text || "" 
+          })
+        });
+      };
+      
       // Format: update_status:ORDER_ID:STATUS
       if (data && data.startsWith("update_status:")) {
         const parts = data.split(":");
@@ -136,27 +148,16 @@ export const webhook = httpAction(async (ctx, request) => {
           const orderId = parts[1] as Id<"orders">;
           const status = parts[2];
           
-          // Update in Convex
           await ctx.runMutation(internal.orders.updateStatusInternal, {
             orderId: orderId,
             status: status as "pending" | "paid" | "shipped" | "delivered" | "cancelled",
           });
           
-          // Answer callback
-          await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              callback_query_id: callbackQuery.id, 
-              text: `Status zmieniony na ${status}` 
-            })
-          });
+          await answerCallback(`Status zmieniony na ${status}`);
 
-          // Update message
           const originalText = message.text || "";
           const updatedText = originalText.replace(/Status: .*/, `Status: ${status}`);
 
-          // Define keyboard explicitly to ensure Delete button is present
           const keyboard = {
             inline_keyboard: [
                 [
@@ -185,6 +186,7 @@ export const webhook = httpAction(async (ctx, request) => {
             })
           });
         }
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Custom Order Status Update
@@ -199,14 +201,7 @@ export const webhook = httpAction(async (ctx, request) => {
             status: status,
           });
           
-          await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              callback_query_id: callbackQuery.id, 
-              text: `Status zmieniony na ${status}` 
-            })
-          });
+          await answerCallback(`Status zmieniony na ${status}`);
 
           const originalText = message.text || "";
           const updatedText = originalText.replace(/Status: .*/, `Status: ${status}`);
@@ -222,6 +217,7 @@ export const webhook = httpAction(async (ctx, request) => {
             })
           });
         }
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Product Selection for Edit
@@ -257,12 +253,8 @@ export const webhook = httpAction(async (ctx, request) => {
             }),
         });
 
-        // Answer callback to stop loading animation
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ callback_query_id: callbackQuery.id })
-        });
+        await answerCallback();
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Product Selection for Delete
@@ -285,11 +277,8 @@ export const webhook = httpAction(async (ctx, request) => {
             });
         }
 
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ callback_query_id: callbackQuery.id })
-        });
+        await answerCallback();
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Delete Pagination
@@ -306,7 +295,6 @@ export const webhook = httpAction(async (ctx, request) => {
           { text: `${p.name} (${p.stock} szt.)`, callback_data: `delete_product_${p._id}` }
         ]));
         
-        // Add navigation buttons
         const navButtons = [];
         if (page > 0) {
           navButtons.push({ text: "⬅️ Poprzednia", callback_data: `delete_page:${page - 1}` });
@@ -330,11 +318,8 @@ export const webhook = httpAction(async (ctx, request) => {
           })
         });
 
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ callback_query_id: callbackQuery.id })
-        });
+        await answerCallback();
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Edit Pagination
@@ -351,7 +336,6 @@ export const webhook = httpAction(async (ctx, request) => {
           { text: `${p.name} (${p.stock} szt.)`, callback_data: `edit_product_${p._id}` }
         ]));
         
-        // Add navigation buttons
         const navButtons = [];
         if (page > 0) {
           navButtons.push({ text: "⬅️ Poprzednia", callback_data: `edit_page:${page - 1}` });
@@ -375,11 +359,8 @@ export const webhook = httpAction(async (ctx, request) => {
           })
         });
 
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ callback_query_id: callbackQuery.id })
-        });
+        await answerCallback();
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Order Info
@@ -411,18 +392,14 @@ export const webhook = httpAction(async (ctx, request) => {
           });
         }
 
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ callback_query_id: callbackQuery.id })
-        });
+        await answerCallback();
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Order Delete
       if (data && data.startsWith("order_delete:")) {
         const orderId = data.split(":")[1] as Id<"orders">;
         
-        // Show confirmation buttons by EDITING the message
         const confirmKeyboard = {
           inline_keyboard: [
             [
@@ -443,16 +420,12 @@ export const webhook = httpAction(async (ctx, request) => {
           }),
         });
 
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ callback_query_id: callbackQuery.id })
-        });
+        await answerCallback();
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Order Delete Confirmation
       if (data && data.startsWith("order_delete_confirm:")) {
-        // Just delete the message from Telegram
         await fetch(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -462,11 +435,8 @@ export const webhook = httpAction(async (ctx, request) => {
           }),
         });
 
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ callback_query_id: callbackQuery.id, text: "Usunięto wiadomość" })
-        });
+        await answerCallback("Usunięto wiadomość");
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Order Delete Cancel
@@ -527,11 +497,8 @@ export const webhook = httpAction(async (ctx, request) => {
             });
         }
 
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ callback_query_id: callbackQuery.id })
-        });
+        await answerCallback();
+        return new Response("OK", { status: 200 });
       }
 
       // Custom order quote with price input
@@ -554,15 +521,8 @@ export const webhook = httpAction(async (ctx, request) => {
           }),
         });
 
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            callback_query_id: callbackQueryId,
-            text: "Wprowadź cenę",
-          }),
-        });
-        return new Response("OK");
+        await answerCallback("Wprowadź cenę");
+        return new Response("OK", { status: 200 });
       }
 
       // Handle Custom Order Message
@@ -570,51 +530,14 @@ export const webhook = httpAction(async (ctx, request) => {
         const orderId = data.replace("custom_message:", "");
         await handleCustomOrderMessage(ctx, chatId, orderId);
         
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            callback_query_id: callbackQueryId,
-            text: "Wpisz wiadomość",
-          }),
-        });
-        return new Response("OK");
+        await answerCallback("Wpisz wiadomość");
+        return new Response("OK", { status: 200 });
       }
 
-      // Custom order status update
-      if (data.startsWith("custom_status:")) {
-        const [, orderId, status] = data.split(":");
-        
-        await ctx.runMutation(internal.customOrders.updateStatusInternal, {
-          orderId: orderId as Id<"customOrders">,
-          status,
-        });
+      // Custom order status update (duplicate removed, already handled above)
 
-        await fetch(`https://api.telegram.org/bot${botToken}/editMessageReplyMarkup`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            message_id: messageId,
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: `✅ Status: ${status}`, callback_data: "noop" }]
-              ]
-            },
-          }),
-        });
-
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            callback_query_id: callbackQueryId,
-            text: `Status zmieniony na: ${status}`,
-          }),
-        });
-        return new Response("OK");
-      }
-
+      // If no handler matched, answer callback anyway
+      await answerCallback();
       return new Response("OK", { status: 200 });
     }
 
