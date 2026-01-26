@@ -22,7 +22,7 @@ export const webhook = httpAction(async (ctx, request) => {
   };
 
   try {
-    const body = await request.json();
+    const body = await request.json() as any;
     
     // Handle Callback Queries (Buttons)
     if (body.callback_query) {
@@ -41,7 +41,7 @@ export const webhook = httpAction(async (ctx, request) => {
           // Update in Convex
           await ctx.runMutation(internal.orders.updateStatusInternal, {
             orderId: orderId,
-            status: status as any,
+            status: status as "pending" | "paid" | "shipped" | "delivered" | "cancelled",
           });
           
           // Answer callback
@@ -567,7 +567,7 @@ export const webhook = httpAction(async (ctx, request) => {
                  return new Response("OK", { status: 200 });
               }
 
-              const updates: any = {};
+              const updates: Record<string, any> = {};
               if (field === "price") {
                 const val = parseFloat(text.replace(",", "."));
                 if (isNaN(val)) {
@@ -804,7 +804,7 @@ export const webhook = httpAction(async (ctx, request) => {
                   await sendMessage(chatId, "✅ Zdjęcie dodane. Wyślij kolejne lub wpisz /done");
                 }
               }
-            } catch (e) {
+            } catch (e: any) {
               console.error(e);
               await sendMessage(chatId, "❌ Błąd podczas pobierania zdjęcia.");
             }
@@ -838,7 +838,7 @@ export const webhook = httpAction(async (ctx, request) => {
     }
 
     return new Response("OK", { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Telegram webhook error:", error);
     return new Response("Error processing webhook", { status: 500 });
   }
