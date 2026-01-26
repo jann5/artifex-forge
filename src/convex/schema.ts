@@ -38,7 +38,7 @@ const schema = defineSchema(
       description: v.string(),
       price: v.number(),
       category: v.string(),
-      images: v.array(v.string()), // Array of storage IDs or URLs
+      images: v.array(v.string()),
       inventory: v.number(),
       featured: v.boolean(),
       isBestSeller: v.optional(v.boolean()),
@@ -47,7 +47,7 @@ const schema = defineSchema(
           v.object({
             id: v.string(),
             name: v.string(),
-            price: v.optional(v.number()), // Override price if needed
+            price: v.optional(v.number()),
             inventory: v.number(),
           })
         )
@@ -59,6 +59,20 @@ const schema = defineSchema(
         searchField: "name",
         filterFields: ["category"],
       }),
+
+    customOrders: defineTable({
+      userId: v.id("users"),
+      projectName: v.string(),
+      description: v.string(),
+      material: v.string(),
+      images: v.array(v.string()), // Storage IDs
+      contactInfo: v.optional(v.string()),
+      status: v.string(), // pending, quoted, accepted, in_production, completed, cancelled
+      estimatedPrice: v.optional(v.number()),
+      adminNotes: v.optional(v.string()),
+      customerName: v.string(),
+      customerEmail: v.string(),
+    }).index("by_user", ["userId"]),
 
     cartItems: defineTable({
       userId: v.id("users"),

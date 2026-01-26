@@ -1,5 +1,6 @@
 "use node";
 import { internalAction } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
 export const sendTelegramNotification = internalAction({
@@ -103,6 +104,85 @@ Zarządzaj statusem poniżej:
       console.error(`[sendTelegramNotification] Error stack:`, error.stack);
       console.log(`[sendTelegramNotification] ========== END (ERROR) ==========`);
       return { success: false, message: error.message };
+    }
+  },
+});
+
+export const sendCustomOrderNotification = internalAction({
+  args: {
+    customOrderId: v.id("customOrders"),
+  },
+  handler: async (ctx, args) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (!botToken || !chatId) {
+      console.error("Telegram not configured");
+      return;
+    }
+
+    const order = await ctx.runQuery(internal.customOrders.getById, {
+      orderId: args.customOrderId,
+    });
+
+    if (!order) {
+      console.error("Custom order not found");
+      return;
+    }
+
+    const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
+    const contactInfo = order.contactInfo ? `\n📞 Kontakt: ${order.contactInfo}` : "";
+    
+    const msg = `🎨 *Nowe Zamówienie Niestandardowe* (${date})\n\n` +
+                `📦 Projekt: ${order.projectName}\n` +
+                `👤 Klient: ${order.customerName}\n` +
+                `📧 Email: ${order.customerEmail}\n` +
+                `🧱 Materiał: ${order.material}\n` +
+                `📝 Opis:\n${order.description}${contactInfo}\n\n` +
+                `📸 Zdjęcia: ${order.images.length} załącznik(ów)`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "💰 Wyceniono", callback_data: `custom_status:${order._id}:quoted` },
+          { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` }
+        ],
+        [
+          { text: "🔨 W produkcji", callback_data: `custom_status:${order._id}:in_production` },
+          { text: "✔️ Ukończono", callback_data: `custom_status:${order._id}:completed` }
+        ],
+        [
+          { text: "❌ Anulowano", callback_data: `custom_status:${order._id}:cancelled` }
+        ]
+      ]
+    };
+
+    // Send main message
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: msg,
+        parse_mode: "Markdown",
+        reply_markup: keyboard,
+      }),
+    });
+
+    // Send images as documents (files) for better organization
+    for (const imageId of order.images) {
+      const imageUrl = await ctx.storage.getUrl(imageId);
+      if (imageUrl) {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            document: imageUrl,
+            caption: `📎 Załącznik projektu: ${order.projectName}`,
+          }),
+        });
+      }
     }
   },
 });

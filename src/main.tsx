@@ -1,28 +1,30 @@
-import { StrictMode, Component, ReactNode } from "react";
-import { createRoot } from "react-dom/client";
+import React, { Component, ReactNode, StrictMode } from "react";
+import ReactDOM from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { Toaster } from "sonner";
 import "./index.css";
-import { ConvexAuthProvider } from "@convex-dev/auth/react";
-import { ConvexReactClient } from "convex/react";
-import { BrowserRouter, Routes, Route } from "react-router";
+
+// Pages
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-import ProductPage from "./pages/ProductPage";
 import ProductsPage from "./pages/ProductsPage";
+import ProductPage from "./pages/ProductPage";
 import AdminPage from "./pages/AdminPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import AddressesPage from "./pages/AddressesPage";
 import RecentPage from "./pages/RecentPage";
 import SettingsPage from "./pages/SettingsPage";
-import Demo from "./demo";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
-import PaymentSuccessPage from "./pages/PaymentSuccessPage";
-import { Toaster } from "@/components/ui/sonner";
+import CustomOrderPage from "./pages/CustomOrderPage";
+import NotFound from "./pages/NotFound";
+import Demo from "./demo";
 
 // Debug log for user
 console.log("================================================");
@@ -69,34 +71,92 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-createRoot(document.getElementById("root")!).render(
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Landing />,
+  },
+  {
+    path: "/auth",
+    element: <Auth />,
+  },
+  {
+    path: "/products",
+    element: <ProductsPage />,
+  },
+  {
+    path: "/products/:id",
+    element: <ProductPage />,
+  },
+  {
+    path: "/custom-order",
+    element: <CustomOrderPage />,
+  },
+  {
+    path: "/admin",
+    element: <AdminPage />,
+  },
+  {
+    path: "/admin/orders",
+    element: <AdminOrdersPage />,
+  },
+  {
+    path: "/checkout",
+    element: <CheckoutPage />,
+  },
+  {
+    path: "/orders",
+    element: <OrdersPage />,
+  },
+  {
+    path: "/payment-success",
+    element: <PaymentSuccessPage />,
+  },
+  {
+    path: "/favorites",
+    element: <FavoritesPage />,
+  },
+  {
+    path: "/reviews",
+    element: <ReviewsPage />,
+  },
+  {
+    path: "/addresses",
+    element: <AddressesPage />,
+  },
+  {
+    path: "/recent",
+    element: <RecentPage />,
+  },
+  {
+    path: "/settings",
+    element: <SettingsPage />,
+  },
+  {
+    path: "/about",
+    element: <AboutPage />,
+  },
+  {
+    path: "/contact",
+    element: <ContactPage />,
+  },
+  {
+    path: "/demo",
+    element: <Demo />,
+  },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
+]);
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
-      <ConvexAuthProvider client={convex}>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/products" element={<ProductsPage />} />
-            <Route path="/products/:id" element={<ProductPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/admin/orders" element={<AdminOrdersPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/payment-success" element={<PaymentSuccessPage />} />
-            <Route path="/favorites" element={<FavoritesPage />} />
-            <Route path="/reviews" element={<ReviewsPage />} />
-            <Route path="/addresses" element={<AddressesPage />} />
-            <Route path="/recent" element={<RecentPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/demo" element={<Demo />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-        </BrowserRouter>
-      </ConvexAuthProvider>
+      <ConvexProvider client={convex}>
+        <RouterProvider router={router} />
+        <Toaster />
+      </ConvexProvider>
     </ErrorBoundary>
   </StrictMode>,
 );

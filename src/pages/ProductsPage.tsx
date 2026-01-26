@@ -13,6 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -43,6 +46,22 @@ export default function ProductsPage() {
                 Odkryj naszą wyselekcjonowaną kolekcję premium produktów drukowanych 3D
               </p>
             </div>
+
+            <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold mb-1">Masz własny projekt?</h3>
+                    <p className="text-muted-foreground">
+                      Wydrukujemy go na profesjonalnej drukarce Stratasys F170
+                    </p>
+                  </div>
+                  <Button asChild size="lg">
+                    <Link to="/custom-order">Zamów projekt</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-4 rounded-xl border shadow-sm">
               <div className="relative w-full md:w-96">

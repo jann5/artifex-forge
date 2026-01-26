@@ -89,6 +89,43 @@ export const webhook = httpAction(async (ctx, request) => {
         }
       }
 
+      // Handle Custom Order Status Update
+      if (data && data.startsWith("custom_status:")) {
+        const parts = data.split(":");
+        if (parts.length === 3) {
+          const orderId = parts[1] as Id<"customOrders">;
+          const status = parts[2];
+          
+          await ctx.runMutation(internal.customOrders.updateStatus, {
+            orderId: orderId,
+            status: status,
+          });
+          
+          await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              callback_query_id: callbackQuery.id, 
+              text: `Status zmieniony na ${status}` 
+            })
+          });
+
+          const originalText = message.text || "";
+          const updatedText = originalText.replace(/Status: .*/, `Status: ${status}`);
+
+          await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: message.chat.id,
+              message_id: message.message_id,
+              text: updatedText,
+              parse_mode: "Markdown",
+            })
+          });
+        }
+      }
+
       // Handle Product Selection for Edit
       if (data && data.startsWith("edit_select:")) {
         const productId = data.split(":")[1];
