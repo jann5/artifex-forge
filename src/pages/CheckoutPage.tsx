@@ -9,7 +9,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, CreditCard, Truck, ArrowLeft, Lock, AlertCircle, MapPin } from "lucide-react";
+import { Loader2, ShieldCheck, CreditCard, Truck, ArrowLeft, Lock, AlertCircle, MapPin, Package } from "lucide-react";
+import { InpostGeowidgetReact } from "inpost-geowidget-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
@@ -33,6 +35,9 @@ export default function CheckoutPage() {
   const createCustomOrderStripeSession = useAction(api.stripe.createCustomOrderCheckoutSession);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  const [deliveryMethod, setDeliveryMethod] = useState<'inpost' | 'courier'>('inpost');
+  const [selectedParcelLocker, setSelectedParcelLocker] = useState<any>(null);
+  const [showParcelMap, setShowParcelMap] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Id<"addresses"> | null>(null);
   const [shippingDetails, setShippingDetails] = useState({
     fullName: "",
@@ -73,22 +78,32 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     if (customOrder) {
       // Handle custom order checkout
-      if (!selectedAddress) {
+      if (deliveryMethod === 'inpost' && !selectedParcelLocker) {
+        toast.error("Wybierz paczkomat");
+        return;
+      }
+      if (deliveryMethod === 'courier' && !selectedAddress) {
         toast.error("Wybierz adres dostawy");
         return;
       }
 
       setIsProcessing(true);
       try {
+        if (deliveryMethod === 'courier' && !selectedAddress) {
+          toast.error("Wybierz adres dostawy");
+          setIsProcessing(false);
+          return;
+        }
+
         const checkoutData = await createCustomOrderCheckout({
           customOrderId: customOrder._id,
-          addressId: selectedAddress,
+          addressId: selectedAddress || undefined,
         });
 
         // Now call the Stripe action to create the checkout session
         const result = await createCustomOrderStripeSession({
           customOrderId: checkoutData.customOrderId,
-          addressId: checkoutData.addressId,
+          addressId: checkoutData.addressId || undefined,
           userId: checkoutData.userId as Id<"users">,
           amount: checkoutData.amount,
         });
@@ -109,9 +124,16 @@ export default function CheckoutPage() {
         return;
       }
 
-      if (!shippingDetails.fullName || !shippingDetails.street || !shippingDetails.city || !shippingDetails.postalCode || !shippingDetails.phone) {
-        toast.error("Proszę uzupełnić wszystkie dane do wysyłki");
+      if (deliveryMethod === 'inpost' && !selectedParcelLocker) {
+        toast.error("Wybierz paczkomat");
         return;
+      }
+
+      if (deliveryMethod === 'courier') {
+        if (!shippingDetails.fullName || !shippingDetails.street || !shippingDetails.city || !shippingDetails.postalCode || !shippingDetails.phone) {
+          toast.error("Proszę uzupełnić wszystkie dane do wysyłki");
+          return;
+        }
       }
 
       setIsProcessing(true);
@@ -124,9 +146,20 @@ export default function CheckoutPage() {
           image: item.product?.images?.[0],
         }));
 
+        const shippingData = deliveryMethod === 'inpost' 
+          ? {
+              fullName: shippingDetails.fullName || "Odbiór w paczkomacie",
+              street: selectedParcelLocker.name,
+              city: selectedParcelLocker.address.line2,
+              postalCode: "",
+              phone: shippingDetails.phone || "",
+              parcelLocker: selectedParcelLocker.name,
+            }
+          : shippingDetails;
+
         const result = await createCheckout({ 
           items,
-          shippingAddress: shippingDetails
+          shippingAddress: shippingData
         });
         
         if (result.url) {
@@ -315,29 +348,133 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              <div className="space-y-4">
-                <Label>Wybierz adres dostawy</Label>
-                <div className="space-y-2">
-                  {addresses && addresses.length > 0 ? (
-                    addresses.map((address) => (
-                      <div key={address._id} className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-muted/5 transition-colors" onClick={() => setSelectedAddress(address._id)}>
-                        <div className="flex-1">
-                          <p className="font-medium">{address.fullName}</p>
-                          <p className="text-sm text-muted-foreground">{address.street}, {address.city}, {address.postalCode}</p>
+              <Card className="border shadow-none bg-card">
+                <CardHeader className="bg-muted/30 border-b py-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Truck className="h-5 w-5 text-primary" />
+                    Metoda dostawy
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="space-y-3">
+                    <div 
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        deliveryMethod === 'inpost' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => setDeliveryMethod('inpost')}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                            <Package className="h-5 w-5 text-yellow-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">InPost Paczkomat</p>
+                            <p className="text-sm text-muted-foreground">Odbierz z paczkomatu 24/7</p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                          <span className="text-xs text-muted-foreground">Darmowa</span>
-                        </div>
+                        <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">
+                          Darmowa
+                        </Badge>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-muted-foreground p-4">
-                      Brak adresów dostawy
+                    </div>
+
+                    <div 
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        deliveryMethod === 'courier' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => setDeliveryMethod('courier')}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                            <Truck className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">Kurier do domu</p>
+                            <p className="text-sm text-muted-foreground">Dostawa pod wskazany adres</p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">
+                          Darmowa
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {deliveryMethod === 'inpost' && (
+                    <div className="mt-4 space-y-3">
+                      <Label>Wybierz paczkomat</Label>
+                      {selectedParcelLocker ? (
+                        <div className="p-4 bg-muted/30 rounded-lg border">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-semibold">{selectedParcelLocker.name}</p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {selectedParcelLocker.address.line1}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {selectedParcelLocker.address.line2}
+                              </p>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setShowParcelMap(true)}
+                            >
+                              Zmień
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setShowParcelMap(true)}
+                        >
+                          <MapPin className="h-4 w-4 mr-2" />
+                          Wybierz paczkomat z mapy
+                        </Button>
+                      )}
                     </div>
                   )}
-                </div>
-              </div>
+
+                  {deliveryMethod === 'courier' && addresses && addresses.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      <Label>Wybierz adres dostawy</Label>
+                      <div className="space-y-2">
+                        {addresses.map((address) => (
+                          <div 
+                            key={address._id} 
+                            className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                              selectedAddress === address._id 
+                                ? 'border-primary bg-primary/5' 
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                            onClick={() => setSelectedAddress(address._id)}
+                          >
+                            <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                              selectedAddress === address._id 
+                                ? 'border-primary' 
+                                : 'border-muted-foreground'
+                            }`}>
+                              {selectedAddress === address._id && (
+                                <div className="h-2 w-2 rounded-full bg-primary" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium">{address.fullName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {address.street}, {address.city}, {address.postalCode}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
 
             <div>
@@ -404,6 +541,32 @@ export default function CheckoutPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* InPost Parcel Locker Map Dialog */}
+        <Dialog open={showParcelMap} onOpenChange={setShowParcelMap}>
+          <DialogContent className="max-w-4xl h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>Wybierz paczkomat InPost</DialogTitle>
+            </DialogHeader>
+            <div className="h-full w-full">
+              <InpostGeowidgetReact
+                token="eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJzQlpXVzFNZzVlQnpDYU1XU3JvTlBjRWFveFpXcW9Ua2FuZVB3X291LWxvIn0.eyJleHAiOjIwNTI3MjgzNTMsImlhdCI6MTczNzM2ODM1MywianRpIjoiNzY5YzI3YzAtNzI3Yy00YzI3LWI3YzAtNzI3YzQwYzI3YjdjIiwiaXNzIjoiaHR0cHM6Ly9sb2dpbi5pbnBvc3QucGwvYXV0aC9yZWFsbXMvZXh0ZXJuYWwiLCJzdWIiOiJmOjEyNDc1MDUxLTFjMDMtNGVhZS1iYWU0LWNlZjRlOGQzYjg1ZTpzYW5kYm94X3Rlc3QiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzaGlweCIsImFjciI6IjEiLCJhbGxvd2VkX3JlZmVycmVycyI6IiIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJhcGkiXX0sInNjb3BlIjoib3BlbmlkIGFwaTpwaWNrdXBwb2ludHMiLCJjbGllbnRJZCI6InNoaXB4In0.dummy"
+                identifier="parcel-map"
+                language="pl"
+                config="parcelcollect"
+                sandbox={true}
+                pointSelect={(point: any) => {
+                  setSelectedParcelLocker(point);
+                  setShowParcelMap(false);
+                  toast.success(`Wybrano paczkomat: ${point.name}`);
+                }}
+                apiReady={(api: any) => {
+                  console.log("InPost API ready", api);
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

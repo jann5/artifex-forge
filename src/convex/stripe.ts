@@ -169,7 +169,7 @@ export const verifyPayment = action({
 export const createCustomOrderCheckoutSession = action({
   args: {
     customOrderId: v.id("customOrders"),
-    addressId: v.id("addresses"),
+    addressId: v.optional(v.id("addresses")),
     userId: v.id("users"),
     amount: v.number(),
   },
@@ -187,11 +187,29 @@ export const createCustomOrderCheckoutSession = action({
       throw new Error("Custom order not found");
     }
 
-    const address = await ctx.runQuery(api.addresses.getById, {
+    const address = args.addressId ? await ctx.runQuery(api.addresses.getById, {
       addressId: args.addressId,
-    });
+    }) : null;
 
     const siteUrl = process.env.SITE_URL || process.env.CONVEX_SITE_URL;
+
+    const params: Record<string, string> = {
+      "payment_method_types[0]": "card",
+      "line_items[0][price_data][currency]": "pln",
+      "line_items[0][price_data][product_data][name]": `Zamówienie niestandardowe: ${customOrder.projectName}`,
+      "line_items[0][price_data][product_data][description]": customOrder.description,
+      "line_items[0][price_data][unit_amount]": String(Math.round(args.amount * 100)),
+      "line_items[0][quantity]": "1",
+      mode: "payment",
+      success_url: `${siteUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&custom_order=${args.customOrderId}`,
+      cancel_url: `${siteUrl}/checkout?customOrder=${args.customOrderId}`,
+      "metadata[customOrderId]": args.customOrderId,
+      "metadata[userId]": args.userId,
+    };
+
+    if (args.addressId) {
+      params["metadata[addressId]"] = args.addressId;
+    }
 
     const response: Response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
@@ -199,20 +217,7 @@ export const createCustomOrderCheckoutSession = action({
         Authorization: `Bearer ${stripeKey}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({
-        "payment_method_types[0]": "card",
-        "line_items[0][price_data][currency]": "pln",
-        "line_items[0][price_data][product_data][name]": `Zamówienie niestandardowe: ${customOrder.projectName}`,
-        "line_items[0][price_data][product_data][description]": customOrder.description,
-        "line_items[0][price_data][unit_amount]": String(Math.round(args.amount * 100)),
-        "line_items[0][quantity]": "1",
-        mode: "payment",
-        success_url: `${siteUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&custom_order=${args.customOrderId}`,
-        cancel_url: `${siteUrl}/checkout?customOrder=${args.customOrderId}`,
-        "metadata[customOrderId]": args.customOrderId,
-        "metadata[userId]": args.userId,
-        "metadata[addressId]": args.addressId,
-      }),
+      body: new URLSearchParams(params),
     });
 
     const session: any = await response.json();

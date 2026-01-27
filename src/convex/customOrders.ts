@@ -247,7 +247,7 @@ export const acceptQuote = mutation({
 export const createCheckoutSession = mutation({
   args: {
     customOrderId: v.id("customOrders"),
-    addressId: v.id("addresses"),
+    addressId: v.optional(v.id("addresses")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
