@@ -380,22 +380,27 @@ export default function AdminOrdersPage() {
                               <div>
                                 <h4 className="font-semibold text-sm text-muted-foreground mb-2">Pliki 3D ({order.files3D.length})</h4>
                                 <div className="space-y-2">
-                                  {order.files3D.map((fileId: string, idx: number) => (
-                                    <a
-                                      key={idx}
-                                      href={`${import.meta.env.VITE_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/storage/${fileId}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      download
-                                      className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors bg-muted/20"
-                                    >
-                                      <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                                      <div className="flex-1 min-w-0">
-                                        <span className="text-sm font-medium">Model 3D {idx + 1}</span>
-                                        <p className="text-xs text-muted-foreground truncate">ID: {fileId.slice(0, 8)}...</p>
-                                      </div>
-                                    </a>
-                                  ))}
+                                  {order.files3D.map((fileId: string, idx: number) => {
+                                    const metadata = order.files3DMetadata?.find((m: any) => m.storageId === fileId);
+                                    const fileName = metadata?.fileName || `model_${idx + 1}.3mf`;
+                                    
+                                    return (
+                                      <a
+                                        key={idx}
+                                        href={`${import.meta.env.VITE_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/storage/${fileId}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download={fileName}
+                                        className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors bg-muted/20"
+                                      >
+                                        <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                          <span className="text-sm font-medium truncate block">{fileName}</span>
+                                          <p className="text-xs text-muted-foreground truncate">ID: {fileId.slice(0, 8)}...</p>
+                                        </div>
+                                      </a>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             )}

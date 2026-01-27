@@ -109,6 +109,7 @@ export default function CustomOrderPage() {
 
       // Upload 3D files (optional) with proper MIME types
       const file3DIds: string[] = [];
+      const files3DMetadata: Array<{ storageId: string; fileName: string }> = [];
       if (files3D.length > 0) {
         for (const file of files3D) {
           const uploadUrl = await generateUploadUrl();
@@ -135,6 +136,7 @@ export default function CustomOrderPage() {
           
           const { storageId } = await result.json();
           file3DIds.push(storageId);
+          files3DMetadata.push({ storageId, fileName: file.name });
         }
       }
 
@@ -147,6 +149,7 @@ export default function CustomOrderPage() {
         contactInfo: contactInfo || undefined,
         images: imageIds,
         files3D: file3DIds,
+        files3DMetadata: files3DMetadata.length > 0 ? files3DMetadata : undefined,
       });
 
       toast.success("Zamówienie zostało złożone! Skontaktujemy się wkrótce.");

@@ -15,6 +15,10 @@ export const create = mutation({
     contactInfo: v.optional(v.string()),
     images: v.array(v.string()),
     files3D: v.array(v.string()),
+    files3DMetadata: v.optional(v.array(v.object({
+      storageId: v.string(),
+      fileName: v.string(),
+    }))),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -30,6 +34,7 @@ export const create = mutation({
       contactInfo: args.contactInfo,
       images: args.images,
       files3D: args.files3D,
+      files3DMetadata: args.files3DMetadata,
       status: "pending",
     });
 
