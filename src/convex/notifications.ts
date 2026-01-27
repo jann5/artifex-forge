@@ -131,35 +131,35 @@ export const sendCustomOrderNotification = internalAction({
     }
 
     const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
-    const contactInfo = order.contactInfo ? `\\n📞 Kontakt: ${order.contactInfo}` : "";
+    const contactInfo = order.contactInfo ? `\n📞 Kontakt: ${order.contactInfo}` : "";
     const siteUrl = process.env.CONVEX_SITE_URL;
     
-    let msg = `🎨 *NOWE ZAMÓWIENIE NIESTANDARDOWE* (${date})\\n\\n` +
-                `📦 *Projekt:* ${order.projectName}\\n` +
-                `👤 *Klient:* ${order.customerName}\\n` +
-                `📧 *Email:* ${order.customerEmail}\\n` +
-                `🧱 *Materiał:* ${order.material}\\n` +
-                `📝 *Opis:*\\n${order.description}${contactInfo}\\n\\n`;
+    let msg = `🎨 *NOWE ZAMÓWIENIE NIESTANDARDOWE* (${date})\n\n` +
+                `📦 *Projekt:* ${order.projectName}\n` +
+                `👤 *Klient:* ${order.customerName}\n` +
+                `📧 *Email:* ${order.customerEmail}\n` +
+                `🧱 *Materiał:* ${order.material}\n` +
+                `📝 *Opis:*\n${order.description}${contactInfo}\n\n`;
     
     // Add file information with download links
     if (order.images && order.images.length > 0) {
-      msg += `📸 *Zdjęcia:* ${order.images.length} plik(ów)\\n`;
+      msg += `📸 *Zdjęcia:* ${order.images.length} plik(ów)\n`;
       for (let i = 0; i < order.images.length; i++) {
         const imageUrl = `${siteUrl}/api/storage/${order.images[i]}`;
-        msg += `  [Zdjęcie ${i + 1}](${imageUrl})\\n`;
+        msg += `  [Zdjęcie ${i + 1}](${imageUrl})\n`;
       }
     }
     
     if (order.files3D && order.files3D.length > 0) {
-      msg += `\\n📦 *Pliki 3D:* ${order.files3D.length} plik(ów)\\n`;
+      msg += `\n📦 *Pliki 3D:* ${order.files3D.length} plik(ów)\n`;
       for (let i = 0; i < order.files3D.length; i++) {
         const fileUrl = `${siteUrl}/api/storage/${order.files3D[i]}`;
-        msg += `  [Model 3D ${i + 1}](${fileUrl})\\n`;
+        msg += `  [Model 3D ${i + 1}](${fileUrl})\n`;
       }
     }
     
-    msg += `\\n📊 *Status:* ${order.status}\\n\\n` +
-           `🔗 *Zarządzaj w panelu admina*\\n` +
+    msg += `\n📊 *Status:* ${order.status}\n\n` +
+           `🔗 *Zarządzaj w panelu admina*\n` +
            `🆔 \`${order._id}\``;
 
     await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
