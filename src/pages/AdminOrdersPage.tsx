@@ -360,7 +360,7 @@ export default function AdminOrdersPage() {
                                   {order.images.slice(0, 4).map((imageId: string, idx: number) => (
                                     <div key={idx} className="aspect-square rounded-lg bg-muted overflow-hidden border">
                                       <img 
-                                        src={imageId} 
+                                        src={`${process.env.CONVEX_SITE_URL}/api/storage/${imageId}`}
                                         alt={`Załącznik ${idx + 1}`}
                                         className="h-full w-full object-cover"
                                       />
