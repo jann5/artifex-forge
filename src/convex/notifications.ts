@@ -110,67 +110,56 @@ Zarządzaj statusem poniżej:
 
 export const sendCustomOrderNotification = internalAction({
   args: {
-    customOrderId: v.id("customOrders"),
+    orderId: v.id("customOrders"),
+    projectName: v.string(),
+    customerName: v.string(),
+    customerEmail: v.string(),
+    material: v.string(),
+    description: v.string(),
+    images: v.optional(v.array(v.string())),
+    files3D: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
-
-    if (!botToken || !chatId) {
-      console.log("Telegram not configured - skipping notification");
-      return;
-    }
-
-    const order = await ctx.runQuery(internal.customOrders.getByIdInternal, {
-      orderId: args.customOrderId,
-    });
-
-    if (!order) {
-      console.error("Custom order not found");
-      return;
-    }
-
-    const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
-    const contactInfo = order.contactInfo ? `\n📞 Kontakt: ${order.contactInfo}` : "";
     const siteUrl = process.env.CONVEX_SITE_URL;
-    
-    let msg = `🎨 *NOWE ZAMÓWIENIE NIESTANDARDOWE* (${date})\n\n` +
-                `📦 *Projekt:* ${order.projectName}\n` +
-                `👤 *Klient:* ${order.customerName}\n` +
-                `📧 *Email:* ${order.customerEmail}\n` +
-                `🧱 *Materiał:* ${order.material}\n` +
-                `📝 *Opis:*\n${order.description}${contactInfo}\n\n`;
-    
-    // Add file information with download links
-    if (order.images && order.images.length > 0) {
-      msg += `📸 *Zdjęcia:* ${order.images.length} plik(ów)\n`;
-      for (let i = 0; i < order.images.length; i++) {
-        const imageUrl = `${siteUrl}/api/storage/${order.images[i]}`;
-        msg += `  [Zdjęcie ${i + 1}](${imageUrl})\n`;
-      }
-    }
-    
-    if (order.files3D && order.files3D.length > 0) {
-      msg += `\n📦 *Pliki 3D:* ${order.files3D.length} plik(ów)\n`;
-      for (let i = 0; i < order.files3D.length; i++) {
-        const fileUrl = `${siteUrl}/api/storage/${order.files3D[i]}`;
-        msg += `  [Model 3D ${i + 1}](${fileUrl})\n`;
-      }
-    }
-    
-    msg += `\n📊 *Status:* ${order.status}\n\n` +
-           `🔗 *Zarządzaj w panelu admina*\n` +
-           `🆔 \`${order._id}\``;
 
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: msg,
-        parse_mode: "Markdown",
-      }),
-    });
+    if (botToken && chatId) {
+      let message = `🎨 *NOWE ZAMÓWIENIE NIESTANDARDOWE*\n\n` +
+                    `👤 *Klient:* ${args.customerName}\n` +
+                    `📧 *Email:* ${args.customerEmail}\n` +
+                    `🏗️ *Projekt:* ${args.projectName}\n` +
+                    `🧱 *Materiał:* ${args.material}\n` +
+                    `📝 *Opis:* ${args.description}\n`;
+
+      if (args.images && args.images.length > 0) {
+        message += `\n📸 *Zdjęcia:* ${args.images.length} plik(ów)\n`;
+        for (let i = 0; i < args.images.length; i++) {
+          const imageUrl = `${siteUrl}/api/storage/${args.images[i]}`;
+          message += `  [Zdjęcie ${i + 1}](${imageUrl})\n`;
+        }
+      }
+
+      if (args.files3D && args.files3D.length > 0) {
+        message += `\n📦 *Pliki 3D:* ${args.files3D.length} plik(ów)\n`;
+        for (let i = 0; i < args.files3D.length; i++) {
+          const fileUrl = `${siteUrl}/api/storage/${args.files3D[i]}`;
+          message += `  [Model 3D ${i + 1}](${fileUrl})\n`;
+        }
+      }
+
+      message += `\n🆔 \`${args.orderId}\`\n\n🔗 [Zarządzaj w panelu admina](${siteUrl}/admin/orders)`;
+
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: "Markdown",
+        }),
+      });
+    }
   },
 });
 

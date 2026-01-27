@@ -39,7 +39,14 @@ export const create = mutation({
     });
 
     await ctx.scheduler.runAfter(0, internal.notifications.sendCustomOrderNotification, {
-      customOrderId: orderId,
+      orderId,
+      projectName: args.projectName,
+      customerName: args.customerName,
+      customerEmail: args.customerEmail,
+      material: args.material,
+      description: args.description,
+      images: args.images,
+      files3D: args.files3D,
     });
 
     return orderId;
