@@ -28,7 +28,7 @@ export function Component() {
             cx="500"
             cy="500"
             r="120"
-            fill="oklch(0.279 0.041 260.031)"
+            fill="rgba(147, 197, 253, 0.6)"
             animate={{
               cx: [500, 600, 400, 500],
               cy: [500, 400, 600, 500],
@@ -44,7 +44,7 @@ export function Component() {
             cx="400"
             cy="600"
             r="100"
-            fill="oklch(0.75 0.156 72.5)"
+            fill="rgba(147, 197, 253, 0.5)"
             animate={{
               cx: [400, 300, 500, 400],
               cy: [600, 500, 700, 600],
@@ -61,7 +61,7 @@ export function Component() {
             cx="600"
             cy="400"
             r="110"
-            fill="oklch(0.279 0.041 260.031)"
+            fill="rgba(147, 197, 253, 0.55)"
             animate={{
               cx: [600, 700, 500, 600],
               cy: [400, 500, 300, 400],
@@ -78,7 +78,7 @@ export function Component() {
             cx="300"
             cy="300"
             r="90"
-            fill="oklch(0.75 0.156 72.5)"
+            fill="rgba(147, 197, 253, 0.45)"
             animate={{
               cx: [300, 250, 350, 300],
               cy: [300, 400, 250, 300],
