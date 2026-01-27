@@ -158,16 +158,22 @@ export function CustomOrderCard({ order }: { order: any }) {
 
           {order.images && order.images.length > 0 && (
             <div>
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">Zdjęcia</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {order.images.slice(0, 6).map((imageId: string, idx: number) => (
-                  <div key={idx} className="aspect-square rounded-lg bg-muted overflow-hidden border">
+              <h4 className="font-semibold text-sm text-muted-foreground mb-2">Zdjęcia ({order.images.length})</h4>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {order.images.map((imageId: string, idx: number) => (
+                  <a
+                    key={idx}
+                    href={`${import.meta.env.VITE_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/storage/${imageId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="aspect-square rounded-lg bg-muted overflow-hidden border hover:opacity-80 transition-opacity"
+                  >
                     <img 
                       src={`${import.meta.env.VITE_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/storage/${imageId}`}
                       alt={`Załącznik ${idx + 1}`}
                       className="h-full w-full object-cover"
                     />
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>
@@ -175,7 +181,7 @@ export function CustomOrderCard({ order }: { order: any }) {
 
           {order.files3D && order.files3D.length > 0 && (
             <div>
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">Pliki 3D</h4>
+              <h4 className="font-semibold text-sm text-muted-foreground mb-2">Pliki 3D ({order.files3D.length})</h4>
               <div className="space-y-2">
                 {order.files3D.map((fileId: string, idx: number) => (
                   <a
@@ -183,10 +189,14 @@ export function CustomOrderCard({ order }: { order: any }) {
                     href={`${import.meta.env.VITE_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/storage/${fileId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2 rounded-lg border hover:bg-muted/50 transition-colors"
+                    download
+                    className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors bg-muted/20"
                   >
-                    <Package className="h-4 w-4 text-primary" />
-                    <span className="text-sm">Model 3D {idx + 1}</span>
+                    <Package className="h-5 w-5 text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium">Model 3D {idx + 1}</span>
+                      <p className="text-xs text-muted-foreground">Kliknij, aby pobrać</p>
+                    </div>
                   </a>
                 ))}
               </div>
