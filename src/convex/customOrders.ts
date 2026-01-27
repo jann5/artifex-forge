@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const create = mutation({
   args: {
@@ -306,9 +307,11 @@ export const listAll = query({
       return [];
     }
 
-    const userId = identity.subject as Id<"users">;
-    const user = await ctx.db.get(userId);
+    // Use getAuthUserId to get the actual user ID
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     
+    const user = await ctx.db.get(userId);
     if (!user) return [];
     
     // Type guard to check if user has role property
