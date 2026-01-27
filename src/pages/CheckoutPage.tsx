@@ -549,21 +549,30 @@ export default function CheckoutPage() {
               <DialogTitle>Wybierz paczkomat InPost</DialogTitle>
             </DialogHeader>
             <div className="h-full w-full">
-              <InpostGeowidgetReact
-                token="eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJzQlpXVzFNZzVlQnpDYU1XU3JvTlBjRWFveFpXcW9Ua2FuZVB3X291LWxvIn0.eyJleHAiOjIwNTI3MjgzNTMsImlhdCI6MTczNzM2ODM1MywianRpIjoiNzY5YzI3YzAtNzI3Yy00YzI3LWI3YzAtNzI3YzQwYzI3YjdjIiwiaXNzIjoiaHR0cHM6Ly9sb2dpbi5pbnBvc3QucGwvYXV0aC9yZWFsbXMvZXh0ZXJuYWwiLCJzdWIiOiJmOjEyNDc1MDUxLTFjMDMtNGVhZS1iYWU0LWNlZjRlOGQzYjg1ZTpzYW5kYm94X3Rlc3QiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzaGlweCIsImFjciI6IjEiLCJhbGxvd2VkX3JlZmVycmVycyI6IiIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJhcGkiXX0sInNjb3BlIjoib3BlbmlkIGFwaTpwaWNrdXBwb2ludHMiLCJjbGllbnRJZCI6InNoaXB4In0.dummy"
-                identifier="parcel-map"
-                language="pl"
-                config="parcelcollect"
-                sandbox={true}
-                pointSelect={(point: any) => {
-                  setSelectedParcelLocker(point);
-                  setShowParcelMap(false);
-                  toast.success(`Wybrano paczkomat: ${point.name}`);
-                }}
-                apiReady={(api: any) => {
-                  console.log("InPost API ready", api);
-                }}
-              />
+              <div className="p-8 text-center space-y-4">
+                <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto" />
+                <h3 className="text-lg font-semibold">Wymagana konfiguracja InPost</h3>
+                <p className="text-sm text-muted-foreground">
+                  Aby korzystać z wyboru paczkomatu, administrator musi skonfigurować token API InPost.
+                </p>
+                <div className="bg-muted/50 p-4 rounded-lg text-left text-xs space-y-2">
+                  <p className="font-semibold">Instrukcja dla administratora:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                    <li>Zarejestruj konto na: <a href="https://sandbox-manager.paczkomaty.pl/" target="_blank" className="text-primary underline">sandbox-manager.paczkomaty.pl</a></li>
+                    <li>Uzupełnij dane firmy w zakładce "Moje Konto"</li>
+                    <li>Przejdź do zakładki API i wygeneruj token Geowidget</li>
+                    <li>Dla localhost zostaw pole domeny puste</li>
+                    <li>Dodaj token do zmiennych środowiskowych jako INPOST_GEOWIDGET_TOKEN</li>
+                  </ol>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowParcelMap(false)}
+                  className="mt-4"
+                >
+                  Zamknij
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
