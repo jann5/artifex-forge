@@ -90,93 +90,141 @@ export default function Landing() {
       </Dialog>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
-        {/* Animated Background */}
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+        {/* Decorative Background Elements */}
         <div className="absolute inset-0 z-0">
-          {/* Animated blue organic shape */}
+          {/* Animated gradient orbs */}
           <motion.div
-            className="absolute inset-0 flex items-center justify-center"
+            className="absolute top-20 left-10 w-96 h-96 rounded-full"
+            style={{
+              background: "radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)",
+              filter: "blur(60px)",
+            }}
             animate={{
-              scale: [1, 1.1, 1],
-              rotate: [0, 5, -5, 0],
+              scale: [1, 1.2, 1],
+              x: [0, 30, 0],
+              y: [0, -20, 0],
             }}
             transition={{
               duration: 20,
               repeat: Infinity,
               ease: "easeInOut"
             }}
-          >
-            <div className="relative w-[800px] h-[800px]">
-              <motion.div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background: "radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(37, 99, 235, 0.3) 30%, rgba(29, 78, 216, 0.2) 50%, transparent 70%)",
-                  filter: "blur(60px)",
-                }}
-                animate={{
-                  scale: [1, 1.2, 0.9, 1],
-                  x: [0, 50, -50, 0],
-                  y: [0, -30, 30, 0],
-                }}
-                transition={{
-                  duration: 15,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-              <motion.div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background: "radial-gradient(circle, rgba(96, 165, 250, 0.3) 0%, rgba(59, 130, 246, 0.2) 40%, transparent 70%)",
-                  filter: "blur(80px)",
-                }}
-                animate={{
-                  scale: [1, 0.8, 1.3, 1],
-                  x: [0, -40, 40, 0],
-                  y: [0, 40, -40, 0],
-                }}
-                transition={{
-                  duration: 18,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1
-                }}
-              />
-            </div>
-          </motion.div>
-
-          {/* Subtle grid overlay */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px]" />
+          />
+          <motion.div
+            className="absolute bottom-20 right-10 w-96 h-96 rounded-full"
+            style={{
+              background: "radial-gradient(circle, rgba(251, 146, 60, 0.12) 0%, transparent 70%)",
+              filter: "blur(70px)",
+            }}
+            animate={{
+              scale: [1, 1.3, 1],
+              x: [0, -40, 0],
+              y: [0, 30, 0],
+            }}
+            transition={{
+              duration: 18,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1
+            }}
+          />
+          
+          {/* Subtle grid pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:80px_80px]" />
+          
+          {/* Floating geometric shapes */}
+          <motion.div
+            className="absolute top-1/4 right-1/4 w-32 h-32 border-2 border-primary/10 rounded-lg"
+            animate={{
+              rotate: [0, 360],
+              y: [0, -20, 0],
+            }}
+            transition={{
+              duration: 25,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+          <motion.div
+            className="absolute bottom-1/3 left-1/4 w-24 h-24 border-2 border-secondary/10 rounded-full"
+            animate={{
+              scale: [1, 1.1, 1],
+              x: [0, 15, 0],
+            }}
+            transition={{
+              duration: 15,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
         </div>
 
         <motion.div 
           style={{ opacity, y }}
           className="container mx-auto px-4 relative z-10"
         >
-          <div className="text-center max-w-4xl mx-auto">
-            {/* Main Heading */}
+          <div className="text-center max-w-5xl mx-auto">
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 mb-8"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              <span className="text-sm font-medium text-primary">Profesjonalny Druk 3D</span>
+            </motion.div>
+
+            {/* Main Heading - Polish Typography */}
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-6 text-white"
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6"
               style={{
-                fontFamily: "var(--font-display)",
-                letterSpacing: "0.05em"
+                fontFamily: "'Poppins', 'Inter', sans-serif",
+                background: "linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
               }}
             >
               ARTIFEX FORGE
             </motion.h1>
 
-            {/* Subheading */}
+            {/* Subheading - Polish */}
             <motion.p 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.8 }}
-              className="text-xl md:text-2xl text-blue-200/80 mb-12 font-light tracking-wide"
+              className="text-xl md:text-2xl text-muted-foreground mb-12 font-light max-w-3xl mx-auto leading-relaxed"
+              style={{
+                fontFamily: "'Inter', sans-serif",
+              }}
             >
-              a full cycle agency for all digital and creatives
+              Kompleksowa agencja dla wszystkich projektów cyfrowych i kreatywnych
             </motion.p>
+
+            {/* Feature Pills */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.8 }}
+              className="flex flex-wrap justify-center gap-3 mb-12"
+            >
+              {["Precyzja Przemysłowa", "Stratasys F170", "Materiały Inżynieryjne"].map((feature, i) => (
+                <span 
+                  key={i}
+                  className="px-4 py-2 rounded-full bg-muted/50 text-sm font-medium text-foreground/80 border border-border/50"
+                >
+                  {feature}
+                </span>
+              ))}
+            </motion.div>
 
             {/* CTA Buttons */}
             <motion.div
@@ -187,17 +235,18 @@ export default function Landing() {
             >
               <Button 
                 size="lg" 
-                className="h-14 px-12 text-lg bg-blue-600 hover:bg-blue-700 text-white border-0" 
+                className="h-14 px-10 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group" 
                 asChild
               >
                 <Link to="/products">
-                  Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
+                  Zobacz Kolekcję 
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="h-14 px-12 text-lg border-blue-400/30 text-blue-100 hover:bg-blue-950/50 hover:text-white" 
+                className="h-14 px-10 text-lg border-2 hover:bg-muted/50 transition-all duration-300" 
                 asChild
               >
                 <Link to="/about">
@@ -215,13 +264,13 @@ export default function Landing() {
           transition={{ delay: 0.8, duration: 0.6 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
         >
-          <div className="flex flex-col items-center gap-2 text-blue-200/60">
-            <span className="text-xs uppercase tracking-wider">Scroll</span>
-            <div className="w-6 h-10 border-2 border-blue-400/30 rounded-full flex items-start justify-center p-2">
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <span className="text-xs uppercase tracking-wider font-medium">Przewiń</span>
+            <div className="w-6 h-10 border-2 border-border rounded-full flex items-start justify-center p-2">
               <motion.div
                 animate={{ y: [0, 12, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-1.5 h-1.5 bg-blue-400/50 rounded-full"
+                className="w-1.5 h-1.5 bg-primary rounded-full"
               />
             </div>
           </div>
