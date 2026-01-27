@@ -155,11 +155,25 @@ export const updateStatusInternal = internalMutation({
     estimatedPrice: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+
     const updates: any = { status: args.status };
     if (args.estimatedPrice !== undefined) {
       updates.estimatedPrice = args.estimatedPrice;
     }
     await ctx.db.patch(args.orderId, updates);
+
+    // Send email notification when status changes to "quoted"
+    if (args.status === "quoted" && args.estimatedPrice) {
+      await ctx.scheduler.runAfter(0, internal.emails.sendCustomOrderQuoteEmail, {
+        customerEmail: order.customerEmail,
+        customerName: order.customerName,
+        projectName: order.projectName,
+        estimatedPrice: args.estimatedPrice,
+        orderId: args.orderId,
+      });
+    }
   },
 });
 

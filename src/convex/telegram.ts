@@ -232,40 +232,56 @@ export const webhook = httpAction(async (ctx, request) => {
 
           await answerCallback(`Status zmieniony na ${status}`);
 
-          const originalText = message.text || "";
-          const updatedText = originalText.replace(/Status: .*/, `Status: ${status}`);
+          // Get order details for updated message
+          const order = await ctx.runQuery(internal.customOrders.getByIdInternal, { orderId });
+          
+          if (order) {
+            const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
+            const statusEmoji = status === "pending" ? "⏳" : status === "quoted" ? "💰" : status === "accepted" ? "✅" : status === "in_production" ? "🔨" : status === "completed" ? "✔️" : "📋";
+            
+            let orderMessage = `${statusEmoji} *ZAMÓWIENIE NIESTANDARDOWE* (${date})\n\n`;
+            orderMessage += `🎨 *Projekt:* ${order.projectName}\n`;
+            orderMessage += `👤 *Klient:* ${order.customerName}\n`;
+            orderMessage += `📧 *Email:* ${order.customerEmail}\n`;
+            orderMessage += `🧱 *Materiał:* ${order.material}\n`;
+            orderMessage += `📊 *Status:* ${status}\n`;
+            if (order.estimatedPrice) {
+              orderMessage += `💰 *Wycena:* ${order.estimatedPrice} PLN\n`;
+            }
+            orderMessage += `\n🆔 \`${order._id}\``;
 
-          // Re-add the inline keyboard buttons after status update
-          const keyboard = {
-            inline_keyboard: [
-              [
-                { text: "💰 Wyceniono", callback_data: `custom_quote:${orderId}` }
-              ],
-              [
-                { text: "✅ Zaakceptowano", callback_data: `custom_status:${orderId}:accepted` },
-                { text: "🔨 W produkcji", callback_data: `custom_status:${orderId}:in_production` }
-              ],
-              [
-                { text: "✔️ Ukończono", callback_data: `custom_status:${orderId}:completed` },
-                { text: "❌ Anulowano", callback_data: `custom_status:${orderId}:cancelled` }
-              ],
-              [
-                { text: "🗑️ Usuń", callback_data: `delete_custom_order:${orderId}` }
+            // Re-add the inline keyboard buttons after status update
+            const keyboard = {
+              inline_keyboard: [
+                [
+                  { text: "💰 Wyceniono", callback_data: `custom_quote:${orderId}` }
+                ],
+                [
+                  { text: "✅ Zaakceptowano", callback_data: `custom_status:${orderId}:accepted` },
+                  { text: "🔨 W produkcji", callback_data: `custom_status:${orderId}:in_production` }
+                ],
+                [
+                  { text: "✔️ Ukończono", callback_data: `custom_status:${orderId}:completed` },
+                  { text: "❌ Anulowano", callback_data: `custom_status:${orderId}:cancelled` }
+                ],
+                [
+                  { text: "🗑️ Usuń", callback_data: `delete_custom_order:${orderId}` }
+                ]
               ]
-            ]
-          };
+            };
 
-          await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: message.chat.id,
-              message_id: message.message_id,
-              text: updatedText,
-              parse_mode: "Markdown",
-              reply_markup: keyboard
-            })
-          });
+            await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: message.chat.id,
+                message_id: message.message_id,
+                text: orderMessage,
+                parse_mode: "Markdown",
+                reply_markup: keyboard
+              })
+            });
+          }
         }
         return new Response("OK", { status: 200 });
       }
@@ -692,37 +708,7 @@ export const webhook = httpAction(async (ctx, request) => {
       }
 
       if (text === "/orders") {
-        const orders = await ctx.runQuery(internal.orders.getRecent);
-        if (orders.length === 0) {
-            await sendMessage(chatId, "Brak ostatnich zamówień.");
-        } else {
-            for (const order of orders) {
-                const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
-                const msg = `📦 *Zamówienie* (${date})\n` +
-                            `👤 ${order.customerName}\n` +
-                            `💰 ${order.totalAmount} PLN\n` +
-                            `Status: ${order.status}`;
-                
-                // Add status buttons + info + delete
-                const keyboard = {
-                    inline_keyboard: [
-                        [
-                            { text: "Oczekuje", callback_data: `update_status:${order._id}:pending` },
-                            { text: "Opłacone", callback_data: `update_status:${order._id}:paid` }
-                        ],
-                        [
-                            { text: "Wysłane", callback_data: `update_status:${order._id}:shipped` },
-                            { text: "Dostarczone", callback_data: `update_status:${order._id}:delivered` }
-                        ],
-                        [
-                            { text: "ℹ️ Szczegóły", callback_data: `order_info:${order._id}` },
-                            { text: "🗑️ Usuń", callback_data: `order_delete:${order._id}` }
-                        ]
-                    ]
-                };
-                await sendMessage(chatId, msg, keyboard);
-            }
-        }
+        await handleOrderCommand(Number(chatId), ctx);
         return new Response("OK", { status: 200 });
       }
 
