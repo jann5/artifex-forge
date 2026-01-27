@@ -89,33 +89,19 @@ export default function Landing() {
         </DialogContent>
       </Dialog>
 
-      {/* Hero Section - Premium & Clean */}
+      {/* Hero Section - Simplified & Clean */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Animated Background */}
+        {/* Simplified Background */}
         <div className="absolute inset-0 -z-10">
-          {/* Background Image/Video */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary/20">
-            <img 
-              src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?q=80&w=2070&auto=format&fit=crop"
-              alt="3D Printing Technology"
-              className="w-full h-full object-cover opacity-20 mix-blend-overlay"
-            />
-          </div>
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[length:24px_24px]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[length:32px_32px]" />
         </div>
 
         <motion.div 
           style={{ opacity, y }}
           className="container mx-auto px-4 relative z-10"
         >
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center max-w-4xl mx-auto"
-          >
+          <div className="text-center max-w-4xl mx-auto">
             {/* Badge */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -128,17 +114,20 @@ export default function Landing() {
             </motion.div>
 
             {/* Main Heading */}
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
-              <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent animate-gradient">
-                Artifex Forge
-              </span>
-            </h1>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6"
+            >
+              Artifex Forge
+            </motion.h1>
 
             {/* Subheading */}
             <motion.p 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
               className="text-2xl md:text-3xl text-muted-foreground mb-8 font-light"
             >
               Twórz. Inspiruj. Wyróżnij się.
@@ -148,22 +137,21 @@ export default function Landing() {
             <motion.p 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
               className="text-lg text-muted-foreground/80 mb-12 max-w-2xl mx-auto leading-relaxed"
             >
               Odkryj świat unikalnych produktów drukowanych w technologii 3D. 
-              Łączymy precyzję inżynieryjną z artystyczną wizją, tworząc przedmioty, 
-              które inspirują i zachwycają swoją jakością.
+              Łączymy precyzję inżynieryjną z artystyczną wizją.
             </motion.p>
 
             {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.6 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Button size="lg" className="h-14 px-12 text-lg shadow-lg hover:shadow-xl transition-all" asChild>
+              <Button size="lg" className="h-14 px-12 text-lg" asChild>
                 <Link to="/products">
                   Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
@@ -179,7 +167,7 @@ export default function Landing() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.9, duration: 0.6 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
               className="flex flex-wrap justify-center gap-4 mt-12"
             >
               {["Materiały Premium", "Precyzyjny Druk", "Szybka Wysyłka"].map((feature, i) => (
@@ -188,14 +176,14 @@ export default function Landing() {
                 </div>
               ))}
             </motion.div>
-          </motion.div>
+          </div>
         </motion.div>
 
         {/* Scroll Indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.6 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2"
         >
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
