@@ -231,12 +231,12 @@ export const acceptQuote = mutation({
     orderId: v.id("customOrders"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
 
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
-    if (order.userId !== identity.subject) throw new Error("Unauthorized");
+    if (order.userId !== user._id) throw new Error("Unauthorized");
 
     await ctx.db.patch(args.orderId, {
       status: "accepted",
