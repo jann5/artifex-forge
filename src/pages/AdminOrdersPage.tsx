@@ -32,7 +32,7 @@ import { useState } from "react";
 export default function AdminOrdersPage() {
   const { user } = useAuth();
   const orders = useQuery(api.orders.listAll);
-  const customOrders = useQuery(api.customOrders.list);
+  const customOrders = useQuery(api.customOrders.listAll);
   const updateStatus = useMutation(api.orders.updateStatus);
   const updateCustomOrderStatus = useMutation(api.customOrders.updateStatus);
   const setCustomOrderPrice = useMutation(api.customOrders.updatePrice);

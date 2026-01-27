@@ -298,6 +298,33 @@ export const getByIdInternal = internalQuery({
   },
 });
 
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const userId = identity.subject as Id<"users">;
+    const user = await ctx.db.get(userId);
+    
+    if (!user) return [];
+    
+    // Type guard to check if user has role property
+    if (!("role" in user) || user.role !== "admin") {
+      return [];
+    }
+
+    const orders = await ctx.db
+      .query("customOrders")
+      .order("desc")
+      .take(100);
+
+    return orders;
+  },
+});
+
 export const listAllInternal = internalQuery({
   args: {},
   handler: async (ctx) => {
