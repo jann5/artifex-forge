@@ -21,7 +21,6 @@ export default function Landing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"]
@@ -42,111 +41,6 @@ export default function Landing() {
       setSearchParams({});
     }
   }, [success, canceled, setSearchParams]);
-
-  // Canvas reveal effect
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Set canvas size
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      
-      // Fill with black initially
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    };
-
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-
-    // Mouse tracking
-    let isDrawing = false;
-    let lastX = 0;
-    let lastY = 0;
-
-    const draw = (e: MouseEvent) => {
-      if (!isDrawing) return;
-
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.lineWidth = 80;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
-      ctx.lineTo(e.clientX, e.clientY);
-      ctx.stroke();
-
-      lastX = e.clientX;
-      lastY = e.clientY;
-    };
-
-    const startDrawing = (e: MouseEvent) => {
-      isDrawing = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
-    };
-
-    const stopDrawing = () => {
-      isDrawing = false;
-    };
-
-    canvas.addEventListener("mousedown", startDrawing);
-    canvas.addEventListener("mousemove", draw);
-    canvas.addEventListener("mouseup", stopDrawing);
-    canvas.addEventListener("mouseout", stopDrawing);
-
-    // Touch support
-    const handleTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      isDrawing = true;
-      lastX = touch.clientX;
-      lastY = touch.clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDrawing) return;
-      e.preventDefault();
-      
-      const touch = e.touches[0];
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.lineWidth = 80;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
-      ctx.lineTo(touch.clientX, touch.clientY);
-      ctx.stroke();
-
-      lastX = touch.clientX;
-      lastY = touch.clientY;
-    };
-
-    const handleTouchEnd = () => {
-      isDrawing = false;
-    };
-
-    canvas.addEventListener("touchstart", handleTouchStart);
-    canvas.addEventListener("touchmove", handleTouchMove);
-    canvas.addEventListener("touchend", handleTouchEnd);
-
-    return () => {
-      window.removeEventListener("resize", resizeCanvas);
-      canvas.removeEventListener("mousedown", startDrawing);
-      canvas.removeEventListener("mousemove", draw);
-      canvas.removeEventListener("mouseup", stopDrawing);
-      canvas.removeEventListener("mouseout", stopDrawing);
-      canvas.removeEventListener("touchstart", handleTouchStart);
-      canvas.removeEventListener("touchmove", handleTouchMove);
-      canvas.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, []);
 
   const handleCloseSuccessDialog = () => {
     setSearchParams({});
@@ -195,10 +89,10 @@ export default function Landing() {
         </DialogContent>
       </Dialog>
 
-      {/* Hero Section - Canvas Reveal Effect */}
+      {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Animated Background - Behind Canvas */}
-        <div className="absolute inset-0 -z-10 bg-black">
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-black">
           {/* Animated blue organic shape */}
           <motion.div
             className="absolute inset-0 flex items-center justify-center"
@@ -255,16 +149,9 @@ export default function Landing() {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px]" />
         </div>
 
-        {/* Canvas Overlay - Draw to Reveal */}
-        <canvas 
-          ref={canvasRef}
-          className="absolute inset-0 z-10 cursor-crosshair"
-          style={{ touchAction: "none" }}
-        />
-
         <motion.div 
           style={{ opacity, y }}
-          className="container mx-auto px-4 relative z-20 pointer-events-none"
+          className="container mx-auto px-4 relative z-10"
         >
           <div className="text-center max-w-4xl mx-auto">
             {/* Main Heading */}
@@ -296,7 +183,7 @@ export default function Landing() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.8 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center pointer-events-auto"
+              className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               <Button 
                 size="lg" 
