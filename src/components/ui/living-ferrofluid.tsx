@@ -93,32 +93,6 @@ export function Component() {
           />
         </g>
       </svg>
-
-      {/* Content Overlay */}
-      <div className="relative z-10 text-center px-4">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-6xl md:text-8xl font-bold mb-6"
-          style={{
-            fontFamily: "'Poppins', 'Inter', sans-serif",
-          }}
-        >
-          ARTIFEX FORGE
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.8 }}
-          className="text-xl md:text-2xl text-muted-foreground"
-          style={{
-            fontFamily: "'Inter', sans-serif",
-          }}
-        >
-          Kompleksowa agencja dla wszystkich projektów cyfrowych i kreatywnych
-        </motion.p>
-      </div>
     </div>
   );
 }
