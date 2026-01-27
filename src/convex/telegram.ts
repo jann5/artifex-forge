@@ -881,6 +881,20 @@ export const webhook = httpAction(async (ctx, request) => {
           chatId: chatId.toString(),
         });
 
+        // Handle unknown commands (commands that start with / but are not recognized)
+        if (text.startsWith("/") && !session) {
+          const knownCommands = [
+            "/start", "/help", "/orders", "/stats", "/lowstock", 
+            "/addproduct", "/editproduct", "/deleteproduct", "/cancel",
+            "/dev_ping", "/dev_info", "/dev_db", "/dev_reset", "/stats_reset", "/done"
+          ];
+          
+          if (!knownCommands.includes(text.split(" ")[0])) {
+            await sendMessage(chatId, "❌ Nieznana komenda. Wpisz /help aby zobaczyć dostępne komendy.");
+            return new Response("OK", { status: 200 });
+          }
+        }
+
         // Handle custom quote price input
         if (session?.step === "CUSTOM_QUOTE_PRICE") {
           const price = parseFloat(text);
