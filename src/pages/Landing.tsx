@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Component as LivingFerrofluid } from "@/components/ui/living-ferrofluid";
 
 export default function Landing() {
   const featuredProducts = useQuery(api.products.list, { featured: true });
@@ -89,9 +90,14 @@ export default function Landing() {
         </DialogContent>
       </Dialog>
 
-      {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-        {/* Decorative Background Elements */}
+      {/* Hero Section with Ferrofluid */}
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Ferrofluid Background */}
+        <div className="absolute inset-0 z-0 opacity-30">
+          <LivingFerrofluid />
+        </div>
+        
+        {/* Additional Decorative Elements */}
         <div className="absolute inset-0 z-0">
           {/* Animated gradient orbs */}
           <motion.div
