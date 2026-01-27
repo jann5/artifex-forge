@@ -291,16 +291,6 @@ export default function CheckoutPage() {
                       )}
                     </CardContent>
                   </Card>
-
-                  <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900/50">
-                    <ShieldCheck className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm">
-                      <p className="font-semibold mb-1">Bezpieczna transakcja</p>
-                      <p className="opacity-90">
-                        Wszystkie transakcje są szyfrowane i bezpieczne. Gwarantujemy 100% satysfakcji lub zwrot pieniędzy.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               )}
 
