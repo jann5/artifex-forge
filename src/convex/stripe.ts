@@ -126,49 +126,47 @@ export const createCheckoutSession = action({
 
 export const verifyPayment = action({
   args: { sessionId: v.string() },
-  handler: async (ctx, args) => {
-    console.log(`[verifyPayment] Verifying session: ${args.sessionId}`);
-
-    if (args.sessionId.startsWith("mock_session_")) {
-      console.log("[verifyPayment] Mock session detected, assuming success");
-      return { success: true };
+  handler: async (ctx, args): Promise<{ success: boolean; error?: string; orderId?: string }> => {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      console.error("[verifyPayment] STRIPE_SECRET_KEY not configured");
+      return { success: false, error: "Stripe not configured" };
     }
 
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error("Stripe Secret Key is missing");
-    }
-
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-02-24.acacia",
-    });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-02-24.acacia" });
 
     try {
       const session = await stripe.checkout.sessions.retrieve(args.sessionId);
       
-      if (session.payment_status === "paid") {
-        console.log(`[verifyPayment] Session ${args.sessionId} is paid. Ensuring order exists.`);
-        
-        const userId = session.metadata?.userId;
-        if (!userId) {
-          console.error("[verifyPayment] Missing userId in session metadata");
-          return { success: false, error: "Missing userId" };
-        }
+      if (!session) {
+        return { success: false, error: "Session not found" };
+      }
 
-        await ctx.runMutation(internal.orders.createFromStripe, {
-          sessionId: session.id,
-          userId: userId,
-          items: JSON.parse(session.metadata?.items || "[]"),
-          totalAmount: (session.amount_total || 0) / 100,
-          shippingAddress: session.metadata?.shippingAddress ? JSON.parse(session.metadata.shippingAddress) : undefined,
-        });
-        
-        return { success: true };
-      } else {
-        console.log(`[verifyPayment] Session ${args.sessionId} is not paid. Status: ${session.payment_status}`);
+      if (session.payment_status !== "paid") {
         return { success: false, error: "Payment not completed" };
       }
+
+      // Find order by session ID
+      const order = await ctx.runQuery(internal.orders.getByStripeSession, {
+        sessionId: args.sessionId,
+      });
+
+      if (!order) {
+        console.error("[verifyPayment] Order not found for session:", args.sessionId);
+        return { success: false, error: "Order not found" };
+      }
+
+      // Update order status to paid if still pending
+      if (order.status === "pending") {
+        await ctx.runMutation(internal.orders.updateStatusInternal, {
+          orderId: order._id,
+          status: "paid",
+        });
+      }
+
+      return { success: true, orderId: order._id };
     } catch (error: any) {
-      console.error(`[verifyPayment] Error verifying payment:`, error);
+      console.error("[verifyPayment] Error:", error);
       return { success: false, error: error.message };
     }
   },

@@ -18,68 +18,84 @@ export const list = query({
   },
 });
 
-export const create = mutation({
+export const createOrder = mutation({
   args: {
     items: v.array(
       v.object({
-        productId: v.id("products"),
-        variantId: v.optional(v.string()),
-        quantity: v.number(),
-        price: v.number(),
+        productId: v.optional(v.id("products")),
+        customOrderId: v.optional(v.id("customOrders")),
         name: v.string(),
+        price: v.number(),
+        quantity: v.number(),
         image: v.optional(v.string()),
       })
     ),
     totalAmount: v.number(),
-    shippingAddress: v.any(),
+    customerName: v.string(),
+    customerEmail: v.string(),
+    shippingAddress: v.object({
+      fullName: v.string(),
+      street: v.string(),
+      city: v.string(),
+      postalCode: v.string(),
+      country: v.string(),
+      phone: v.string(),
+    }),
+    stripeSessionId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
 
+    // Validate inventory before creating order
+    for (const item of args.items) {
+      if (item.productId) {
+        const product = await ctx.db.get(item.productId);
+        if (!product) {
+          throw new Error(`Produkt ${item.name} nie istnieje`);
+        }
+        if (product.inventory < item.quantity) {
+          throw new Error(`Niewystarczająca ilość produktu ${item.name}. Dostępne: ${product.inventory}`);
+        }
+      }
+    }
+
+    // Create order
     const orderId = await ctx.db.insert("orders", {
       userId: user._id,
       items: args.items,
       totalAmount: args.totalAmount,
       status: "pending",
+      customerName: args.customerName,
+      customerEmail: args.customerEmail,
       shippingAddress: args.shippingAddress,
+      stripeSessionId: args.stripeSessionId,
     });
 
-    // Update inventory
+    // Decrease inventory for each product
     for (const item of args.items) {
-      const product = await ctx.db.get(item.productId);
-      if (product) {
-        const newInventory = Math.max(0, product.inventory - item.quantity);
-        await ctx.db.patch(item.productId, { inventory: newInventory });
-        
-        if (newInventory <= 5) {
-           await ctx.scheduler.runAfter(0, internal.notifications.sendLowStockNotification, {
-             productId: item.productId,
-             productName: product.name,
-             currentInventory: newInventory
-           });
+      if (item.productId) {
+        const product = await ctx.db.get(item.productId);
+        if (product) {
+          const newInventory = product.inventory - item.quantity;
+          await ctx.db.patch(item.productId, {
+            inventory: Math.max(0, newInventory), // Ensure inventory doesn't go negative
+          });
+
+          // Send low stock notification if inventory is low
+          if (newInventory <= 5 && newInventory > 0) {
+            await ctx.scheduler.runAfter(0, internal.notifications.sendLowStockNotification, {
+              productId: item.productId,
+              productName: product.name,
+              currentInventory: newInventory,
+            });
+          }
         }
       }
     }
 
     // Clear cart
-    const cartItems = await ctx.db
-      .query("cartItems")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .collect();
-
-    for (const item of cartItems) {
-      await ctx.db.delete(item._id);
-    }
-
-    // Send Telegram notification - schedule immediately
-    await ctx.scheduler.runAfter(0, internal.notifications.sendTelegramNotification, {
-      orderId: orderId,
-      customerEmail: user.email || "Unknown",
-      totalAmount: args.totalAmount,
-      status: "pending",
-      shippingAddress: args.shippingAddress,
-    });
+    await ctx.runMutation(internal.cart.clearInternal, { userId: user._id });
 
     return orderId;
   },
@@ -314,6 +330,16 @@ export const deleteOrder = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.delete(args.orderId);
   }
+});
+
+export const getByStripeSession = internalQuery({
+  args: { sessionId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("orders")
+      .withIndex("by_stripe_session", (q) => q.eq("stripeSessionId", args.sessionId))
+      .first();
+  },
 });
 
 export const getAnalytics = query({

@@ -2,183 +2,137 @@ import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { Infer, v } from "convex/values";
 
-// default user roles. can add / remove based on the project as needed
-export const ROLES = {
-  ADMIN: "admin",
-  USER: "user",
-  MEMBER: "member",
-} as const;
+export default defineSchema({
+  ...authTables,
+  
+  users: defineTable({
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+    role: v.optional(v.union(v.literal("admin"), v.literal("user"))),
+  }).index("email", ["email"]),
 
-export const roleValidator = v.union(
-  v.literal(ROLES.ADMIN),
-  v.literal(ROLES.USER),
-  v.literal(ROLES.MEMBER),
-);
-export type Role = Infer<typeof roleValidator>;
+  products: defineTable({
+    name: v.string(),
+    description: v.string(),
+    price: v.number(),
+    category: v.string(),
+    images: v.array(v.string()),
+    inventory: v.number(),
+    featured: v.optional(v.boolean()),
+    model3d: v.optional(v.string()), // Added to support existing data
+  })
+    .index("by_category", ["category"])
+    .index("by_featured", ["featured"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["category"],
+    }),
 
-const schema = defineSchema(
-  {
-    // default auth tables using convex auth.
-    ...authTables, // do not remove or modify
+  customOrders: defineTable({
+    userId: v.string(), // Temporarily changed to allow cleanup of corrupted data
+    projectName: v.string(),
+    customerName: v.string(),
+    customerEmail: v.string(),
+    material: v.string(),
+    description: v.string(),
+    contactInfo: v.optional(v.string()),
+    status: v.string(),
+    estimatedPrice: v.optional(v.number()),
+    images: v.optional(v.array(v.string())),
+    files3D: v.optional(v.array(v.string())),
+    files3DMetadata: v.optional(v.array(v.object({
+      storageId: v.string(),
+      fileName: v.string(),
+    }))),
+  }).index("by_user", ["userId"]),
 
-    // the users table is the default users table that is brought in by the authTables
-    users: defineTable({
-      name: v.optional(v.string()), // name of the user. do not remove
-      image: v.optional(v.string()), // image of the user. do not remove
-      email: v.optional(v.string()), // email of the user. do not remove
-      emailVerificationTime: v.optional(v.number()), // email verification time. do not remove
-      isAnonymous: v.optional(v.boolean()), // is the user anonymous. do not remove
+  customOrderMessages: defineTable({
+    customOrderId: v.id("customOrders"),
+    senderId: v.id("users"),
+    message: v.string(),
+    isAdmin: v.boolean(),
+    senderName: v.string(),
+  }).index("by_order", ["customOrderId"]),
 
-      role: v.optional(roleValidator), // role of the user. do not remove
-      stripeCustomerId: v.optional(v.string()),
-    }).index("email", ["email"]), // index for the email. do not remove or modify
+  cartItems: defineTable({
+    userId: v.id("users"),
+    productId: v.optional(v.id("products")),
+    customOrderId: v.optional(v.id("customOrders")),
+    quantity: v.number(),
+  }).index("by_user", ["userId"]),
 
-    products: defineTable({
-      name: v.string(),
-      description: v.string(),
-      price: v.number(),
-      category: v.string(),
-      images: v.array(v.string()),
-      inventory: v.number(),
-      featured: v.boolean(),
-      isBestSeller: v.optional(v.boolean()),
-      variants: v.optional(
-        v.array(
-          v.object({
-            id: v.string(),
-            name: v.string(),
-            price: v.optional(v.number()),
-            inventory: v.number(),
-          })
-        )
-      ),
-    })
-      .index("by_category", ["category"])
-      .index("by_featured", ["featured"])
-      .searchIndex("search_name", {
-        searchField: "name",
-        filterFields: ["category"],
-      }),
+  orders: defineTable({
+    userId: v.id("users"),
+    items: v.array(
+      v.object({
+        productId: v.optional(v.id("products")),
+        customOrderId: v.optional(v.id("customOrders")),
+        name: v.string(),
+        price: v.number(),
+        quantity: v.number(),
+        image: v.optional(v.string()),
+      })
+    ),
+    totalAmount: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("paid"),
+      v.literal("shipped"),
+      v.literal("delivered"),
+      v.literal("cancelled")
+    ),
+    customerName: v.optional(v.string()),
+    customerEmail: v.optional(v.string()),
+    shippingAddress: v.optional(v.any()),
+    stripeSessionId: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_stripe_session", ["stripeSessionId"]),
 
-    customOrders: defineTable({
-      userId: v.id("users"),
-      projectName: v.string(),
-      description: v.string(),
-      material: v.string(),
-      images: v.array(v.string()),
-      files3D: v.array(v.string()),
-      files3DMetadata: v.optional(v.array(v.object({
-        storageId: v.string(),
-        fileName: v.string(),
-      }))),
-      contactInfo: v.optional(v.string()),
-      status: v.string(), // pending, quoted, accepted, in_production, completed, cancelled
-      customerName: v.string(),
-      customerEmail: v.string(),
-      estimatedPrice: v.optional(v.number()),
-      adminNotes: v.optional(v.string()),
-      stripePaymentIntentId: v.optional(v.string()),
-      paidAt: v.optional(v.number()),
-    })
-      .index("by_user", ["userId"]),
+  favorites: defineTable({
+    userId: v.id("users"),
+    productId: v.id("products"),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_product", ["userId", "productId"]),
 
-    customOrderMessages: defineTable({
-      customOrderId: v.id("customOrders"),
-      senderId: v.id("users"),
-      senderName: v.string(),
-      message: v.string(),
-      isAdmin: v.boolean(),
-    })
-      .index("by_order", ["customOrderId"]),
+  reviews: defineTable({
+    userId: v.id("users"),
+    productId: v.id("products"),
+    rating: v.number(),
+    comment: v.string(),
+  })
+    .index("by_product", ["productId"])
+    .index("by_user", ["userId"]),
 
-    cartItems: defineTable({
-      userId: v.id("users"),
-      productId: v.optional(v.id("products")),
-      customOrderId: v.optional(v.id("customOrders")),
-      variantId: v.optional(v.string()),
-      quantity: v.number(),
-    }).index("by_user", ["userId"]),
+  addresses: defineTable({
+    userId: v.id("users"),
+    fullName: v.string(),
+    street: v.string(),
+    city: v.string(),
+    postalCode: v.string(),
+    country: v.string(),
+    phone: v.optional(v.string()),
+    isDefault: v.optional(v.boolean()),
+  }).index("by_user", ["userId"]),
 
-    orders: defineTable({
-      userId: v.id("users"),
-      items: v.array(
-        v.object({
-          productId: v.id("products"),
-          variantId: v.optional(v.string()),
-          quantity: v.number(),
-          price: v.number(),
-          name: v.string(),
-          image: v.optional(v.string()),
-        })
-      ),
-      totalAmount: v.number(),
-      status: v.union(
-        v.literal("pending"),
-        v.literal("paid"),
-        v.literal("shipped"),
-        v.literal("delivered"),
-        v.literal("cancelled")
-      ),
-      stripeSessionId: v.optional(v.string()),
-      shippingAddress: v.optional(v.any()), // Store as JSON object for flexibility
-    })
-      .index("by_user", ["userId"])
-      .index("by_stripe_session", ["stripeSessionId"]),
+  recentlyViewed: defineTable({
+    userId: v.id("users"),
+    productId: v.id("products"),
+    viewedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_product", ["userId", "productId"])
+    .index("by_user_and_viewed", ["userId", "viewedAt"]),
 
-    favorites: defineTable({
-      userId: v.id("users"),
-      productId: v.id("products"),
-    })
-      .index("by_user", ["userId"])
-      .index("by_product", ["productId"])
-      .index("by_user_and_product", ["userId", "productId"]),
-
-    reviews: defineTable({
-      userId: v.id("users"),
-      productId: v.id("products"),
-      rating: v.number(),
-      comment: v.string(),
-    })
-      .index("by_product", ["productId"])
-      .index("by_user", ["userId"]),
-
-    addresses: defineTable({
-      userId: v.id("users"),
-      fullName: v.string(),
-      street: v.string(),
-      city: v.string(),
-      postalCode: v.string(),
-      country: v.string(),
-      isDefault: v.boolean(),
-    }).index("by_user", ["userId"]),
-
-    recentlyViewed: defineTable({
-      userId: v.id("users"),
-      productId: v.id("products"),
-      viewedAt: v.number(),
-    })
-      .index("by_user", ["userId"])
-      .index("by_user_and_viewed", ["userId", "viewedAt"])
-      .index("by_user_and_product", ["userId", "productId"]),
-
-    telegramSessions: defineTable({
-      chatId: v.string(),
-      step: v.string(),
-      productData: v.object({
-        name: v.optional(v.string()),
-        description: v.optional(v.string()),
-        price: v.optional(v.number()),
-        category: v.optional(v.string()),
-        images: v.optional(v.array(v.string())),
-        inventory: v.optional(v.number()),
-      }),
-      editingProductId: v.optional(v.string()),
-      customOrderId: v.optional(v.string()),
-    }).index("by_chatId", ["chatId"]),
-  },
-  {
-    schemaValidation: false,
-  },
-);
-
-export default schema;
+  telegramSessions: defineTable({
+    chatId: v.string(),
+    step: v.string(),
+    data: v.optional(v.any()),
+  }).index("by_chat", ["chatId"]),
+});

@@ -36,6 +36,7 @@ export default function AddressesPage() {
         city: formData.get("city") as string,
         postalCode: formData.get("postalCode") as string,
         country: formData.get("country") as string,
+        phone: formData.get("phone") as string || "",
         isDefault: formData.get("isDefault") === "on",
       });
       toast.success("Adres został dodany");
@@ -96,6 +97,10 @@ export default function AddressesPage() {
                   <div className="grid gap-2">
                     <Label htmlFor="country">Kraj</Label>
                     <Input id="country" name="country" defaultValue="Polska" required />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">Telefon</Label>
+                    <Input id="phone" name="phone" type="tel" placeholder="+48 123 456 789" required />
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="isDefault" name="isDefault" />

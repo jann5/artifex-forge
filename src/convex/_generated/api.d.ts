@@ -13,6 +13,7 @@ import type * as ai from "../ai.js";
 import type * as auth from "../auth.js";
 import type * as auth_emailOtp from "../auth/emailOtp.js";
 import type * as cart from "../cart.js";
+import type * as cleanup from "../cleanup.js";
 import type * as customOrders from "../customOrders.js";
 import type * as debug from "../debug.js";
 import type * as dev from "../dev.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   "auth/emailOtp": typeof auth_emailOtp;
   cart: typeof cart;
+  cleanup: typeof cleanup;
   customOrders: typeof customOrders;
   debug: typeof debug;
   dev: typeof dev;

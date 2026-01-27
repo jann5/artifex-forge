@@ -931,7 +931,7 @@ ${list}`);
             return new Response("OK");
           }
 
-          const orderId = session.customOrderId as Id<"customOrders">;
+          const orderId = session.data?.customOrderId as Id<"customOrders">;
           
           // Update order status and price
           await ctx.runMutation(internal.customOrders.updateStatusInternal, {
@@ -1001,7 +1001,7 @@ ${list}`);
               };
               
               const field = fieldMap[session.step];
-              if (!field || !session.editingProductId) {
+              if (!field || !session.data?.editingProductId) {
                  await sendMessage(chatId, "❌ Błąd sesji. Wpisz /cancel");
                  return new Response("OK", { status: 200 });
               }
@@ -1027,7 +1027,7 @@ ${list}`);
 
               // Apply update
               await ctx.runMutation(api.products.update, {
-                id: session.editingProductId as Id<"products">,
+                id: session.data?.editingProductId as Id<"products">,
                 updates: updates
               });
 
@@ -1078,7 +1078,7 @@ ${list}`);
               // Call AI Action to improve description
               // @ts-ignore
               const improvedDescription = await ctx.runAction(internal.ai.generateProductDescription, {
-                name: session.productData.name || "Produkt",
+                name: session.data?.productData?.name || "Produkt",
                 imageUrl: text // Using text as the base description to improve
               });
 
@@ -1226,7 +1226,7 @@ ${list}`);
                   // Call AI Action
                   // @ts-ignore
                   const description = await ctx.runAction(internal.ai.generateProductDescription, {
-                    name: session.productData.name || "Produkt",
+                    name: session.data?.productData?.name || "Produkt",
                     imageUrl: fileUrl
                   });
 
@@ -1271,12 +1271,12 @@ ${list}`);
         // Handle Finish
         if (text === "/done" && session.step === "IMAGES") {
           const finalSession = await ctx.runQuery(internal.telegram_db.getSession, { chatId });
-          if (!finalSession || !finalSession.productData.images || finalSession.productData.images.length === 0) {
+          if (!finalSession || !finalSession.data?.productData?.images || finalSession.data?.productData?.images.length === 0) {
             await sendMessage(chatId, "⚠️ Musisz dodać przynajmniej jedno zdjęcie!");
             return new Response("OK", { status: 200 });
           }
 
-          const p = finalSession.productData;
+          const p = finalSession.data?.productData;
           
           await ctx.runMutation(api.products.create, {
             name: p.name!,

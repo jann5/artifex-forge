@@ -6,7 +6,7 @@ export const getSession = internalQuery({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("telegramSessions")
-      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .withIndex("by_chat", (q) => q.eq("chatId", args.chatId))
       .unique();
   },
 });
@@ -16,7 +16,7 @@ export const startSession = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("telegramSessions")
-      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .withIndex("by_chat", (q) => q.eq("chatId", args.chatId))
       .unique();
 
     if (existing) {
@@ -26,8 +26,10 @@ export const startSession = internalMutation({
     await ctx.db.insert("telegramSessions", {
       chatId: args.chatId,
       step: "NAME",
-      productData: {
-        images: [],
+      data: {
+        productData: {
+          images: [],
+        },
       },
     });
   },
@@ -52,13 +54,13 @@ export const updateSession = internalMutation({
   handler: async (ctx, args) => {
     const session = await ctx.db
       .query("telegramSessions")
-      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .withIndex("by_chat", (q) => q.eq("chatId", args.chatId))
       .unique();
 
     if (!session) throw new Error("Session not found");
 
     const { image, images, editingProductId, customOrderId, ...otherUpdates } = args.updates;
-    let currentImages = session.productData.images || [];
+    let currentImages = session.data?.productData?.images || [];
 
     if (images) {
       currentImages = images;
@@ -68,20 +70,16 @@ export const updateSession = internalMutation({
 
     const patchData: any = {
       step: args.step,
-      productData: {
-        ...session.productData,
-        ...otherUpdates,
-        images: currentImages,
+      data: {
+        productData: {
+          ...session.data?.productData,
+          ...otherUpdates,
+          images: currentImages,
+        },
+        editingProductId: args.updates.editingProductId || session.data?.editingProductId,
+        customOrderId: args.updates.customOrderId || session.data?.customOrderId,
       },
     };
-
-    if (editingProductId !== undefined) {
-      patchData.editingProductId = editingProductId;
-    }
-
-    if (customOrderId !== undefined) {
-      patchData.customOrderId = customOrderId;
-    }
 
     await ctx.db.patch(session._id, patchData);
   },
@@ -92,7 +90,7 @@ export const clearSession = internalMutation({
   handler: async (ctx, args) => {
     const session = await ctx.db
       .query("telegramSessions")
-      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .withIndex("by_chat", (q) => q.eq("chatId", args.chatId))
       .unique();
 
     if (session) {

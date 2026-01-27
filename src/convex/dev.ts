@@ -32,7 +32,7 @@ export const debugClearSession = internalMutation({
     handler: async (ctx, args) => {
         const session = await ctx.db
             .query("telegramSessions")
-            .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+            .withIndex("by_chat", (q) => q.eq("chatId", args.chatId))
             .unique();
         
         if (session) {

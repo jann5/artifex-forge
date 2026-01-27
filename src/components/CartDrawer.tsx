@@ -21,7 +21,12 @@ export function CartDrawer() {
   const navigate = useNavigate();
 
   const total = cartItems?.reduce((acc, item) => {
-    return acc + (item.product?.price || 0) * item.quantity;
+    const price = item.product && 'price' in item.product 
+      ? item.product.price 
+      : item.product && 'estimatedPrice' in item.product 
+        ? (item.product.estimatedPrice || 0)
+        : 0;
+    return acc + price * item.quantity;
   }, 0) || 0;
 
   const handleCheckout = () => {
@@ -106,7 +111,7 @@ export function CartDrawer() {
                     {item.product?.images?.[0] && (
                       <img 
                         src={getStorageUrl(item.product.images[0])} 
-                        alt={item.product.name}
+                        alt={'name' in item.product ? item.product.name : item.product.projectName}
                         className="h-full w-full object-cover"
                       />
                     )}
@@ -114,11 +119,17 @@ export function CartDrawer() {
                   <div className="flex-1 flex flex-col justify-between gap-3">
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-base line-clamp-2 mb-1">{item.product?.name}</h4>
+                        <h4 className="font-semibold text-base line-clamp-2 mb-1">
+                          {item.product && 'name' in item.product 
+                            ? item.product.name 
+                            : item.product && 'projectName' in item.product 
+                              ? item.product.projectName 
+                              : 'Unknown'}
+                        </h4>
                         <p className="text-xs text-muted-foreground capitalize">
-                          {(item.product as any)?.isCustomOrder 
-                            ? 'Zamówienie niestandardowe' 
-                            : (item.product as any)?.category}
+                          {item.product && 'category' in item.product
+                            ? item.product.category
+                            : 'Zamówienie niestandardowe'}
                         </p>
                       </div>
                       <button 
@@ -147,7 +158,13 @@ export function CartDrawer() {
                         </button>
                       </div>
                       <p className="font-bold text-lg text-primary">
-                        {formatCurrency((item.product?.price || 0) * item.quantity)}
+                        {formatCurrency(
+                          (item.product && 'price' in item.product 
+                            ? item.product.price 
+                            : item.product && 'estimatedPrice' in item.product 
+                              ? (item.product.estimatedPrice || 0)
+                              : 0) * item.quantity
+                        )}
                       </p>
                     </div>
                   </div>

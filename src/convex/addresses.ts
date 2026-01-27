@@ -29,6 +29,7 @@ export const add = mutation({
     city: v.string(),
     postalCode: v.string(),
     country: v.string(),
+    phone: v.string(),
     isDefault: v.boolean(),
   },
   handler: async (ctx, args) => {
@@ -58,7 +59,12 @@ export const add = mutation({
 
     await ctx.db.insert("addresses", {
       userId: user._id,
-      ...args,
+      fullName: args.fullName,
+      street: args.street,
+      city: args.city,
+      postalCode: args.postalCode,
+      country: args.country,
+      phone: args.phone,
       isDefault,
     });
   },

@@ -16,14 +16,14 @@ export default function PaymentSuccessPage() {
   const sessionId = searchParams.get("session_id");
   const verifyPayment = useAction(api.stripe.verifyPayment);
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
     const verify = async () => {
       if (!sessionId) {
-        // If no session ID, assume success (legacy behavior or direct access)
-        // But ideally we should require it. For now, let's show success to not break things.
-        setStatus("success");
-        triggerConfetti();
+        setStatus("error");
+        setErrorMessage("Brak identyfikatora sesji płatności");
+        toast.error("Nieprawidłowy link potwierdzenia płatności");
         return;
       }
 
@@ -34,11 +34,13 @@ export default function PaymentSuccessPage() {
           triggerConfetti();
         } else {
           setStatus("error");
+          setErrorMessage(result.error || "Nie udało się potwierdzić płatności");
           toast.error("Nie udało się potwierdzić płatności. Skontaktuj się z obsługą.");
         }
       } catch (error) {
         console.error("Payment verification failed:", error);
         setStatus("error");
+        setErrorMessage("Wystąpił błąd podczas weryfikacji płatności");
         toast.error("Wystąpił błąd podczas weryfikacji płatności.");
       }
     };
@@ -127,11 +129,15 @@ export default function PaymentSuccessPage() {
                   </motion.div>
 
                   <h1 className="text-3xl font-bold mb-3">Błąd Płatności</h1>
-                  <p className="text-muted-foreground mb-8">
-                    Nie udało się potwierdzić Twojej płatności. Jeśli środki zostały pobrane, 
-                    skontaktuj się z nami podając numer sesji: <br/>
-                    <span className="font-mono text-xs bg-muted p-1 rounded mt-2 inline-block">{sessionId}</span>
+                  <p className="text-muted-foreground mb-4">
+                    {errorMessage || "Nie udało się potwierdzić Twojej płatności."}
                   </p>
+                  {sessionId && (
+                    <p className="text-muted-foreground mb-8">
+                      Jeśli środki zostały pobrane, skontaktuj się z nami podając numer sesji: <br/>
+                      <span className="font-mono text-xs bg-muted p-1 rounded mt-2 inline-block">{sessionId}</span>
+                    </p>
+                  )}
 
                   <div className="space-y-3">
                     <Button 

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { getCurrentUser } from "./users";
 
 export const get = query({
@@ -8,34 +8,23 @@ export const get = query({
     const user = await getCurrentUser(ctx);
     if (!user) return [];
 
-    const cartItems = await ctx.db
+    const items = await ctx.db
       .query("cartItems")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
-    const itemsWithProduct = await Promise.all(
-      cartItems.map(async (item) => {
-        if (item.customOrderId) {
+    return Promise.all(
+      items.map(async (item) => {
+        if (item.productId) {
+          const product = await ctx.db.get(item.productId);
+          return { ...item, product };
+        } else if (item.customOrderId) {
           const customOrder = await ctx.db.get(item.customOrderId);
-          return { 
-            ...item, 
-            product: customOrder ? {
-              _id: customOrder._id,
-              name: customOrder.projectName,
-              price: customOrder.estimatedPrice || 0,
-              images: customOrder.images,
-              inventory: 1,
-              isCustomOrder: true,
-            } : null
-          };
+          return { ...item, product: customOrder };
         }
-        
-        const product = item.productId ? await ctx.db.get(item.productId) : null;
-        return { ...item, product };
+        return { ...item, product: null };
       })
     );
-
-    return itemsWithProduct;
   },
 });
 
@@ -43,72 +32,71 @@ export const add = mutation({
   args: {
     productId: v.optional(v.id("products")),
     customOrderId: v.optional(v.id("customOrders")),
-    variantId: v.optional(v.string()),
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
 
-    // Handle custom orders
-    if (args.customOrderId) {
-      const customOrder = await ctx.db.get(args.customOrderId);
-      if (!customOrder) throw new Error("Custom order not found");
-      if (customOrder.userId !== user._id) throw new Error("Unauthorized");
-      if (customOrder.status !== "accepted") throw new Error("Custom order not accepted yet");
-
-      // Check if already in cart
-      const existing = await ctx.db
-        .query("cartItems")
-        .withIndex("by_user", (q) => q.eq("userId", user._id))
-        .filter((q) => q.eq(q.field("customOrderId"), args.customOrderId))
-        .first();
-
-      if (existing) {
-        throw new Error("To zamówienie niestandardowe jest już w koszyku");
-      }
-
-      await ctx.db.insert("cartItems", {
-        userId: user._id,
-        customOrderId: args.customOrderId,
-        quantity: 1,
-      });
-      return;
+    // Validate that either productId or customOrderId is provided
+    if (!args.productId && !args.customOrderId) {
+      throw new Error("Musisz podać productId lub customOrderId");
     }
 
-    // Handle regular products
-    if (!args.productId) throw new Error("Product ID required");
+    // Validate product exists and has enough inventory
+    if (args.productId) {
+      const product = await ctx.db.get(args.productId);
+      if (!product) {
+        throw new Error("Produkt nie istnieje");
+      }
+      if (product.inventory < args.quantity) {
+        throw new Error(`Niewystarczająca ilość w magazynie. Dostępne: ${product.inventory}`);
+      }
+    }
 
-    const product = await ctx.db.get(args.productId);
-    if (!product) throw new Error("Product not found");
+    // Validate custom order exists and is accepted
+    if (args.customOrderId) {
+      const customOrder = await ctx.db.get(args.customOrderId);
+      if (!customOrder) {
+        throw new Error("Zamówienie niestandardowe nie istnieje");
+      }
+      if (customOrder.status !== "accepted") {
+        throw new Error("Zamówienie niestandardowe musi być zaakceptowane przed dodaniem do koszyka");
+      }
+    }
 
+    // Check if item already exists in cart
     const existing = await ctx.db
       .query("cartItems")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("productId"), args.productId),
-          q.eq(q.field("variantId"), args.variantId)
-        )
-      )
+      .filter((q) => {
+        if (args.productId) {
+          return q.eq(q.field("productId"), args.productId);
+        } else {
+          return q.eq(q.field("customOrderId"), args.customOrderId);
+        }
+      })
       .first();
 
-    const currentQuantity = existing ? existing.quantity : 0;
-    const newQuantity = currentQuantity + args.quantity;
-
-    if (newQuantity > product.inventory) {
-      throw new Error(`Niewystarczająca ilość produktu. Dostępne: ${product.inventory}`);
-    }
-
     if (existing) {
+      const newQuantity = existing.quantity + args.quantity;
+      
+      // Check inventory again for the new total quantity
+      if (args.productId) {
+        const product = await ctx.db.get(args.productId);
+        if (product && product.inventory < newQuantity) {
+          throw new Error(`Niewystarczająca ilość w magazynie. Dostępne: ${product.inventory}, w koszyku: ${existing.quantity}`);
+        }
+      }
+      
       await ctx.db.patch(existing._id, {
-        quantity: existing.quantity + args.quantity,
+        quantity: newQuantity,
       });
     } else {
       await ctx.db.insert("cartItems", {
         userId: user._id,
         productId: args.productId,
-        variantId: args.variantId,
+        customOrderId: args.customOrderId,
         quantity: args.quantity,
       });
     }
@@ -160,5 +148,19 @@ export const remove = mutation({
     if (!user) throw new Error("Unauthorized");
 
     await ctx.db.delete(args.id);
+  },
+});
+
+export const clearInternal = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const cartItems = await ctx.db
+      .query("cartItems")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    for (const item of cartItems) {
+      await ctx.db.delete(item._id);
+    }
   },
 });
