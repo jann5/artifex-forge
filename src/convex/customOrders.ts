@@ -3,6 +3,7 @@ import { mutation, query, internalQuery, internalMutation } from "./_generated/s
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { getCurrentUser } from "./users";
 
 export const create = mutation({
   args: {
@@ -135,16 +136,10 @@ export const updateStatus = mutation({
     estimatedPrice: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    const userId = identity.subject as Id<"users">;
-    const user = await ctx.db.get(userId);
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
     
-    if (!user) throw new Error("User not found");
-    
-    // Type guard to check if user has role property
-    if (!("role" in user) || user.role !== "admin") {
+    if (user.role !== "admin") {
       throw new Error("Unauthorized - Admin only");
     }
 
@@ -205,16 +200,10 @@ export const updatePrice = mutation({
     estimatedPrice: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    const userId = identity.subject as Id<"users">;
-    const user = await ctx.db.get(userId);
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
     
-    if (!user) throw new Error("User not found");
-    
-    // Type guard to check if user has role property
-    if (!("role" in user) || user.role !== "admin") {
+    if (user.role !== "admin") {
       throw new Error("Unauthorized - Admin only");
     }
 
