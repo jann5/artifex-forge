@@ -84,15 +84,16 @@ export const webhook = httpAction(async (ctx, request) => {
           const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
           const statusEmoji = order.status === "pending" ? "⏳" : order.status === "quoted" ? "💰" : order.status === "accepted" ? "✅" : order.status === "in_production" ? "🔨" : order.status === "completed" ? "✔️" : "📋";
           
-          let orderMessage = `${statusEmoji} *Zamówienie niestandardowe* (${date})\n\n`;
-          orderMessage += `📋 *ID:* \`${order._id}\`\n`;
+          let orderMessage = `${statusEmoji} *ZAMÓWIENIE NIESTANDARDOWE* (${date})\n\n`;
           orderMessage += `🎨 *Projekt:* ${order.projectName}\n`;
           orderMessage += `👤 *Klient:* ${order.customerName}\n`;
           orderMessage += `📧 *Email:* ${order.customerEmail}\n`;
+          orderMessage += `🧱 *Materiał:* ${order.material}\n`;
           orderMessage += `📊 *Status:* ${order.status}\n`;
           if (order.estimatedPrice) {
-            orderMessage += `💰 *Cena:* ${order.estimatedPrice} PLN\n`;
+            orderMessage += `💰 *Wycena:* ${order.estimatedPrice} PLN\n`;
           }
+          orderMessage += `\n🆔 \`${order._id}\``;
           
           const customKeyboard = {
             inline_keyboard: [
@@ -880,7 +881,7 @@ export const webhook = httpAction(async (ctx, request) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: chatId,
-              text: `✅ Wycena zapisana: ${price} PLN\n\nKlient otrzyma powiadomienie i będzie mógł zaakceptować wycenę.`,
+              text: `✅ *Wycena zapisana pomyślnie!*\n\n💰 Cena: *${price} PLN*\n\n📧 Klient otrzymał powiadomienie email i może teraz zaakceptować wycenę na stronie zamówienia.`,
               parse_mode: "Markdown",
             }),
           });

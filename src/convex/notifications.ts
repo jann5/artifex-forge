@@ -133,14 +133,15 @@ export const sendCustomOrderNotification = internalAction({
     const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
     const contactInfo = order.contactInfo ? `\n📞 Kontakt: ${order.contactInfo}` : "";
     
-    const msg = `🎨 *Nowe Zamówienie Niestandardowe* (${date})\n\n` +
-                `📦 Projekt: ${order.projectName}\n` +
-                `👤 Klient: ${order.customerName}\n` +
-                `📧 Email: ${order.customerEmail}\n` +
-                `🧱 Materiał: ${order.material}\n` +
-                `📝 Opis:\n${order.description}${contactInfo}\n\n` +
-                `📸 Zdjęcia: ${order.images.length} załącznik(ów)\n\n` +
-                `ID: \`${order._id}\``;
+    const msg = `🎨 *NOWE ZAMÓWIENIE NIESTANDARDOWE* (${date})\n\n` +
+                `📦 *Projekt:* ${order.projectName}\n` +
+                `👤 *Klient:* ${order.customerName}\n` +
+                `📧 *Email:* ${order.customerEmail}\n` +
+                `🧱 *Materiał:* ${order.material}\n` +
+                `📝 *Opis:*\n${order.description}${contactInfo}\n\n` +
+                `📸 *Załączniki:* ${order.images.length} zdjęć\n` +
+                `📊 *Status:* ${order.status}\n\n` +
+                `🆔 \`${order._id}\``;
 
     const keyboard = {
       inline_keyboard: [
