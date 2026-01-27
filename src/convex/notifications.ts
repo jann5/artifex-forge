@@ -117,7 +117,7 @@ export const sendCustomOrderNotification = internalAction({
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
     if (!botToken || !chatId) {
-      console.error("Telegram not configured");
+      console.log("Telegram not configured - skipping notification");
       return;
     }
 
@@ -141,28 +141,10 @@ export const sendCustomOrderNotification = internalAction({
                 `📝 *Opis:*\n${order.description}${contactInfo}\n\n` +
                 `📸 *Załączniki:* ${order.images.length} zdjęć\n` +
                 `📊 *Status:* ${order.status}\n\n` +
+                `🔗 *Zarządzaj w panelu admina*\n` +
                 `🆔 \`${order._id}\``;
 
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: "💰 Wyceniono", callback_data: `custom_quote:${order._id}` }
-        ],
-        [
-          { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` },
-          { text: "🔨 W produkcji", callback_data: `custom_status:${order._id}:in_production` }
-        ],
-        [
-          { text: "✔️ Ukończono", callback_data: `custom_status:${order._id}:completed` },
-          { text: "❌ Anulowano", callback_data: `custom_status:${order._id}:cancelled` }
-        ],
-        [
-          { text: "🗑️ Usuń", callback_data: `delete_custom_order:${order._id}` }
-        ]
-      ]
-    };
-
-    // Send main message
+    // Simple notification without buttons
     await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -170,25 +152,8 @@ export const sendCustomOrderNotification = internalAction({
         chat_id: chatId,
         text: msg,
         parse_mode: "Markdown",
-        reply_markup: keyboard,
       }),
     });
-
-    // Send images as documents (files) for better organization
-    for (const imageId of order.images) {
-      const imageUrl = await ctx.storage.getUrl(imageId);
-      if (imageUrl) {
-        await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            document: imageUrl,
-            caption: `📎 Załącznik projektu: ${order.projectName}`,
-          }),
-        });
-      }
-    }
   },
 });
 

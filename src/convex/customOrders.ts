@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 
 export const create = mutation({
   args: {
@@ -136,15 +137,35 @@ export const updateStatus = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
+    const userId = identity.subject as Id<"users">;
+    const user = await ctx.db.get(userId);
+    
+    if (!user) throw new Error("User not found");
+    
+    // Type guard to check if user has role property
+    if (!("role" in user) || user.role !== "admin") {
+      throw new Error("Unauthorized - Admin only");
+    }
+
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
-    if (order.userId !== identity.subject) throw new Error("Unauthorized");
 
     const updates: any = { status: args.status };
     if (args.estimatedPrice !== undefined) {
       updates.estimatedPrice = args.estimatedPrice;
     }
     await ctx.db.patch(args.orderId, updates);
+
+    // Send email notification when status changes to "quoted"
+    if (args.status === "quoted" && args.estimatedPrice) {
+      await ctx.scheduler.runAfter(0, internal.emails.sendCustomOrderQuoteEmail, {
+        customerEmail: order.customerEmail,
+        customerName: order.customerName,
+        projectName: order.projectName,
+        estimatedPrice: args.estimatedPrice,
+        orderId: args.orderId,
+      });
+    }
   },
 });
 
@@ -186,13 +207,31 @@ export const updatePrice = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
+    const userId = identity.subject as Id<"users">;
+    const user = await ctx.db.get(userId);
+    
+    if (!user) throw new Error("User not found");
+    
+    // Type guard to check if user has role property
+    if (!("role" in user) || user.role !== "admin") {
+      throw new Error("Unauthorized - Admin only");
+    }
+
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
-    if (order.userId !== identity.subject) throw new Error("Unauthorized");
 
     await ctx.db.patch(args.orderId, {
       estimatedPrice: args.estimatedPrice,
       status: "quoted",
+    });
+
+    // Send email notification to customer
+    await ctx.scheduler.runAfter(0, internal.emails.sendCustomOrderQuoteEmail, {
+      customerEmail: order.customerEmail,
+      customerName: order.customerName,
+      projectName: order.projectName,
+      estimatedPrice: args.estimatedPrice,
+      orderId: args.orderId,
     });
   },
 });
