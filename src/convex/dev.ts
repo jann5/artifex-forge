@@ -42,3 +42,36 @@ export const debugClearSession = internalMutation({
         return false;
     }
 });
+
+export const resetAllStats = internalMutation({
+    args: {},
+    handler: async (ctx) => {
+        // Delete all orders
+        const orders = await ctx.db.query("orders").collect();
+        for (const order of orders) {
+            await ctx.db.delete(order._id);
+        }
+
+        // Delete all custom orders
+        const customOrders = await ctx.db.query("customOrders").collect();
+        for (const customOrder of customOrders) {
+            await ctx.db.delete(customOrder._id);
+        }
+
+        // Delete all cart items
+        const cartItems = await ctx.db.query("cartItems").collect();
+        for (const cartItem of cartItems) {
+            await ctx.db.delete(cartItem._id);
+        }
+
+        // Delete all reviews
+        const reviews = await ctx.db.query("reviews").collect();
+        for (const review of reviews) {
+            await ctx.db.delete(review._id);
+        }
+
+        return {
+            message: `Usunięto:\n📦 ${orders.length} zamówień\n🎨 ${customOrders.length} zamówień niestandardowych\n🛒 ${cartItems.length} pozycji w koszykach\n⭐ ${reviews.length} recenzji`
+        };
+    }
+});

@@ -644,7 +644,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // COMMANDS
       if (text === "/start" || text === "/help") {
-        await sendMessage(chatId, "🤖 *Artifex Bot*\n\nKomendy:\n/orders - Ostatnie zamówienia\n/stats - Statystyki sklepu\n/lowstock - Niskie stany magazynowe\n/addproduct - Dodaj produkt\n/editproduct - Edytuj produkt\n/deleteproduct - Usuń produkt\n/cancel - Anuluj\n\n🛠️ *Developer:*\n/dev_ping - Status serwera\n/dev_info - Twoje ID\n/dev_db - Statystyki bazy\n/dev_reset - Reset sesji\n/help - Pomoc");
+        await sendMessage(chatId, "🤖 *Artifex Bot*\n\nKomendy:\n/orders - Ostatnie zamówienia\n/stats - Statystyki sklepu\n/lowstock - Niskie stany magazynowe\n/addproduct - Dodaj produkt\n/editproduct - Edytuj produkt\n/deleteproduct - Usuń produkt\n/cancel - Anuluj\n\n🛠️ *Developer:*\n/dev_ping - Status serwera\n/dev_info - Twoje ID\n/dev_db - Statystyki bazy\n/dev_reset - Reset sesji\n/stats_reset - Reset statystyk (Admin)\n/help - Pomoc");
         return new Response("OK", { status: 200 });
       }
 
@@ -688,6 +688,22 @@ export const webhook = httpAction(async (ctx, request) => {
       if (text === "/dev_reset") {
         const result = await ctx.runMutation(internal.dev.debugClearSession, { chatId });
         await sendMessage(chatId, result ? "✅ Session cleared (Hard Reset)." : "ℹ️ No active session found.");
+        return new Response("OK", { status: 200 });
+      }
+
+      if (text === "/stats_reset") {
+        const adminChatId = process.env.TELEGRAM_CHAT_ID;
+        if (adminChatId && chatId !== String(adminChatId)) {
+           await sendMessage(chatId, "⛔ Brak uprawnień. Tylko administrator może resetować statystyki.");
+           return new Response("OK", { status: 200 });
+        }
+
+        try {
+          const result = await ctx.runMutation(internal.dev.resetAllStats, {});
+          await sendMessage(chatId, `✅ *Statystyki zresetowane*\n\n${result.message}\n\n⚠️ Ta operacja jest nieodwracalna.`);
+        } catch (error: any) {
+          await sendMessage(chatId, `❌ Błąd podczas resetowania statystyk: ${error.message}`);
+        }
         return new Response("OK", { status: 200 });
       }
 
