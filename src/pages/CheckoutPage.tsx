@@ -138,6 +138,7 @@ export default function CheckoutPage() {
       try {
         const items = cart.map((item: any) => ({
           productId: item.productId,
+          customOrderId: item.customOrderId,
           name: item.product?.name || "Produkt",
           price: item.product?.price || 0,
           quantity: item.quantity,

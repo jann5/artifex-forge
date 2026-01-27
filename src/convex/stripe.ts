@@ -9,7 +9,8 @@ export const createCheckoutSession = action({
   args: {
     items: v.array(
       v.object({
-        productId: v.id("products"),
+        productId: v.optional(v.id("products")),
+        customOrderId: v.optional(v.id("customOrders")),
         name: v.string(),
         price: v.number(),
         quantity: v.number(),
@@ -101,7 +102,14 @@ export const createCheckoutSession = action({
         cancel_url: `${domain}/checkout?canceled=true`,
         metadata: {
           userId: userId,
-          items: JSON.stringify(args.items),
+          items: JSON.stringify(args.items.map(item => ({
+            productId: item.productId,
+            customOrderId: item.customOrderId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image,
+          }))),
           shippingAddress: JSON.stringify(args.shippingAddress),
         },
       });
