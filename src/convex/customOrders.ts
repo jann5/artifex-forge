@@ -17,11 +17,11 @@ export const create = mutation({
     files3D: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
 
     const orderId = await ctx.db.insert("customOrders", {
-      userId: identity.subject as any,
+      userId: user._id,
       projectName: args.projectName,
       customerName: args.customerName,
       customerEmail: args.customerEmail,
