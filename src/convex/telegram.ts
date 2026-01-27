@@ -698,12 +698,23 @@ export const webhook = httpAction(async (ctx, request) => {
            return new Response("OK", { status: 200 });
         }
 
-        try {
-          const result = await ctx.runMutation(internal.dev.resetAllStats, {});
-          await sendMessage(chatId, `✅ *Statystyki zresetowane*\n\n${result.message}\n\n⚠️ Ta operacja jest nieodwracalna.`);
-        } catch (error: any) {
-          await sendMessage(chatId, `❌ Błąd podczas resetowania statystyk: ${error.message}`);
-        }
+        // Set session to await confirmation
+        await ctx.runMutation(internal.telegram_db.updateSession, {
+          chatId,
+          step: "STATS_RESET_CONFIRM",
+          updates: {}
+        });
+
+        const confirmKeyboard = {
+          keyboard: [
+            [{ text: "✅ TAK, RESETUJ WSZYSTKO" }],
+            [{ text: "❌ Anuluj" }]
+          ],
+          one_time_keyboard: true,
+          resize_keyboard: true
+        };
+
+        await sendMessage(chatId, "⚠️ *OSTRZEŻENIE*\n\nCzy na pewno chcesz zresetować wszystkie statystyki?\n\nZostaną usunięte:\n📦 Wszystkie zamówienia\n🎨 Wszystkie zamówienia niestandardowe\n🛒 Wszystkie koszyki\n⭐ Wszystkie recenzje\n\n*Ta operacja jest NIEODWRACALNA!*", confirmKeyboard);
         return new Response("OK", { status: 200 });
       }
 
@@ -1101,6 +1112,24 @@ export const webhook = httpAction(async (ctx, request) => {
               
             case "IMAGES":
               await sendMessage(chatId, "📸 Wyślij zdjęcie lub wpisz /done aby zakończyć.");
+              break;
+
+            case "STATS_RESET_CONFIRM":
+              if (text === "✅ TAK, RESETUJ WSZYSTKO") {
+                try {
+                  const result = await ctx.runMutation(internal.dev.resetAllStats, {});
+                  await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+                  await sendMessage(chatId, `✅ *Statystyki zresetowane*\n\n${result.message}\n\n⚠️ Ta operacja została wykonana.`, { remove_keyboard: true });
+                } catch (error: any) {
+                  await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+                  await sendMessage(chatId, `❌ Błąd podczas resetowania statystyk: ${error.message}`, { remove_keyboard: true });
+                }
+              } else if (text === "❌ Anuluj") {
+                await ctx.runMutation(internal.telegram_db.clearSession, { chatId });
+                await sendMessage(chatId, "✅ Anulowano resetowanie statystyk.", { remove_keyboard: true });
+              } else {
+                await sendMessage(chatId, "⚠️ Wybierz opcję z klawiatury lub wpisz /cancel aby anulować.");
+              }
               break;
           }
         }
