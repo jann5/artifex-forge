@@ -154,6 +154,9 @@ export const sendCustomOrderNotification = internalAction({
         [
           { text: "✔️ Ukończono", callback_data: `custom_status:${order._id}:completed` },
           { text: "❌ Anulowano", callback_data: `custom_status:${order._id}:cancelled` }
+        ],
+        [
+          { text: "🗑️ Usuń", callback_data: `delete_custom_order:${order._id}` }
         ]
       ]
     };

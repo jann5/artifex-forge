@@ -45,79 +45,77 @@ export const webhook = httpAction(async (ctx, request) => {
         return;
       }
 
-      let message = "📦 *Ostatnie zamówienia:*\n\n";
-      
-      // Display standard orders
+      // Send standard orders
       if (standardOrders.length > 0) {
-        message += "*Standardowe zamówienia:*\n";
         for (const order of standardOrders) {
-          const statusEmoji = order.status === "paid" ? "✅" : order.status === "shipped" ? "🚚" : "⏳";
-          message += `${statusEmoji} ID: \`${order._id}\`\n`;
-          message += `   Klient: ${order.customerName}\n`;
-          message += `   Kwota: ${order.totalAmount} PLN\n`;
-          message += `   Status: ${order.status}\n\n`;
+          const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
+          const statusEmoji = order.status === "paid" ? "✅" : order.status === "shipped" ? "🚚" : order.status === "delivered" ? "📦" : "⏳";
+          
+          const msg = `${statusEmoji} *Zamówienie standardowe* (${date})\n\n` +
+                      `📋 *ID:* \`${order._id}\`\n` +
+                      `👤 *Klient:* ${order.customerName}\n` +
+                      `💰 *Kwota:* ${order.totalAmount} PLN\n` +
+                      `📊 *Status:* ${order.status}`;
+          
+          const keyboard = {
+            inline_keyboard: [
+              [
+                { text: "💰 Opłacone", callback_data: `update_status:${order._id}:paid` },
+                { text: "🚚 Wysłane", callback_data: `update_status:${order._id}:shipped` }
+              ],
+              [
+                { text: "✅ Dostarczone", callback_data: `update_status:${order._id}:delivered` },
+                { text: "❌ Anulowane", callback_data: `update_status:${order._id}:cancelled` }
+              ],
+              [
+                { text: "ℹ️ Szczegóły", callback_data: `order_info:${order._id}` },
+                { text: "🗑️ Usuń", callback_data: `delete_order:${order._id}` }
+              ]
+            ]
+          };
+          
+          await sendMessage(chatId, msg, keyboard);
         }
       }
       
-      // Display custom orders
+      // Send custom orders
       if (customOrders.length > 0) {
-        message += "*Zamówienia niestandardowe:*\n";
         for (const order of customOrders) {
-          const statusEmoji = order.status === "pending" ? "⏳" : order.status === "quoted" ? "💰" : order.status === "accepted" ? "✅" : "📋";
-          message += `${statusEmoji} ID: \`${order._id}\`\n`;
-          message += `   Projekt: ${order.projectName}\n`;
-          message += `   Klient: ${order.customerName}\n`;
-          message += `   Status: ${order.status}\n`;
+          const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
+          const statusEmoji = order.status === "pending" ? "⏳" : order.status === "quoted" ? "💰" : order.status === "accepted" ? "✅" : order.status === "in_production" ? "🔨" : order.status === "completed" ? "✔️" : "📋";
+          
+          let orderMessage = `${statusEmoji} *Zamówienie niestandardowe* (${date})\n\n`;
+          orderMessage += `📋 *ID:* \`${order._id}\`\n`;
+          orderMessage += `🎨 *Projekt:* ${order.projectName}\n`;
+          orderMessage += `👤 *Klient:* ${order.customerName}\n`;
+          orderMessage += `📧 *Email:* ${order.customerEmail}\n`;
+          orderMessage += `📊 *Status:* ${order.status}\n`;
           if (order.estimatedPrice) {
-            message += `   Cena: ${order.estimatedPrice} PLN\n`;
+            orderMessage += `💰 *Cena:* ${order.estimatedPrice} PLN\n`;
           }
-          message += `\n`;
+          
+          const customKeyboard = {
+            inline_keyboard: [
+              [
+                { text: "💰 Wyceniono", callback_data: `custom_quote:${order._id}` }
+              ],
+              [
+                { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` },
+                { text: "🔨 W produkcji", callback_data: `custom_status:${order._id}:in_production` }
+              ],
+              [
+                { text: "✔️ Ukończono", callback_data: `custom_status:${order._id}:completed` },
+                { text: "❌ Anulowane", callback_data: `custom_status:${order._id}:cancelled` }
+              ],
+              [
+                { text: "🗑️ Usuń", callback_data: `delete_custom_order:${order._id}` }
+              ]
+            ]
+          };
+          
+          await sendMessage(chatId, orderMessage, customKeyboard);
         }
       }
-
-    const keyboard = {
-      inline_keyboard: [
-        ...standardOrders.map((order: any) => [{
-          text: `🗑️ Usuń standardowe: ${order._id.slice(-6)}`,
-          callback_data: `delete_order:${order._id}`
-        }]),
-        ...customOrders.map((order: any) => [{
-          text: `🗑️ Usuń niestandardowe: ${order._id.slice(-6)}`,
-          callback_data: `delete_custom_order:${order._id}`
-        }])
-      ]
-    };
-
-    await sendMessage(chatId, message, keyboard);
-    
-    // Send each custom order as a separate message with its own buttons
-    for (const order of customOrders) {
-      const statusEmoji = order.status === "pending" ? "⏳" : order.status === "quoted" ? "💰" : order.status === "accepted" ? "✅" : order.status === "in_production" ? "🔨" : "📋";
-      let orderMessage = `${statusEmoji} *Zamówienie niestandardowe*\n\n`;
-      orderMessage += `📋 *ID:* \`${order._id}\`\n`;
-      orderMessage += `🎨 *Projekt:* ${order.projectName}\n`;
-      orderMessage += `👤 *Klient:* ${order.customerName}\n`;
-      orderMessage += `📧 *Email:* ${order.customerEmail}\n`;
-      orderMessage += `📊 *Status:* ${order.status}\n`;
-      if (order.estimatedPrice) {
-        orderMessage += `💰 *Cena:* ${order.estimatedPrice} PLN\n`;
-      }
-      
-      const customKeyboard = {
-        inline_keyboard: [[
-          { text: "💰 Wyceniono", callback_data: `custom_status:${order._id}:quoted` },
-          { text: "✅ Zaakceptowano", callback_data: `custom_status:${order._id}:accepted` }
-        ], [
-          { text: "🔨 W produkcji", callback_data: `custom_status:${order._id}:in_production` },
-          { text: "✔️ Ukończono", callback_data: `custom_status:${order._id}:completed` }
-        ], [
-          { text: "❌ Anulowano", callback_data: `custom_status:${order._id}:cancelled` },
-          { text: "🗑️ Usuń", callback_data: `delete_custom_order:${order._id}` }
-        ]]
-      };
-      
-      await sendMessage(chatId, orderMessage, customKeyboard);
-    }
     
     } catch (error) {
       console.error("Error in handleOrderCommand:", error);
@@ -222,7 +220,6 @@ export const webhook = httpAction(async (ctx, request) => {
       // Handle Custom Order Status Update
       if (data && data.startsWith("custom_status:")) {
         const parts = data.split(":");
-        await answerCallback("Aktualizacja statusu...");
         if (parts.length === 3) {
           const orderId = parts[1] as Id<"customOrders">;
           const status = parts[2];
@@ -231,6 +228,8 @@ export const webhook = httpAction(async (ctx, request) => {
             orderId: orderId,
             status: status,
           });
+
+          await answerCallback(`Status zmieniony na ${status}`);
 
           const originalText = message.text || "";
           const updatedText = originalText.replace(/Status: .*/, `Status: ${status}`);
@@ -605,7 +604,7 @@ export const webhook = httpAction(async (ctx, request) => {
           updates: { customOrderId: orderId },
         });
 
-        await sendTelegramMessage(chatId, "💰 *Podaj cenę wyceny*\\n\\nWpisz tylko liczbę (np. 150 dla 150 PLN):");
+        await sendTelegramMessage(chatId, "💰 *Podaj cenę wyceny*\n\nWpisz tylko liczbę (np. 150 dla 150 PLN):");
 
         return new Response("OK", { status: 200 });
       }
