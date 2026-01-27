@@ -839,38 +839,29 @@ export const webhook = httpAction(async (ctx, request) => {
           const price = parseFloat(text);
           
           if (isNaN(price) || price <= 0) {
-            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: chatId,
-                text: "❌ Nieprawidłowa cena. Podaj liczbę większą od 0:",
-              }),
-            });
+            await sendTelegramMessage(chatId, "❌ Nieprawidłowa cena. Podaj liczbę większą od 0:");
             return new Response("OK");
           }
 
           const orderId = session.customOrderId as Id<"customOrders">;
           
-        await ctx.runMutation(internal.customOrders.updateStatusInternal, {
-          orderId,
-          status: "quoted",
-          estimatedPrice: price,
-        });
+          // Update order status and price
+          await ctx.runMutation(internal.customOrders.updateStatusInternal, {
+            orderId,
+            status: "quoted",
+            estimatedPrice: price,
+          });
 
+          // Clear session
           await ctx.runMutation(internal.telegram_db.clearSession, {
             chatId: chatId.toString(),
           });
 
-          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: `✅ *Wycena zapisana pomyślnie!*\n\n💰 Cena: *${price} PLN*\n\n📧 Klient otrzymał powiadomienie email i może teraz zaakceptować wycenę na stronie zamówienia.`,
-              parse_mode: "Markdown",
-            }),
-          });
+          // Send confirmation message
+          await sendTelegramMessage(
+            chatId, 
+            `✅ *CENA ZAAKCEPTOWANA!*\n\n💰 Wycena: *${price} PLN*\n\n📧 Klient otrzymał powiadomienie email.\n📱 Wycena jest teraz widoczna na stronie zamówienia.\n\n✔️ Klient może zaakceptować i opłacić zamówienie lub je odrzucić.`
+          );
 
           return new Response("OK");
         }
