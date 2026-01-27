@@ -1,1 +1,1 @@
-npx convex run debug:testOrderFlow
+npm run build
