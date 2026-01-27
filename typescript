@@ -1,1 +1,6 @@
-npm install inpost-geowidget-react
+if (text === "/start" || text === "/help") {
+  const helpMessage = `🤖 *Artifex Bot*...`;
+  
+  await sendMessage(chatId, helpMessage);
+  // ❌ BRAK RETURN! Kod wykonuje się dalej
+}

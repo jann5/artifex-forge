@@ -685,6 +685,7 @@ Komendy:
         
         await sendMessage(chatId, helpMessage);
         return new Response("OK", { status: 200 });
+        return new Response("OK", { status: 200 });
       }
 
       if (text === "/dev_ping") {
