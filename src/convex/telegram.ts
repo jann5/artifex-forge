@@ -692,20 +692,22 @@ Komendy:
         const stats = await ctx.runQuery(internal.dev.getSystemStats, {});
         const latency = Date.now() - start;
         
-        const msg = `🏓 *Pong!*\n\n` +
-                    `⏱️ Latency: ${latency}ms\n` +
-                    `🕒 Server Time: ${new Date(stats.serverTime).toISOString()}\n` +
-                    `🔗 URL: ${stats.convexSiteUrl || "Not set"}`;
+        const msg = `🏓 *Pong!*
+
+⏱️ Latency: ${latency}ms
+🕒 Server Time: ${new Date(stats.serverTime).toISOString()}
+🔗 URL: ${stats.convexSiteUrl || "Not set"}`;
         
         await sendMessage(chatId, msg);
         return new Response("OK", { status: 200 });
       }
 
       if (text === "/dev_info") {
-        const msg = `🕵️ *Developer Info*\n\n` +
-                    `🆔 Chat ID: \`${chatId}\`\n` +
-                    `👤 User: ${message.from?.first_name} ${message.from?.last_name || ""} (@${message.from?.username || "none"})\n` +
-                    `📝 Message ID: ${message.message_id}`;
+        const msg = `🕵️ *Developer Info*
+
+🆔 Chat ID: \`${chatId}\`
+👤 User: ${message.from?.first_name} ${message.from?.last_name || ""} (@${message.from?.username || "none"})
+📝 Message ID: ${message.message_id}`;
         
         await sendMessage(chatId, msg);
         return new Response("OK", { status: 200 });
@@ -714,11 +716,12 @@ Komendy:
       if (text === "/dev_db") {
         const stats = await ctx.runQuery(internal.dev.getSystemStats, {});
         
-        const msg = `💾 *Database Stats*\n\n` +
-                    `👥 Users: ${stats.users}\n` +
-                    `🛍️ Products: ${stats.products}\n` +
-                    `📦 Orders: ${stats.orders}\n` +
-                    `⭐ Reviews: ${stats.reviews}`;
+        const msg = `💾 *Database Stats*
+
+👥 Users: ${stats.users}
+🛍️ Products: ${stats.products}
+📦 Orders: ${stats.orders}
+⭐ Reviews: ${stats.reviews}`;
         
         await sendMessage(chatId, msg);
         return new Response("OK", { status: 200 });
@@ -761,13 +764,15 @@ Komendy:
         const stats = await ctx.runQuery(internal.orders.getStats);
         const productStats = await ctx.runQuery(internal.products.getStatsInternal);
         
-        const msg = `📊 *Statystyki Sklepu*\n\n` +
-                    `📦 Zamówienia: ${stats.totalOrders}\n` +
-                    `💰 Przychód: ${stats.totalRevenue.toFixed(2)} PLN\n` +
-                    `⏳ Oczekujące: ${stats.pendingOrders}\n` +
-                    `✅ Opłacone: ${stats.paidOrders}\n\n` +
-                    `🛍️ Produkty: ${productStats.totalProducts}\n` +
-                    `⚠️ Niski stan: ${productStats.lowStockCount}`;
+        const msg = `📊 *Statystyki Sklepu*
+
+📦 Zamówienia: ${stats.totalOrders}
+💰 Przychód: ${stats.totalRevenue.toFixed(2)} PLN
+⏳ Oczekujące: ${stats.pendingOrders}
+✅ Opłacone: ${stats.paidOrders}
+
+🛍️ Produkty: ${productStats.totalProducts}
+⚠️ Niski stan: ${productStats.lowStockCount}`;
         
         await sendMessage(chatId, msg);
         return new Response("OK", { status: 200 });
@@ -784,7 +789,9 @@ Komendy:
             await sendMessage(chatId, "✅ Wszystkie produkty mają odpowiedni stan magazynowy.");
         } else {
             const list = stats.lowStockNames.map((n: string) => `- ${n}`).join("\n");
-            await sendMessage(chatId, `⚠️ *Niski stan magazynowy (<5):\n\n${list}`);
+            await sendMessage(chatId, `⚠️ *Niski stan magazynowy (<5):*
+
+${list}`);
         }
         return new Response("OK", { status: 200 });
       }
