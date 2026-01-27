@@ -129,7 +129,13 @@ export function CustomOrderCard({ order }: { order: any }) {
               )}
               
               {order.status === "accepted" && (
-                <Button className="w-full">
+                <Button 
+                  className="w-full"
+                  onClick={() => {
+                    // Navigate to checkout with custom order
+                    window.location.href = `/checkout?customOrderId=${order._id}`;
+                  }}
+                >
                   Przejdź do płatności
                 </Button>
               )}
