@@ -315,3 +315,48 @@ export const deleteOrder = internalMutation({
     await ctx.db.delete(args.orderId);
   }
 });
+
+export const getAnalytics = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized - Admin only");
+    }
+
+    const orders = await ctx.db.query("orders").collect();
+    const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+    const totalOrders = orders.length;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    // Status counts
+    const pendingOrders = orders.filter(o => o.status === "pending").length;
+    const paidOrders = orders.filter(o => o.status === "paid").length;
+    const shippedOrders = orders.filter(o => o.status === "shipped").length;
+    const deliveredOrders = orders.filter(o => o.status === "delivered").length;
+
+    // Recent orders
+    const recentOrders = await ctx.db.query("orders").order("desc").take(5);
+    const recentWithCustomers = await Promise.all(
+      recentOrders.map(async (o) => {
+        const customer = await ctx.db.get(o.userId);
+        return { ...o, customerName: customer?.name || customer?.email || "Unknown" };
+      })
+    );
+
+    // Calculate growth (mock for now - would need historical data)
+    const revenueGrowth = 12.5; // Placeholder
+
+    return {
+      totalRevenue,
+      totalOrders,
+      averageOrderValue,
+      pendingOrders,
+      paidOrders,
+      shippedOrders,
+      deliveredOrders,
+      recentOrders: recentWithCustomers,
+      revenueGrowth,
+    };
+  },
+});

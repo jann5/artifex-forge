@@ -740,7 +740,7 @@ export const webhook = httpAction(async (ctx, request) => {
 
       if (text === "/stats") {
         const stats = await ctx.runQuery(internal.orders.getStats);
-        const productStats = await ctx.runQuery(internal.products.getStats);
+        const productStats = await ctx.runQuery(internal.products.getStatsInternal);
         
         const msg = `📊 *Statystyki Sklepu*\n\n` +
                     `📦 Zamówienia: ${stats.totalOrders}\n` +
@@ -760,7 +760,7 @@ export const webhook = httpAction(async (ctx, request) => {
       }
 
       if (text === "/lowstock") {
-        const stats = await ctx.runQuery(internal.products.getStats);
+        const stats = await ctx.runQuery(internal.products.getStatsInternal);
         if (stats.lowStockCount === 0) {
             await sendMessage(chatId, "✅ Wszystkie produkty mają odpowiedni stan magazynowy.");
         } else {

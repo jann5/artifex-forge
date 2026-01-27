@@ -108,7 +108,20 @@ export const remove = mutation({
   },
 });
 
-export const getStats = internalQuery({
+export const getStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    const lowStock = products.filter(p => p.inventory < 5);
+    return { 
+        totalProducts: products.length, 
+        lowStockCount: lowStock.length,
+        lowStockNames: lowStock.map(p => p.name).slice(0, 10)
+    };
+  }
+});
+
+export const getStatsInternal = internalQuery({
   args: {},
   handler: async (ctx) => {
     const products = await ctx.db.query("products").collect();

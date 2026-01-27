@@ -13,6 +13,7 @@ import ProductsPage from "./pages/ProductsPage";
 import ProductPage from "./pages/ProductPage";
 import AdminPage from "./pages/AdminPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
@@ -100,6 +101,10 @@ const router = createBrowserRouter([
   {
     path: "/admin/orders",
     element: <AdminOrdersPage />,
+  },
+  {
+    path: "/admin/analytics",
+    element: <AnalyticsPage />,
   },
   {
     path: "/checkout",

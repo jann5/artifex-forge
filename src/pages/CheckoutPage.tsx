@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getStorageUrl } from "@/lib/utils";
+import { getDeliveryEstimate, formatDeliveryDate } from "@/lib/delivery";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -348,6 +349,28 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                   </div>
+
+                  {deliveryMethod === 'inpost' && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm font-medium text-blue-900">
+                        📦 Szacowany czas dostawy: {formatDeliveryDate(1)} - {formatDeliveryDate(2)}
+                      </p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Dostawa do paczkomatu następnego dnia roboczego
+                      </p>
+                    </div>
+                  )}
+
+                  {deliveryMethod === 'courier' && selectedAddress && (
+                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm font-medium text-green-900">
+                        🚚 Szacowany czas dostawy: {formatDeliveryDate(2)} - {formatDeliveryDate(3)}
+                      </p>
+                      <p className="text-xs text-green-700 mt-1">
+                        Dostawa kurierem pod wskazany adres
+                      </p>
+                    </div>
+                  )}
 
                   {deliveryMethod === 'inpost' && (
                     <div className="mt-4 space-y-3">

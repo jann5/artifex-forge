@@ -6,12 +6,13 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
 import { useState, useEffect } from "react";
-import { Minus, Plus, ShoppingBag, X, ZoomIn } from "lucide-react";
+import { Minus, Plus, ShoppingBag, X, ZoomIn, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getStorageUrl } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Reviews } from "@/components/Reviews";
+import { formatDeliveryDate } from "@/lib/delivery";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -192,6 +193,23 @@ export default function ProductPage() {
                   <ShoppingBag className="mr-2 h-5 w-5" /> 
                   {isOutOfStock ? "Wyprzedane" : "Dodaj do Koszyka"}
                 </Button>
+              </div>
+              
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">Szacowany czas dostawy</h3>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">📦 InPost Paczkomat:</span>
+                    <span className="font-medium">{formatDeliveryDate(1)} - {formatDeliveryDate(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">🚚 Kurier:</span>
+                    <span className="font-medium">{formatDeliveryDate(2)} - {formatDeliveryDate(3)}</span>
+                  </div>
+                </div>
               </div>
               
               <div className="text-sm text-muted-foreground pt-4 border-t">
