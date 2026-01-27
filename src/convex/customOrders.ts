@@ -291,20 +291,12 @@ export const getByIdInternal = internalQuery({
 export const listAll = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const user = await getCurrentUser(ctx);
+    if (!user) {
       return [];
     }
-
-    // Use getAuthUserId to get the actual user ID
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
     
-    const user = await ctx.db.get(userId);
-    if (!user) return [];
-    
-    // Type guard to check if user has role property
-    if (!("role" in user) || user.role !== "admin") {
+    if (user.role !== "admin") {
       return [];
     }
 
