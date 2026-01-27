@@ -89,12 +89,67 @@ export default function Landing() {
         </DialogContent>
       </Dialog>
 
-      {/* Hero Section - Simplified & Clean */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Simplified Background */}
+      {/* Hero Section - BLOCKSPACE Style */}
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
+        {/* Animated Background with Blue Organic Shape */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[length:32px_32px]" />
+          {/* Dark base */}
+          <div className="absolute inset-0 bg-black" />
+          
+          {/* Animated blue organic shape - jellyfish-like effect */}
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            animate={{
+              scale: [1, 1.1, 1],
+              rotate: [0, 5, -5, 0],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <div className="relative w-[800px] h-[800px]">
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: "radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(37, 99, 235, 0.3) 30%, rgba(29, 78, 216, 0.2) 50%, transparent 70%)",
+                  filter: "blur(60px)",
+                }}
+                animate={{
+                  scale: [1, 1.2, 0.9, 1],
+                  x: [0, 50, -50, 0],
+                  y: [0, -30, 30, 0],
+                }}
+                transition={{
+                  duration: 15,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: "radial-gradient(circle, rgba(96, 165, 250, 0.3) 0%, rgba(59, 130, 246, 0.2) 40%, transparent 70%)",
+                  filter: "blur(80px)",
+                }}
+                animate={{
+                  scale: [1, 0.8, 1.3, 1],
+                  x: [0, -40, 40, 0],
+                  y: [0, 40, -40, 0],
+                }}
+                transition={{
+                  duration: 18,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 1
+                }}
+              />
+            </div>
+          </motion.div>
+
+          {/* Subtle grid overlay */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px]" />
         </div>
 
         <motion.div 
@@ -102,79 +157,56 @@ export default function Landing() {
           className="container mx-auto px-4 relative z-10"
         >
           <div className="text-center max-w-4xl mx-auto">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8"
-            >
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Premium Druk 3D w Polsce</span>
-            </motion.div>
-
             {/* Main Heading */}
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6"
+              transition={{ duration: 0.8 }}
+              className="text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-6 text-white"
+              style={{
+                fontFamily: "var(--font-display)",
+                letterSpacing: "0.05em"
+              }}
             >
-              Artifex Forge
+              ARTIFEX FORGE
             </motion.h1>
 
             {/* Subheading */}
             <motion.p 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-2xl md:text-3xl text-muted-foreground mb-8 font-light"
+              transition={{ delay: 0.3, duration: 0.8 }}
+              className="text-xl md:text-2xl text-blue-200/80 mb-12 font-light tracking-wide"
             >
-              Twórz. Inspiruj. Wyróżnij się.
-            </motion.p>
-
-            {/* Description */}
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-lg text-muted-foreground/80 mb-12 max-w-2xl mx-auto leading-relaxed"
-            >
-              Odkryj świat unikalnych produktów drukowanych w technologii 3D. 
-              Łączymy precyzję inżynieryjną z artystyczną wizją.
+              a full cycle agency for all digital and creatives
             </motion.p>
 
             {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Button size="lg" className="h-14 px-12 text-lg" asChild>
+              <Button 
+                size="lg" 
+                className="h-14 px-12 text-lg bg-blue-600 hover:bg-blue-700 text-white border-0" 
+                asChild
+              >
                 <Link to="/products">
                   Zobacz Kolekcję <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="h-14 px-12 text-lg" asChild>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="h-14 px-12 text-lg border-blue-400/30 text-blue-100 hover:bg-blue-950/50 hover:text-white" 
+                asChild
+              >
                 <Link to="/about">
                   Poznaj Nas
                 </Link>
               </Button>
-            </motion.div>
-
-            {/* Feature Pills */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="flex flex-wrap justify-center gap-4 mt-12"
-            >
-              {["Materiały Premium", "Precyzyjny Druk", "Szybka Wysyłka"].map((feature, i) => (
-                <div key={i} className="px-4 py-2 rounded-full bg-muted/50 text-sm font-medium">
-                  {feature}
-                </div>
-              ))}
             </motion.div>
           </div>
         </motion.div>
@@ -183,16 +215,16 @@ export default function Landing() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.6 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2"
         >
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <span className="text-xs uppercase tracking-wider">Przewiń w dół</span>
-            <div className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex items-start justify-center p-2">
+          <div className="flex flex-col items-center gap-2 text-blue-200/60">
+            <span className="text-xs uppercase tracking-wider">Scroll</span>
+            <div className="w-6 h-10 border-2 border-blue-400/30 rounded-full flex items-start justify-center p-2">
               <motion.div
                 animate={{ y: [0, 12, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full"
+                className="w-1.5 h-1.5 bg-blue-400/50 rounded-full"
               />
             </div>
           </div>
