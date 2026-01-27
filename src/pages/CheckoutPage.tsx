@@ -129,11 +129,9 @@ export default function CheckoutPage() {
         return;
       }
 
-      if (deliveryMethod === 'courier') {
-        if (!shippingDetails.fullName || !shippingDetails.street || !shippingDetails.city || !shippingDetails.postalCode || !shippingDetails.phone) {
-          toast.error("Proszę uzupełnić wszystkie dane do wysyłki");
-          return;
-        }
+      if (deliveryMethod === 'courier' && !selectedAddress) {
+        toast.error("Wybierz adres dostawy");
+        return;
       }
 
       setIsProcessing(true);
@@ -146,16 +144,32 @@ export default function CheckoutPage() {
           image: item.product?.images?.[0],
         }));
 
-        const shippingData = deliveryMethod === 'inpost' 
-          ? {
-              fullName: shippingDetails.fullName || "Odbiór w paczkomacie",
-              street: selectedParcelLocker.name,
-              city: selectedParcelLocker.address.line2,
-              postalCode: "",
-              phone: shippingDetails.phone || "",
-              parcelLocker: selectedParcelLocker.name,
-            }
-          : shippingDetails;
+        let shippingData: any;
+        if (deliveryMethod === 'inpost') {
+          shippingData = {
+            fullName: "Odbiór w paczkomacie",
+            street: selectedParcelLocker.name,
+            city: selectedParcelLocker.address.line2,
+            postalCode: "",
+            phone: "",
+            parcelLocker: selectedParcelLocker.name,
+          };
+        } else {
+          // Get selected address details
+          const address = addresses?.find(a => a._id === selectedAddress);
+          if (!address) {
+            toast.error("Nie znaleziono wybranego adresu");
+            setIsProcessing(false);
+            return;
+          }
+          shippingData = {
+            fullName: address.fullName,
+            street: address.street,
+            city: address.city,
+            postalCode: address.postalCode,
+            phone: "", // Phone can be added to address schema if needed
+          };
+        }
 
         const result = await createCheckout({ 
           items,
@@ -278,64 +292,6 @@ export default function CheckoutPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="border shadow-none bg-card">
-                    <CardHeader className="bg-muted/30 border-b py-4">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <MapPin className="h-5 w-5 text-primary" />
-                        Dane do wysyłki
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="fullName">Imię i Nazwisko</Label>
-                        <Input 
-                          id="fullName" 
-                          placeholder="Jan Kowalski"
-                          value={shippingDetails.fullName}
-                          onChange={(e) => setShippingDetails({...shippingDetails, fullName: e.target.value})}
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="street">Ulica i numer</Label>
-                        <Input 
-                          id="street" 
-                          placeholder="ul. Słoneczna 12/4"
-                          value={shippingDetails.street}
-                          onChange={(e) => setShippingDetails({...shippingDetails, street: e.target.value})}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="postalCode">Kod pocztowy</Label>
-                          <Input 
-                            id="postalCode" 
-                            placeholder="00-000"
-                            value={shippingDetails.postalCode}
-                            onChange={(e) => setShippingDetails({...shippingDetails, postalCode: e.target.value})}
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="city">Miasto</Label>
-                          <Input 
-                            id="city" 
-                            placeholder="Warszawa"
-                            value={shippingDetails.city}
-                            onChange={(e) => setShippingDetails({...shippingDetails, city: e.target.value})}
-                          />
-                        </div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="phone">Numer telefonu</Label>
-                        <Input 
-                          id="phone" 
-                          placeholder="+48 123 456 789"
-                          value={shippingDetails.phone}
-                          onChange={(e) => setShippingDetails({...shippingDetails, phone: e.target.value})}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-
                   <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900/50">
                     <ShieldCheck className="h-5 w-5 flex-shrink-0 mt-0.5" />
                     <div className="text-sm">
@@ -439,42 +395,73 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  {deliveryMethod === 'courier' && addresses && addresses.length > 0 && (
+                  {deliveryMethod === 'courier' && (
                     <div className="mt-4 space-y-3">
-                      <Label>Wybierz adres dostawy</Label>
-                      <div className="space-y-2">
-                        {addresses.map((address) => (
-                          <div 
-                            key={address._id} 
-                            className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                              selectedAddress === address._id 
-                                ? 'border-primary bg-primary/5' 
-                                : 'border-border hover:border-primary/50'
-                            }`}
-                            onClick={() => setSelectedAddress(address._id)}
+                      <Label>Adres dostawy</Label>
+                      {addresses && addresses.length > 0 ? (
+                        <div className="space-y-2">
+                          {addresses.map((address) => (
+                            <div 
+                              key={address._id} 
+                              className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                                selectedAddress === address._id 
+                                  ? 'border-primary bg-primary/5' 
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                              onClick={() => setSelectedAddress(address._id)}
+                            >
+                              <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                                selectedAddress === address._id 
+                                  ? 'border-primary' 
+                                  : 'border-muted-foreground'
+                              }`}>
+                                {selectedAddress === address._id && (
+                                  <div className="h-2 w-2 rounded-full bg-primary" />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium">{address.fullName}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {address.street}, {address.city}, {address.postalCode}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                          <Button 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={() => navigate("/addresses")}
                           >
-                            <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
-                              selectedAddress === address._id 
-                                ? 'border-primary' 
-                                : 'border-muted-foreground'
-                            }`}>
-                              {selectedAddress === address._id && (
-                                <div className="h-2 w-2 rounded-full bg-primary" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium">{address.fullName}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {address.street}, {address.city}, {address.postalCode}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                            Dodaj nowy adres
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="text-center p-6 border-2 border-dashed rounded-lg">
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Nie masz jeszcze zapisanych adresów
+                          </p>
+                          <Button 
+                            onClick={() => navigate("/addresses")}
+                            className="w-full"
+                          >
+                            Dodaj adres dostawy
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
               </Card>
+
+              <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                <ShieldCheck className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold mb-1">Bezpieczna transakcja</p>
+                  <p className="opacity-90">
+                    Wszystkie transakcje są szyfrowane i bezpieczne. Gwarantujemy 100% satysfakcji lub zwrot pieniędzy.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div>
