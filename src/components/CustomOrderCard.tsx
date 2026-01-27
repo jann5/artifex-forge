@@ -133,10 +133,10 @@ export function CustomOrderCard({ order }: { order: any }) {
                   className="w-full"
                   onClick={() => {
                     // Navigate to checkout with custom order
-                    window.location.href = `/checkout?customOrderId=${order._id}`;
+                    window.location.href = `/checkout?customOrder=${order._id}`;
                   }}
                 >
-                  Przejdź do płatności
+                  Dodaj do koszyka i opłać
                 </Button>
               )}
             </div>
