@@ -64,7 +64,20 @@ export default function CustomOrderPage() {
 
   const handleFiles3DChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFiles3D(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      // Validate file types
+      const validExtensions = ['.stl', '.obj', '.step', '.stp', '.iges', '.igs', '.3mf'];
+      const invalidFiles = files.filter(file => {
+        const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        return !validExtensions.includes(ext);
+      });
+      
+      if (invalidFiles.length > 0) {
+        toast.error(`Nieprawidłowe pliki: ${invalidFiles.map(f => f.name).join(', ')}`);
+        return;
+      }
+      
+      setFiles3D(files);
     }
   };
 
@@ -86,7 +99,7 @@ export default function CustomOrderPage() {
           const uploadUrl = await generateUploadUrl();
           const result = await fetch(uploadUrl, {
             method: "POST",
-            headers: { "Content-Type": image.type },
+            headers: { "Content-Type": image.type || "image/jpeg" },
             body: image,
           });
           const { storageId } = await result.json();
@@ -94,16 +107,32 @@ export default function CustomOrderPage() {
         }
       }
 
-      // Upload 3D files (optional)
+      // Upload 3D files (optional) with proper MIME types
       const file3DIds: string[] = [];
       if (files3D.length > 0) {
         for (const file of files3D) {
           const uploadUrl = await generateUploadUrl();
+          
+          // Determine MIME type based on file extension
+          const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+          let contentType = 'application/octet-stream';
+          
+          if (ext === '.stl') contentType = 'model/stl';
+          else if (ext === '.obj') contentType = 'model/obj';
+          else if (ext === '.3mf') contentType = 'model/3mf';
+          else if (ext === '.step' || ext === '.stp') contentType = 'application/step';
+          else if (ext === '.iges' || ext === '.igs') contentType = 'application/iges';
+          
           const result = await fetch(uploadUrl, {
             method: "POST",
-            headers: { "Content-Type": file.type },
+            headers: { "Content-Type": contentType },
             body: file,
           });
+          
+          if (!result.ok) {
+            throw new Error(`Failed to upload file: ${file.name}`);
+          }
+          
           const { storageId } = await result.json();
           file3DIds.push(storageId);
         }

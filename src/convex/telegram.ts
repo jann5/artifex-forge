@@ -78,8 +78,10 @@ export const webhook = httpAction(async (ctx, request) => {
         }
       }
       
-      // Send custom orders
+      // Send custom orders with file download links
       if (customOrders.length > 0) {
+        const siteUrl = process.env.CONVEX_SITE_URL;
+        
         for (const order of customOrders) {
           const date = new Date(order._creationTime).toLocaleDateString("pl-PL");
           const statusEmoji = order.status === "pending" ? "⏳" : order.status === "quoted" ? "💰" : order.status === "accepted" ? "✅" : order.status === "in_production" ? "🔨" : order.status === "completed" ? "✔️" : "📋";
@@ -93,6 +95,24 @@ export const webhook = httpAction(async (ctx, request) => {
           if (order.estimatedPrice) {
             orderMessage += `💰 *Wycena:* ${order.estimatedPrice} PLN\n`;
           }
+          
+          // Add file information with download links
+          if (order.images && order.images.length > 0) {
+            orderMessage += `\n📸 *Zdjęcia:* ${order.images.length} plik(ów)\n`;
+            for (let i = 0; i < order.images.length; i++) {
+              const imageUrl = `${siteUrl}/api/storage/${order.images[i]}`;
+              orderMessage += `  [Zdjęcie ${i + 1}](${imageUrl})\n`;
+            }
+          }
+          
+          if (order.files3D && order.files3D.length > 0) {
+            orderMessage += `\n📦 *Pliki 3D:* ${order.files3D.length} plik(ów)\n`;
+            for (let i = 0; i < order.files3D.length; i++) {
+              const fileUrl = `${siteUrl}/api/storage/${order.files3D[i]}`;
+              orderMessage += `  [Model 3D ${i + 1}](${fileUrl})\n`;
+            }
+          }
+          
           orderMessage += `\n🆔 \`${order._id}\``;
           
           const customKeyboard = {
