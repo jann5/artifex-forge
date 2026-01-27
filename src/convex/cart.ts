@@ -15,7 +15,22 @@ export const get = query({
 
     const itemsWithProduct = await Promise.all(
       cartItems.map(async (item) => {
-        const product = await ctx.db.get(item.productId);
+        if (item.customOrderId) {
+          const customOrder = await ctx.db.get(item.customOrderId);
+          return { 
+            ...item, 
+            product: customOrder ? {
+              _id: customOrder._id,
+              name: customOrder.projectName,
+              price: customOrder.estimatedPrice || 0,
+              images: customOrder.images,
+              inventory: 1,
+              isCustomOrder: true,
+            } : null
+          };
+        }
+        
+        const product = item.productId ? await ctx.db.get(item.productId) : null;
         return { ...item, product };
       })
     );
@@ -26,13 +41,43 @@ export const get = query({
 
 export const add = mutation({
   args: {
-    productId: v.id("products"),
+    productId: v.optional(v.id("products")),
+    customOrderId: v.optional(v.id("customOrders")),
     variantId: v.optional(v.string()),
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
+
+    // Handle custom orders
+    if (args.customOrderId) {
+      const customOrder = await ctx.db.get(args.customOrderId);
+      if (!customOrder) throw new Error("Custom order not found");
+      if (customOrder.userId !== user._id) throw new Error("Unauthorized");
+      if (customOrder.status !== "accepted") throw new Error("Custom order not accepted yet");
+
+      // Check if already in cart
+      const existing = await ctx.db
+        .query("cartItems")
+        .withIndex("by_user", (q) => q.eq("userId", user._id))
+        .filter((q) => q.eq(q.field("customOrderId"), args.customOrderId))
+        .first();
+
+      if (existing) {
+        throw new Error("To zamówienie niestandardowe jest już w koszyku");
+      }
+
+      await ctx.db.insert("cartItems", {
+        userId: user._id,
+        customOrderId: args.customOrderId,
+        quantity: 1,
+      });
+      return;
+    }
+
+    // Handle regular products
+    if (!args.productId) throw new Error("Product ID required");
 
     const product = await ctx.db.get(args.productId);
     if (!product) throw new Error("Product not found");
@@ -82,6 +127,17 @@ export const updateQuantity = mutation({
     const cartItem = await ctx.db.get(args.id);
     if (!cartItem) throw new Error("Cart item not found");
 
+    // Custom orders can't have quantity changed (always 1)
+    if (cartItem.customOrderId) {
+      if (args.quantity <= 0) {
+        await ctx.db.delete(args.id);
+      }
+      return;
+    }
+
+    // Handle regular products
+    if (!cartItem.productId) throw new Error("Invalid cart item");
+    
     const product = await ctx.db.get(cartItem.productId);
     if (!product) throw new Error("Product not found");
 

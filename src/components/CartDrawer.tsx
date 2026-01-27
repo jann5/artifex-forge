@@ -115,7 +115,11 @@ export function CartDrawer() {
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1">
                         <h4 className="font-semibold text-base line-clamp-2 mb-1">{item.product?.name}</h4>
-                        <p className="text-xs text-muted-foreground capitalize">{item.product?.category}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {(item.product as any)?.isCustomOrder 
+                            ? 'Zamówienie niestandardowe' 
+                            : (item.product as any)?.category}
+                        </p>
                       </div>
                       <button 
                         onClick={() => remove({ id: item._id })}

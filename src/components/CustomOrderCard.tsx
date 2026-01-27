@@ -6,7 +6,6 @@ import { FileText, Package, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { useNavigate } from "react-router";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useState } from "react";
 
@@ -33,17 +32,34 @@ interface CustomOrderCardProps {
 
 export function CustomOrderCard({ order }: { order: any }) {
   const acceptQuote = useMutation(api.customOrders.acceptQuote);
+  const addToCart = useMutation(api.cart.add);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const handleAcceptQuote = async () => {
     setIsAccepting(true);
     try {
       await acceptQuote({ orderId: order._id });
-      toast.success("Wycena zaakceptowana! Możesz teraz przejść do płatności.");
+      toast.success("Wycena zaakceptowana! Możesz teraz dodać do koszyka.");
     } catch (error) {
       toast.error("Błąd podczas akceptacji wyceny");
     } finally {
       setIsAccepting(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    setIsAddingToCart(true);
+    try {
+      await addToCart({ 
+        customOrderId: order._id,
+        quantity: 1
+      });
+      toast.success("Zamówienie niestandardowe dodane do koszyka!");
+    } catch (error: any) {
+      toast.error(error.message || "Błąd podczas dodawania do koszyka");
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -131,12 +147,10 @@ export function CustomOrderCard({ order }: { order: any }) {
               {order.status === "accepted" && (
                 <Button 
                   className="w-full"
-                  onClick={() => {
-                    // Navigate to checkout with custom order
-                    window.location.href = `/checkout?customOrder=${order._id}`;
-                  }}
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart}
                 >
-                  Dodaj do koszyka i opłać
+                  {isAddingToCart ? "Dodawanie..." : "Dodaj do koszyka"}
                 </Button>
               )}
             </div>

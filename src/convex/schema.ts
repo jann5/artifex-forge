@@ -89,7 +89,8 @@ const schema = defineSchema(
 
     cartItems: defineTable({
       userId: v.id("users"),
-      productId: v.id("products"),
+      productId: v.optional(v.id("products")),
+      customOrderId: v.optional(v.id("customOrders")),
       variantId: v.optional(v.string()),
       quantity: v.number(),
     }).index("by_user", ["userId"]),
