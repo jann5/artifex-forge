@@ -611,7 +611,7 @@ export const webhook = httpAction(async (ctx, request) => {
       }
 
       // Custom order quote with price input
-      if (data.startsWith("custom_quote:")) {
+      if (data && data.startsWith("custom_quote:")) {
         const orderId = data.split(":")[1] as Id<"customOrders">;
         await answerCallback("💰 Wprowadź cenę");
         
@@ -621,7 +621,7 @@ export const webhook = httpAction(async (ctx, request) => {
           updates: { customOrderId: orderId },
         });
 
-        await sendTelegramMessage(chatId, "💰 *Podaj cenę wyceny*\n\nWpisz tylko liczbę (np. 150 dla 150 PLN):");
+        await sendTelegramMessage(Number(chatId), "💰 *Podaj cenę wyceny*\n\nWpisz tylko liczbę (np. 150 dla 150 PLN):");
 
         return new Response("OK", { status: 200 });
       }
