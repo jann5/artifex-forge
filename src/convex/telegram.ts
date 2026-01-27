@@ -913,14 +913,6 @@ export const webhook = httpAction(async (ctx, request) => {
           return new Response("OK");
         }
 
-        // Clear session
-        await ctx.runMutation(internal.telegram_db.clearSession, {
-          chatId: chatId.toString(),
-        });
-        
-        // Send confirmation
-        await sendTelegramMessage(chatId, "✅ *Wiadomość wysłana*\\n\\nKlient zobaczy ją na stronie zamówienia.");
-        return new Response("OK");
       }
 
       // CONVERSATION FLOW
