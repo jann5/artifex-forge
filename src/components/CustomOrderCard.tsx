@@ -158,9 +158,9 @@ export function CustomOrderCard({ order }: { order: any }) {
 
           {order.images && order.images.length > 0 && (
             <div>
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">Załączniki</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {order.images.slice(0, 4).map((imageId: string, idx: number) => (
+              <h4 className="font-semibold text-sm text-muted-foreground mb-2">Zdjęcia</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {order.images.slice(0, 6).map((imageId: string, idx: number) => (
                   <div key={idx} className="aspect-square rounded-lg bg-muted overflow-hidden border">
                     <img 
                       src={`${import.meta.env.VITE_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/storage/${imageId}`}
@@ -168,6 +168,26 @@ export function CustomOrderCard({ order }: { order: any }) {
                       className="h-full w-full object-cover"
                     />
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {order.files3D && order.files3D.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-sm text-muted-foreground mb-2">Pliki 3D</h4>
+              <div className="space-y-2">
+                {order.files3D.map((fileId: string, idx: number) => (
+                  <a
+                    key={idx}
+                    href={`${import.meta.env.VITE_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/storage/${fileId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <Package className="h-4 w-4 text-primary" />
+                    <span className="text-sm">Model 3D {idx + 1}</span>
+                  </a>
                 ))}
               </div>
             </div>
