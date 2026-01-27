@@ -664,7 +664,26 @@ export const webhook = httpAction(async (ctx, request) => {
 
       // COMMANDS
       if (text === "/start" || text === "/help") {
-        await sendMessage(chatId, "🤖 *Artifex Bot*\\n\\nKomendy:\\n/orders - Ostatnie zamówienia\\n/stats - Statystyki sklepu\\n/lowstock - Niskie stany magazynowe\\n/addproduct - Dodaj produkt\\n/editproduct - Edytuj produkt\\n/deleteproduct - Usuń produkt\\n/cancel - Anuluj\\n\\n🛠️ *Developer:*\\n/dev_ping - Status serwera\\n/dev_info - Twoje ID\\n/dev_db - Statystyki bazy\\n/dev_reset - Reset sesji\\n/stats_reset - Reset statystyk (Admin)\\n/help - Pomoc");
+        const helpMessage = `🤖 *Artifex Bot*
+
+Komendy:
+/orders - Ostatnie zamówienia
+/stats - Statystyki sklepu
+/lowstock - Niskie stany magazynowe
+/addproduct - Dodaj produkt
+/editproduct - Edytuj produkt
+/deleteproduct - Usuń produkt
+/cancel - Anuluj
+
+🛠️ *Developer:*
+/dev_ping - Status serwera
+/dev_info - Twoje ID
+/dev_db - Statystyki bazy
+/dev_reset - Reset sesji
+/stats_reset - Reset statystyk (Admin)
+/help - Pomoc`;
+        
+        await sendMessage(chatId, helpMessage);
         return new Response("OK", { status: 200 });
       }
 
