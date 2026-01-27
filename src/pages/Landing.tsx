@@ -47,7 +47,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col overflow-hidden">
       <Navbar />
       
       {/* Success Dialog */}
@@ -90,9 +90,9 @@ export default function Landing() {
       </Dialog>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
         {/* Animated Background */}
-        <div className="absolute inset-0 bg-black">
+        <div className="absolute inset-0 z-0">
           {/* Animated blue organic shape */}
           <motion.div
             className="absolute inset-0 flex items-center justify-center"
