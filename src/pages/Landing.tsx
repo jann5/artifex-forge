@@ -92,10 +92,10 @@ export default function Landing() {
 
       {/* Hero Section with Ferrofluid */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Ferrofluid Background */}
-        <div className="absolute inset-0 z-0 opacity-30">
+        {/* Ferrofluid Background - COMMENTED OUT */}
+        {/* <div className="absolute inset-0 z-0 opacity-30">
           <LivingFerrofluid />
-        </div>
+        </div> */}
         
         <motion.div 
           style={{ opacity, y }}
