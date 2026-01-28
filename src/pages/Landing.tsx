@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Component as LivingFerrofluid } from "@/components/ui/living-ferrofluid";
+import ProceduralGroundBackground from "@/components/ui/procedural-ground-background";
 
 export default function Landing() {
   const featuredProducts = useQuery(api.products.list, { featured: true });
@@ -90,12 +90,10 @@ export default function Landing() {
         </DialogContent>
       </Dialog>
 
-      {/* Hero Section with Ferrofluid */}
+      {/* Hero Section with Procedural Ground Background */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Ferrofluid Background - COMMENTED OUT */}
-        {/* <div className="absolute inset-0 z-0 opacity-30">
-          <LivingFerrofluid />
-        </div> */}
+        {/* Procedural Ground Background */}
+        <ProceduralGroundBackground />
         
         <motion.div 
           style={{ opacity, y }}
