@@ -62,9 +62,8 @@ const ProceduralGroundBackground: React.FC = () => {
         vec3 finalColor = mix(baseColor, accentColor, n * 0.6);
         finalColor += topoLine * neonColor * depth * 0.4;
         
-        // Horizon Fog / Fade
-        float fade = smoothstep(0.1, -1.0, uv.y);
-        finalColor *= (1.0 - length(uv) * 0.45) * (1.0 - fade);
+        // Removed dark vignette and fade - keep it light
+        finalColor *= (1.0 - length(uv) * 0.15); // Subtle edge darkening only
 
         gl_FragColor = vec4(finalColor, 1.0);
       }
