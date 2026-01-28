@@ -22,7 +22,7 @@ export function Component() {
           </filter>
         </defs>
         
-        {/* Animated Ferrofluid Blobs */}
+        {/* Animated Ferrofluid Blobs - All 4 with consistent opacity */}
         <g filter="url(#goo)">
           <motion.circle
             cx="500"
@@ -44,7 +44,7 @@ export function Component() {
             cx="400"
             cy="600"
             r="100"
-            fill="rgba(147, 197, 253, 0.5)"
+            fill="rgba(147, 197, 253, 0.6)"
             animate={{
               cx: [400, 300, 500, 400],
               cy: [600, 500, 700, 600],
@@ -61,7 +61,7 @@ export function Component() {
             cx="600"
             cy="400"
             r="110"
-            fill="rgba(147, 197, 253, 0.55)"
+            fill="rgba(147, 197, 253, 0.6)"
             animate={{
               cx: [600, 700, 500, 600],
               cy: [400, 500, 300, 400],
@@ -78,7 +78,7 @@ export function Component() {
             cx="300"
             cy="300"
             r="90"
-            fill="rgba(147, 197, 253, 0.45)"
+            fill="rgba(147, 197, 253, 0.6)"
             animate={{
               cx: [300, 250, 350, 300],
               cy: [300, 400, 250, 300],
