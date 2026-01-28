@@ -21,9 +21,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from "react";
 
 export function Navbar() {
   const { isAuthenticated, signOut, user } = useAuth();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navItems = [
     {
@@ -72,7 +83,11 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+    <nav className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${
+      isScrolled 
+        ? "bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/95 shadow-sm" 
+        : "bg-transparent border-transparent"
+    }`}>
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
