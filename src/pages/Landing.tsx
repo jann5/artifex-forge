@@ -117,20 +117,21 @@ export default function Landing() {
             </motion.div>
 
             {/* Main Heading - Polish Typography */}
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6"
+              className="text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-6"
               style={{
-                fontFamily: "'Poppins', 'Inter', sans-serif",
-                background: "linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%)",
+                fontFamily: "'Cinzel', 'Playfair Display', serif",
+                background: "linear-gradient(135deg, #1e293b 0%, #3b4a5f 25%, #f59e0b 50%, #f97316 75%, #1e293b 100%)",
+                backgroundSize: "200% auto",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}
             >
-              ARTIFEX FORGE
+              ESSENTIA
             </motion.h1>
 
             {/* Subheading - Polish */}
@@ -199,7 +200,7 @@ export default function Landing() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8, duration: 0.6 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+          className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20"
         >
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
             <span className="text-xs uppercase tracking-wider font-medium">Przewiń</span>
@@ -452,9 +453,9 @@ export default function Landing() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-lg">A</span>
+                  <span className="text-primary-foreground font-bold text-lg">E</span>
                 </div>
-                <span className="font-display font-bold text-xl">Artifex</span>
+                <span className="font-bold text-xl" style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif", letterSpacing: '0.1em' }}>ESSENTIA</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Redefiniujemy cyfrową produkcję z nutą luksusu.
@@ -490,7 +491,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Artifex Forge. Wszelkie prawa zastrzeżone.
+            © {new Date().getFullYear()} ESSENTIA. Wszelkie prawa zastrzeżone.
           </div>
         </div>
       </footer>

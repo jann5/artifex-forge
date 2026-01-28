@@ -112,8 +112,8 @@ export default function ContactPage() {
                       </div>
                       <div>
                         <h3 className="font-medium mb-1">Email</h3>
-                        <p className="text-muted-foreground">kontakt@artifexforge.pl</p>
-                        <p className="text-muted-foreground">wspolpraca@artifexforge.pl</p>
+                        <p className="text-muted-foreground">kontakt@essentia.pl</p>
+                        <p className="text-muted-foreground">wspolpraca@essentia.pl</p>
                       </div>
                     </div>
                     
@@ -264,7 +264,7 @@ export default function ContactPage() {
       <footer className="py-12 border-t bg-muted/20 mt-auto">
         <div className="container mx-auto px-4">
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Artifex Forge. Wszelkie prawa zastrzeżone.
+            © {new Date().getFullYear()} ESSENTIA. Wszelkie prawa zastrzeżone.
           </div>
         </div>
       </footer>

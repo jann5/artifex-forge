@@ -264,9 +264,9 @@ export default function OrdersPage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-6 w-6 bg-primary rounded flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-xs">A</span>
+                  <span className="text-primary-foreground font-bold text-xs">E</span>
                 </div>
-                <span className="font-display font-bold">Artifex</span>
+                <span className="font-bold" style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif", letterSpacing: '0.1em' }}>ESSENTIA</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 Redefiniujemy cyfrową produkcję z nutą luksusu.
@@ -303,7 +303,7 @@ export default function OrdersPage() {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Artifex Forge. Wszelkie prawa zastrzeżone.
+            © {new Date().getFullYear()} ESSENTIA. Wszelkie prawa zastrzeżone.
           </div>
         </div>
       </footer>

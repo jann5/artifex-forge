@@ -16,7 +16,7 @@ export const emailOtp = Email({
   },
   async sendVerificationRequest({ identifier: email, token }) {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const appName = process.env.VLY_APP_NAME || "Artifex Forge";
+    const appName = process.env.VLY_APP_NAME || "ESSENTIA";
     
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "biuro@auralasu.pl",
@@ -84,7 +84,7 @@ export const emailOtp = Email({
           <body>
             <div class="container">
               <div class="header">
-                <div class="logo">Artifex</div>
+                <div class="logo">ESSENTIA</div>
                 <p style="color: #6B7280; margin: 0;">Witaj w ${appName}</p>
               </div>
               

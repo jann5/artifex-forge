@@ -21,7 +21,7 @@ export default function AboutPage() {
                 Pasja do <span className="text-primary">Tworzenia</span>
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                W Artifex Forge wierzymy, że druk 3D to nie tylko technologia – to nowa forma rzemiosła. 
+                W ESSENTIA wierzymy, że druk 3D to nie tylko technologia – to nowa forma rzemiosła. 
                 Łączymy inżynieryjną precyzję z artystyczną wizją, aby dostarczać przedmioty, które inspirują.
               </p>
             </motion.div>
@@ -87,7 +87,7 @@ export default function AboutPage() {
                   Wszystko zaczęło się od jednej małej drukarki i wielkiego marzenia. Chcieliśmy udowodnić, że druk 3D może być czymś więcej niż tylko prototypowaniem – może być sztuką.
                 </p>
                 <p className="text-muted-foreground text-lg">
-                  Dziś Artifex Forge to studio projektowe, które dostarcza unikalne produkty do domów na całym świecie. Każdy przedmiot, który opuszcza naszą pracownię, jest ręcznie wykańczany i sprawdzany, aby spełniał nasze rygorystyczne standardy.
+                  Dziś ESSENTIA to studio projektowe, które dostarcza unikalne produkty do domów na całym świecie. Każdy przedmiot, który opuszcza naszą pracownię, jest ręcznie wykańczany i sprawdzany, aby spełniał nasze rygorystyczne standardy.
                 </p>
                 <p className="text-muted-foreground text-lg">
                   Jesteśmy dumni, że możemy dzielić się naszą pasją z Wami. Dziękujemy, że jesteście częścią naszej podróży.
@@ -102,7 +102,7 @@ export default function AboutPage() {
       <footer className="py-12 border-t bg-muted/20 mt-auto">
         <div className="container mx-auto px-4">
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Artifex Forge. Wszelkie prawa zastrzeżone.
+            © {new Date().getFullYear()} ESSENTIA. Wszelkie prawa zastrzeżone.
           </div>
         </div>
       </footer>

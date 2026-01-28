@@ -19,11 +19,11 @@ export const sendCustomOrderQuoteEmail = internalAction({
     }
 
     const resend = new Resend(resendApiKey);
-    const siteUrl = process.env.CONVEX_SITE_URL || "https://artifex-forge.vercel.app";
+    const siteUrl = process.env.CONVEX_SITE_URL || "https://essentia.vercel.app";
 
     try {
       await resend.emails.send({
-        from: "Artifex Forge <noreply@artifexforge.com>",
+        from: "ESSENTIA <noreply@essentia.com>",
         to: args.customerEmail,
         subject: `Wycena gotowa: ${args.projectName}`,
         html: `
@@ -50,7 +50,7 @@ export const sendCustomOrderQuoteEmail = internalAction({
             <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 30px 0;">
             
             <p style="color: #9CA3AF; font-size: 12px;">
-              Artifex Forge - Profesjonalny Druk 3D<br>
+              ESSENTIA - Profesjonalny Druk 3D<br>
               © ${new Date().getFullYear()} Wszelkie prawa zastrzeżone
             </p>
           </div>

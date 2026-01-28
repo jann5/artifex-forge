@@ -1,18 +1,23 @@
-# Project Name
+# ESSENTIA
 
-<!-- AI Agent: Update this section with the actual project name and purpose -->
+Profesjonalny sklep internetowy z drukiem 3D
 
 ## Overview
 
-<!-- AI Agent: Provide a brief description of what this application does -->
+ESSENTIA to nowoczesna platforma e-commerce specjalizująca się w sprzedaży produktów wydrukowanych na profesjonalnej drukarce przemysłowej Stratasys F170. Oferujemy unikalne przedmioty artystyczne, dekoracyjne oraz możliwość zamówienia projektów niestandardowych.
 
 ## Features
 
-<!-- AI Agent: List the main features of the application -->
-
-- Feature 1
-- Feature 2
-- Feature 3
+- 🛒 Pełnofunkcjonalny sklep internetowy z produktami druku 3D
+- 🎨 Zamówienia niestandardowe z interaktywnym czatem
+- 💳 Integracja z Stripe do obsługi płatności
+- 📦 System zarządzania zamówieniami ze śledzeniem statusu
+- 👤 Uwierzytelnianie użytkowników przez Convex Auth (email OTP)
+- ⭐ System recenzji i ocen produktów
+- 🔍 Wyszukiwanie i filtrowanie produktów
+- 📱 Responsywny design dostosowany do urządzeń mobilnych
+- 🎭 Panel administracyjny do zarządzania produktami i zamówieniami
+- 📧 Integracja z Resend do wysyłki emaili
 
 ## Tech Stack
 
