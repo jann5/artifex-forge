@@ -91,9 +91,11 @@ export default function Landing() {
       </Dialog>
 
       {/* Hero Section with Procedural Ground Background */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Procedural Ground Background */}
-        <ProceduralGroundBackground />
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white">
+        {/* Procedural Ground Background - Only at top */}
+        <div className="absolute top-0 left-0 right-0 h-[60vh] overflow-hidden">
+          <ProceduralGroundBackground />
+        </div>
         
         <motion.div 
           style={{ opacity, y }}
@@ -213,7 +215,7 @@ export default function Landing() {
       </section>
 
       {/* Features Grid - Clean & Minimal */}
-      <section className="py-24 relative">
+      <section className="py-24 relative bg-white">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -359,7 +361,7 @@ export default function Landing() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-24 bg-muted/20">
+      <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4">
             <motion.div
@@ -419,8 +421,7 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-primary/5" />
+      <section className="py-24 relative overflow-hidden bg-white">
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -445,7 +446,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="py-16 border-t bg-muted/30 mt-auto">
+      <footer className="py-16 border-t bg-white mt-auto">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-12">
             <div>

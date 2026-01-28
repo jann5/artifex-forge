@@ -122,7 +122,7 @@ const ProceduralGroundBackground: React.FC = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-zinc-950 -z-10">
+    <div className="absolute inset-0 w-full h-full bg-zinc-950">
       <canvas
         ref={canvasRef}
         className="w-full h-full block touch-none"
