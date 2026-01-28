@@ -92,8 +92,8 @@ export default function Landing() {
 
       {/* Hero Section with Procedural Ground Background */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white">
-        {/* Procedural Ground Background - Only at top */}
-        <div className="absolute top-0 left-0 right-0 h-[60vh] overflow-hidden">
+        {/* Procedural Ground Background - Full screen */}
+        <div className="absolute inset-0 overflow-hidden">
           <ProceduralGroundBackground />
         </div>
         
