@@ -99,6 +99,15 @@ export default function Landing() {
           <ProceduralGroundBackground />
         </div>
         
+        {/* Gradient Overlay for smooth transition */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
+          style={{
+            height: '100px',
+            background: 'linear-gradient(to top, white, transparent)',
+          }}
+        />
+        
         <motion.div 
           style={{ opacity, y }}
           className="container mx-auto px-4 relative z-10"
