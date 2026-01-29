@@ -34,8 +34,9 @@ export function FAQManager() {
       setNewQuestion("");
       setNewAnswer("");
       setIsCreating(false);
-    } catch (error) {
-      toast.error("Błąd dodawania FAQ");
+    } catch (error: any) {
+      toast.error(error.message || "Błąd dodawania FAQ");
+      console.error("FAQ creation error:", error);
     }
   };
 
@@ -50,8 +51,9 @@ export function FAQManager() {
       });
       toast.success("FAQ zaktualizowane");
       setEditingFAQ(null);
-    } catch (error) {
-      toast.error("Błąd aktualizacji FAQ");
+    } catch (error: any) {
+      toast.error(error.message || "Błąd aktualizacji FAQ");
+      console.error("FAQ update error:", error);
     }
   };
 
@@ -60,8 +62,9 @@ export function FAQManager() {
     try {
       await removeFAQ({ id });
       toast.success("FAQ usunięte");
-    } catch (error) {
-      toast.error("Błąd usuwania FAQ");
+    } catch (error: any) {
+      toast.error(error.message || "Błąd usuwania FAQ");
+      console.error("FAQ deletion error:", error);
     }
   };
 

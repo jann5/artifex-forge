@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getCurrentUser } from "./users";
 
 export const list = query({
   args: {},
@@ -14,15 +15,15 @@ export const create = mutation({
     answer: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    const user = await getCurrentUser(ctx);
+    
+    if (!user) {
+      throw new Error("Musisz być zalogowany aby dodać FAQ");
+    }
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email))
-      .first();
-
-    if (user?.role !== "admin") throw new Error("Admin access required");
+    if (user.role !== "admin") {
+      throw new Error("Tylko administrator może dodawać FAQ");
+    }
 
     return await ctx.db.insert("faq", {
       question: args.question,
@@ -38,15 +39,15 @@ export const update = mutation({
     answer: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    const user = await getCurrentUser(ctx);
+    
+    if (!user) {
+      throw new Error("Musisz być zalogowany aby edytować FAQ");
+    }
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email))
-      .first();
-
-    if (user?.role !== "admin") throw new Error("Admin access required");
+    if (user.role !== "admin") {
+      throw new Error("Tylko administrator może edytować FAQ");
+    }
 
     await ctx.db.patch(args.id, {
       question: args.question,
@@ -60,15 +61,15 @@ export const remove = mutation({
     id: v.id("faq"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    const user = await getCurrentUser(ctx);
+    
+    if (!user) {
+      throw new Error("Musisz być zalogowany aby usunąć FAQ");
+    }
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email))
-      .first();
-
-    if (user?.role !== "admin") throw new Error("Admin access required");
+    if (user.role !== "admin") {
+      throw new Error("Tylko administrator może usuwać FAQ");
+    }
 
     await ctx.db.delete(args.id);
   },
