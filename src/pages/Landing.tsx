@@ -16,6 +16,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import ProceduralGroundBackground from "@/components/ui/procedural-ground-background";
+import { CookieConsent } from "@/components/CookieConsent";
 
 export default function Landing() {
   const featuredProducts = useQuery(api.products.list, { featured: true });
@@ -50,6 +51,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col overflow-hidden">
       <Navbar />
+      <CookieConsent />
       
       {/* Success Dialog */}
       <Dialog open={success === "true"} onOpenChange={handleCloseSuccessDialog}>
@@ -480,6 +482,7 @@ export default function Landing() {
                 <li><Link to="/about" className="hover:text-foreground transition-colors">O Nas</Link></li>
                 <li><Link to="/contact" className="hover:text-foreground transition-colors">Kontakt</Link></li>
                 <li><Link to="/contact#faq-section" className="hover:text-foreground transition-colors">FAQ</Link></li>
+                <li><Link to="/privacy" className="hover:text-foreground transition-colors">Polityka Prywatności</Link></li>
                 <li><Link to="/terms" className="hover:text-foreground transition-colors">Regulamin</Link></li>
               </ul>
             </div>
