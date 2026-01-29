@@ -1,1 +1,2 @@
-npm run build
+   npx convex dev
+   
