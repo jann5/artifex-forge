@@ -79,7 +79,7 @@ export const createOrder = mutation({
         if (product) {
           const newInventory = product.inventory - item.quantity;
           await ctx.db.patch(item.productId, {
-            inventory: Math.max(0, newInventory), // Ensure inventory doesn't go negative
+            inventory: Math.max(0, newInventory),
           });
 
           // Send low stock notification if inventory is low
@@ -229,13 +229,22 @@ export const updateStatus = mutation({
     // Get customer info for notification
     const customer = await ctx.db.get(order.userId);
     
-    // Send Telegram notification (scheduled to run after mutation completes)
+    // Send Telegram notification
     await ctx.scheduler.runAfter(0, internal.notifications.sendTelegramNotification, {
       orderId: args.orderId,
       customerEmail: customer?.email || "Unknown",
       totalAmount: order.totalAmount,
       status: args.status,
       shippingAddress: order.shippingAddress,
+    });
+
+    // Send email notification
+    await ctx.scheduler.runAfter(0, internal.emails.sendOrderStatusEmail, {
+      customerEmail: customer?.email || order.customerEmail || "Unknown",
+      customerName: customer?.name || order.customerName || "Klient",
+      orderId: args.orderId,
+      status: args.status,
+      totalAmount: order.totalAmount,
     });
 
     return { success: true };
