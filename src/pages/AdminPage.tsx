@@ -5,6 +5,7 @@ import { ProductList } from "@/components/admin/ProductList";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { EditProductDialog } from "@/components/admin/EditProductDialog";
 import { CategoryManager } from "@/components/admin/CategoryManager";
+import { ReviewManager } from "@/components/admin/ReviewManager";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
@@ -135,8 +136,9 @@ export default function AdminPage() {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Panel Administratora</h1>
         
-        <div className="mb-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
           <CategoryManager />
+          <ReviewManager />
         </div>
         
         <div className="grid lg:grid-cols-3 gap-8">

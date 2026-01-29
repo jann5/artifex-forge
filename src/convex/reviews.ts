@@ -6,14 +6,22 @@ import { paginationOptsValidator } from "convex/server";
 export const list = query({
   args: { productId: v.id("products") },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
+    
     const reviews = await ctx.db
       .query("reviews")
       .withIndex("by_product", (q) => q.eq("productId", args.productId))
       .order("desc")
-      .take(20);
+      .take(50);
+
+    // Filter to show only approved reviews, unless it's the user's own review
+    // Treat reviews without approved field as approved (legacy data)
+    const filteredReviews = reviews.filter(review => 
+      review.approved !== false || (currentUser && review.userId === currentUser._id)
+    );
 
     return Promise.all(
-      reviews.map(async (review) => {
+      filteredReviews.map(async (review) => {
         const user = await ctx.db.get(review.userId);
         return {
           ...review,
@@ -129,6 +137,7 @@ export const create = mutation({
       productId: args.productId,
       rating: args.rating,
       comment: args.comment,
+      approved: false,
     });
   },
 });
@@ -145,6 +154,66 @@ export const deleteReview = mutation({
     if (review.userId !== user._id && user.role !== "admin") {
       throw new Error("Unauthorized");
     }
+
+    await ctx.db.delete(args.id);
+  },
+});
+
+export const listPending = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized - Admin only");
+    }
+
+    const reviews = await ctx.db
+      .query("reviews")
+      .withIndex("by_approved", (q) => q.eq("approved", false))
+      .order("desc")
+      .take(100);
+
+    return Promise.all(
+      reviews.map(async (review) => {
+        const reviewUser = await ctx.db.get(review.userId);
+        const product = await ctx.db.get(review.productId);
+        return {
+          ...review,
+          userName: reviewUser?.name || "Anonimowy",
+          userImage: reviewUser?.image,
+          productName: product?.name || "Nieznany produkt",
+          productImage: product?.images[0],
+        };
+      })
+    );
+  },
+});
+
+export const approveReview = mutation({
+  args: { id: v.id("reviews") },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized - Admin only");
+    }
+
+    const review = await ctx.db.get(args.id);
+    if (!review) throw new Error("Review not found");
+
+    await ctx.db.patch(args.id, { approved: true });
+  },
+});
+
+export const rejectReview = mutation({
+  args: { id: v.id("reviews") },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized - Admin only");
+    }
+
+    const review = await ctx.db.get(args.id);
+    if (!review) throw new Error("Review not found");
 
     await ctx.db.delete(args.id);
   },

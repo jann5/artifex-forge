@@ -111,9 +111,11 @@ export default defineSchema({
     productId: v.id("products"),
     rating: v.number(),
     comment: v.string(),
+    approved: v.optional(v.boolean()),
   })
     .index("by_product", ["productId"])
-    .index("by_user", ["userId"]),
+    .index("by_user", ["userId"])
+    .index("by_approved", ["approved"]),
 
   addresses: defineTable({
     userId: v.id("users"),

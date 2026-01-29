@@ -146,7 +146,14 @@ export function Reviews({ productId }: ReviewsProps) {
           </p>
         ) : (
           reviews.map((review) => (
-            <div key={review._id} className="border-b pb-6 last:border-0">
+            <div key={review._id} className="border-b pb-6 last:border-0 relative">
+              {review.approved === false && (
+                <div className="absolute top-0 right-0">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
+                    Oczekuje na zatwierdzenie
+                  </span>
+                </div>
+              )}
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <Avatar>

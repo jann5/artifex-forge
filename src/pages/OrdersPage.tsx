@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { formatCurrency } from "@/lib/format";
 import { motion } from "framer-motion";
-import { Package, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -225,6 +225,17 @@ export default function OrdersPage() {
                                   <p className="text-sm text-muted-foreground">
                                     {item.quantity} × {formatCurrency(item.price)}
                                   </p>
+                                  {item.productId && (order.status === "paid" || order.status === "shipped" || order.status === "delivered") && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="mt-2"
+                                      onClick={() => navigate(`/products/${item.productId}`)}
+                                    >
+                                      <Star className="h-3 w-3 mr-1" />
+                                      Wystaw opinię
+                                    </Button>
+                                  )}
                                 </div>
                                 <div className="text-right">
                                   <p className="font-bold">
