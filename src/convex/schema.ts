@@ -155,4 +155,10 @@ export default defineSchema({
     step: v.string(),
     data: v.optional(v.any()),
   }).index("by_chat", ["chatId"]),
+
+  newsletter: defineTable({
+    email: v.string(),
+    subscribedAt: v.number(),
+    active: v.boolean(),
+  }).index("by_email", ["email"]),
 });

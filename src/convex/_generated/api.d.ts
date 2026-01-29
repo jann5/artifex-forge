@@ -25,6 +25,7 @@ import type * as favorites from "../favorites.js";
 import type * as files from "../files.js";
 import type * as get_site_url from "../get_site_url.js";
 import type * as http from "../http.js";
+import type * as newsletter from "../newsletter.js";
 import type * as notifications from "../notifications.js";
 import type * as orders from "../orders.js";
 import type * as portfolio from "../portfolio.js";
@@ -64,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   get_site_url: typeof get_site_url;
   http: typeof http;
+  newsletter: typeof newsletter;
   notifications: typeof notifications;
   orders: typeof orders;
   portfolio: typeof portfolio;

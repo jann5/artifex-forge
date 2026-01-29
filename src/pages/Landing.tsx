@@ -1,12 +1,12 @@
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ProductCard } from "@/components/ProductCard";
 import { ArrowRight, Box, Layers, Zap, CheckCircle, Package } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -31,6 +31,9 @@ export default function Landing() {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const y = useTransform(scrollYProgress, [0, 0.5], [0, -50]);
 
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const subscribeToNewsletter = useMutation(api.newsletter.subscribe);
+
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
 
@@ -46,6 +49,22 @@ export default function Landing() {
 
   const handleCloseSuccessDialog = () => {
     setSearchParams({});
+  };
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail) {
+      toast.error("Proszę wpisać adres email");
+      return;
+    }
+
+    try {
+      const result = await subscribeToNewsletter({ email: newsletterEmail });
+      toast.success(result.message);
+      setNewsletterEmail("");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Wystąpił błąd podczas zapisywania do newslettera");
+    }
   };
 
   return (
@@ -497,14 +516,16 @@ export default function Landing() {
             </div>
             <div>
               <h4 className="font-bold mb-4 text-lg">Newsletter</h4>
-              <div className="flex gap-2">
-                <input 
-                  type="email" 
-                  placeholder="Wpisz swój email" 
+              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Wpisz swój email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="flex-1 h-10 rounded-md border bg-background px-3 text-sm focus:ring-2 focus:ring-primary transition-all"
                 />
-                <Button size="sm" className="h-10">Zapisz się</Button>
-              </div>
+                <Button type="submit" size="sm" className="h-10">Zapisz się</Button>
+              </form>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
