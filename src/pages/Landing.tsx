@@ -121,9 +121,9 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-8xl md:text-9xl lg:text-[12rem] font-black tracking-tight mb-6"
+              className="text-8xl md:text-9xl lg:text-[12rem] font-black tracking-tight mb-6 uppercase"
               style={{
-                fontFamily: "'Neue Montreal', sans-serif",
+                fontFamily: "'Proxy_Mono_Beta', monospace",
                 fontWeight: 900,
                 letterSpacing: '-0.03em',
                 background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%)',
