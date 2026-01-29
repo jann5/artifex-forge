@@ -263,6 +263,48 @@ export default function ContactPage() {
       {/* Footer */}
       <footer className="py-12 border-t bg-muted/20 mt-auto">
         <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-6 w-6 bg-primary rounded flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-xs">E</span>
+                </div>
+                <span className="font-bold" style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif", letterSpacing: '0.1em' }}>ESSENTIA</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Redefiniujemy cyfrową produkcję z nutą luksusu.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4">Sklep</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="/products" className="hover:text-foreground">Wszystkie Produkty</a></li>
+                <li><a href="/products?category=art" className="hover:text-foreground">Sztuka</a></li>
+                <li><a href="/products?category=decor" className="hover:text-foreground">Dekoracje</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4">Firma</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="/about" className="hover:text-foreground">O Nas</a></li>
+                <li><a href="/contact" className="hover:text-foreground">Kontakt</a></li>
+                <li><a href="/terms" className="hover:text-foreground">Regulamin</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4">Newsletter</h4>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Wpisz swój email"
+                  className="flex-1 h-9 rounded-md border bg-background px-3 text-sm"
+                />
+                <button className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium">
+                  Zapisz się
+                </button>
+              </div>
+            </div>
+          </div>
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} ESSENTIA. Wszelkie prawa zastrzeżone.
           </div>

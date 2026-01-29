@@ -2,16 +2,18 @@ import { Link } from "react-router";
 import { CartDrawer } from "./CartDrawer";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { 
-  User, 
-  Package, 
-  Settings, 
-  LogOut, 
-  ShieldCheck, 
-  Star, 
-  Clock, 
-  MapPin, 
-  MessageSquare 
+import {
+  User,
+  Package,
+  Settings,
+  LogOut,
+  ShieldCheck,
+  Star,
+  Clock,
+  MapPin,
+  MessageSquare,
+  Menu,
+  X
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -21,11 +23,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 
 export function Navbar() {
   const { isAuthenticated, signOut, user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,40 +93,48 @@ export function Navbar() {
   ];
 
   return (
-    <nav className={`sticky top-0 z-50 w-full transition-all duration-500 ${
+    <nav className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-500 ${
       isScrolled
-        ? "bg-white/95 backdrop-blur-md shadow-sm border-b"
+        ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-border"
         : "bg-transparent border-transparent"
     }`}>
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-xl">E</span>
+          <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors duration-500 ${
+            isScrolled ? "bg-primary" : "bg-white"
+          }`}>
+            <span className={`font-bold text-xl transition-colors duration-500 ${
+              isScrolled ? "text-primary-foreground" : "text-primary"
+            }`}>E</span>
           </div>
-          <span className="text-2xl font-bold tracking-wider" style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif", letterSpacing: '0.1em' }}>ESSENTIA</span>
+          <span className={`text-2xl font-bold tracking-wider transition-colors duration-500 ${
+            isScrolled ? "text-foreground" : "text-foreground"
+          }`} style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif", letterSpacing: '0.1em' }}>ESSENTIA</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-          <Link to="/products" className="hover:text-foreground transition-colors">
+        <div className={`hidden md:flex items-center gap-8 text-sm font-medium transition-colors duration-500 ${
+          isScrolled ? "text-muted-foreground" : "text-foreground"
+        }`}>
+          <Link to="/products" className="hover:text-primary transition-colors">
             Sklep
           </Link>
-          <Link to="/products?category=art" className="hover:text-foreground transition-colors">
+          <Link to="/products?category=art" className="hover:text-primary transition-colors">
             Sztuka
           </Link>
-          <Link to="/products?category=decor" className="hover:text-foreground transition-colors">
+          <Link to="/products?category=decor" className="hover:text-primary transition-colors">
             Dekoracje
           </Link>
-          <Link to="/about" className="hover:text-foreground transition-colors">
+          <Link to="/about" className="hover:text-primary transition-colors">
             O Nas
           </Link>
-          <Link to="/contact" className="hover:text-foreground transition-colors">
+          <Link to="/contact" className="hover:text-primary transition-colors">
             Kontakt
           </Link>
         </div>
 
         <div className="flex items-center gap-2">
           <CartDrawer />
-          
+
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -144,7 +162,7 @@ export function Navbar() {
                   </div>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-destructive focus:text-destructive cursor-pointer"
                   onClick={() => signOut()}
                 >
@@ -154,10 +172,78 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="ghost" asChild>
+            <Button variant="ghost" asChild className="hidden md:inline-flex">
               <Link to="/auth">Zaloguj się</Link>
             </Button>
           )}
+
+          {/* Mobile Menu */}
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px]">
+              <SheetHeader>
+                <SheetTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+                      <span className="text-primary-foreground font-bold text-xl">E</span>
+                    </div>
+                    <span className="text-2xl font-bold tracking-wider" style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif", letterSpacing: '0.1em' }}>ESSENTIA</span>
+                  </div>
+                </SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-4 mt-8">
+                <Link
+                  to="/products"
+                  className="text-lg font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Sklep
+                </Link>
+                <Link
+                  to="/products?category=art"
+                  className="text-lg font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Sztuka
+                </Link>
+                <Link
+                  to="/products?category=decor"
+                  className="text-lg font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Dekoracje
+                </Link>
+                <Link
+                  to="/about"
+                  className="text-lg font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  O Nas
+                </Link>
+                <Link
+                  to="/contact"
+                  className="text-lg font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Kontakt
+                </Link>
+                {!isAuthenticated && (
+                  <>
+                    <div className="border-t my-2" />
+                    <Button asChild className="w-full">
+                      <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                        Zaloguj się
+                      </Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>
