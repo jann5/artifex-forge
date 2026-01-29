@@ -32,6 +32,7 @@ import type * as products from "../products.js";
 import type * as recent from "../recent.js";
 import type * as reviews from "../reviews.js";
 import type * as seed from "../seed.js";
+import type * as seedFAQ from "../seedFAQ.js";
 import type * as setup_telegram from "../setup_telegram.js";
 import type * as stripe from "../stripe.js";
 import type * as telegram from "../telegram.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   recent: typeof recent;
   reviews: typeof reviews;
   seed: typeof seed;
+  seedFAQ: typeof seedFAQ;
   setup_telegram: typeof setup_telegram;
   stripe: typeof stripe;
   telegram: typeof telegram;
