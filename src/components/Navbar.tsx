@@ -116,12 +116,6 @@ export function Navbar() {
           <Link to="/products" className="hover:text-primary transition-colors">
             Sklep
           </Link>
-          <Link to="/products?category=art" className="hover:text-primary transition-colors">
-            Sztuka
-          </Link>
-          <Link to="/products?category=decor" className="hover:text-primary transition-colors">
-            Dekoracje
-          </Link>
           <Link to="/about" className="hover:text-primary transition-colors">
             O Nas
           </Link>
@@ -204,20 +198,6 @@ export function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Sklep
-                </Link>
-                <Link
-                  to="/products?category=art"
-                  className="text-lg font-medium hover:text-primary transition-colors py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sztuka
-                </Link>
-                <Link
-                  to="/products?category=decor"
-                  className="text-lg font-medium hover:text-primary transition-colors py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Dekoracje
                 </Link>
                 <Link
                   to="/about"

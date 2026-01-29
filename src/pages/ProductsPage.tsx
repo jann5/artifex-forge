@@ -28,6 +28,7 @@ export default function ProductsPage() {
     search: searchQuery || undefined,
     sort: sortBy !== "default" ? sortBy : undefined
   });
+  const categories = useQuery(api.categories.list, {});
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -83,10 +84,11 @@ export default function ProductsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Wszystkie</SelectItem>
-                      <SelectItem value="art">Sztuka</SelectItem>
-                      <SelectItem value="decor">Dekoracje</SelectItem>
-                      <SelectItem value="functional">Funkcjonalne</SelectItem>
-                      <SelectItem value="accessories">Akcesoria</SelectItem>
+                      {categories?.map((cat) => (
+                        <SelectItem key={cat._id} value={cat.slug}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -165,8 +167,13 @@ export default function ProductsPage() {
               <h4 className="font-bold mb-4">Sklep</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><button onClick={() => {setSelectedCategory("all"); setSearchQuery("");}} className="hover:text-foreground">Wszystkie Produkty</button></li>
-                <li><button onClick={() => setSelectedCategory("art")} className="hover:text-foreground">Sztuka</button></li>
-                <li><button onClick={() => setSelectedCategory("decor")} className="hover:text-foreground">Dekoracje</button></li>
+                {categories?.slice(0, 3).map((cat) => (
+                  <li key={cat._id}>
+                    <button onClick={() => setSelectedCategory(cat.slug)} className="hover:text-foreground">
+                      {cat.name}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>

@@ -16,6 +16,11 @@ export default defineSchema({
     role: v.optional(v.union(v.literal("admin"), v.literal("user"))),
   }).index("email", ["email"]),
 
+  categories: defineTable({
+    name: v.string(),
+    slug: v.string(),
+  }).index("by_slug", ["slug"]),
+
   products: defineTable({
     name: v.string(),
     description: v.string(),
@@ -24,7 +29,7 @@ export default defineSchema({
     images: v.array(v.string()),
     inventory: v.number(),
     featured: v.optional(v.boolean()),
-    model3d: v.optional(v.string()), // Added to support existing data
+    model3d: v.optional(v.string()),
   })
     .index("by_category", ["category"])
     .index("by_featured", ["featured"])
