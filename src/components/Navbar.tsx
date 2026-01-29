@@ -99,17 +99,26 @@ export function Navbar() {
         : "bg-transparent border-transparent"
     }`}>
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors duration-500 ${
-            isScrolled ? "bg-primary" : "bg-white"
-          }`}>
-            <span className={`font-bold text-xl transition-colors duration-500 ${
-              isScrolled ? "text-primary-foreground" : "text-primary"
-            }`}>E</span>
-          </div>
-          <span className={`text-2xl font-bold tracking-wider transition-colors duration-500 ${
-            isScrolled ? "text-foreground" : "text-foreground"
-          }`} style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif", letterSpacing: '0.1em' }}>ESSENTIA</span>
+        <Link to="/" className="flex items-center gap-3">
+          <img 
+            src="https://harmless-tapir-303.convex.cloud/api/storage/30dff0c3-bcda-4a67-94df-27c80a556658" 
+            alt="Essentia Logo" 
+            className="h-10 w-10 object-contain"
+          />
+          <span 
+            className="text-3xl font-bold tracking-widest"
+            style={{ 
+              fontFamily: "'Montserrat', 'Inter', sans-serif",
+              fontWeight: 800,
+              letterSpacing: '0.15em',
+              background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #0ea5e9 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            ESSENTIA
+          </span>
         </Link>
 
         <div className={`hidden md:flex items-center gap-8 text-sm font-medium transition-colors duration-500 ${
@@ -187,11 +196,26 @@ export function Navbar() {
             <SheetContent side="right" className="w-[300px]">
               <SheetHeader>
                 <SheetTitle>
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                      <span className="text-primary-foreground font-bold text-xl">E</span>
-                    </div>
-                    <span className="text-2xl font-bold tracking-wider" style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif", letterSpacing: '0.1em' }}>ESSENTIA</span>
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src="https://harmless-tapir-303.convex.cloud/api/storage/30dff0c3-bcda-4a67-94df-27c80a556658" 
+                      alt="Essentia Logo" 
+                      className="h-10 w-10 object-contain"
+                    />
+                    <span 
+                      className="text-3xl font-bold tracking-widest"
+                      style={{ 
+                        fontFamily: "'Montserrat', 'Inter', sans-serif",
+                        fontWeight: 800,
+                        letterSpacing: '0.15em',
+                        background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #0ea5e9 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      ESSENTIA
+                    </span>
                   </div>
                 </SheetTitle>
               </SheetHeader>

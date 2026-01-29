@@ -121,11 +121,12 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-6"
+              className="text-7xl md:text-8xl lg:text-9xl font-bold tracking-wider mb-6"
               style={{
-                fontFamily: "'Cinzel', 'Playfair Display', serif",
-                background: "linear-gradient(135deg, #1e293b 0%, #3b4a5f 25%, #f59e0b 50%, #f97316 75%, #1e293b 100%)",
-                backgroundSize: "200% auto",
+                fontFamily: "'Montserrat', 'Inter', sans-serif",
+                fontWeight: 900,
+                letterSpacing: '0.2em',
+                background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #0ea5e9 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -451,11 +452,26 @@ export default function Landing() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-12">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-lg">E</span>
-                </div>
-                <span className="font-bold text-xl" style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif", letterSpacing: '0.1em' }}>ESSENTIA</span>
+              <div className="flex items-center gap-3 mb-4">
+                <img 
+                  src="https://harmless-tapir-303.convex.cloud/api/storage/30dff0c3-bcda-4a67-94df-27c80a556658" 
+                  alt="Essentia Logo" 
+                  className="h-10 w-10 object-contain"
+                />
+                <span 
+                  className="text-2xl font-bold tracking-widest"
+                  style={{ 
+                    fontFamily: "'Montserrat', 'Inter', sans-serif",
+                    fontWeight: 800,
+                    letterSpacing: '0.15em',
+                    background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #0ea5e9 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  ESSENTIA
+                </span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Redefiniujemy cyfrową produkcję z nutą luksusu.
