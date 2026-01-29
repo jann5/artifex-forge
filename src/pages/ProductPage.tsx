@@ -86,7 +86,7 @@ export default function ProductPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
-      <main className="flex-1 container mx-auto px-4 py-12">
+      <main className="flex-1 container mx-auto px-4 py-20 mt-4">
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20 mb-20">
           {/* Image Gallery */}
           <div className="space-y-4">
