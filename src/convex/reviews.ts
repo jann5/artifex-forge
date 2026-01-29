@@ -50,6 +50,44 @@ export const getByUser = query({
   },
 });
 
+export const canReview = query({
+  args: { productId: v.id("products") },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) {
+      return { canReview: false, reason: "Musisz być zalogowany" };
+    }
+
+    // Check if user already reviewed this product
+    const existingReview = await ctx.db
+      .query("reviews")
+      .withIndex("by_product", (q) => q.eq("productId", args.productId))
+      .filter((q) => q.eq(q.field("userId"), user._id))
+      .first();
+
+    if (existingReview) {
+      return { canReview: false, reason: "Już wystawiłeś opinię dla tego produktu" };
+    }
+
+    // Check if user has purchased this product
+    const orders = await ctx.db
+      .query("orders")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const hasPurchased = orders.some((order) => 
+      (order.status === "paid" || order.status === "shipped" || order.status === "delivered") &&
+      order.items.some((item) => item.productId === args.productId)
+    );
+
+    if (!hasPurchased) {
+      return { canReview: false, reason: "Możesz wystawić opinię tylko dla zakupionych produktów" };
+    }
+
+    return { canReview: true };
+  },
+});
+
 export const create = mutation({
   args: {
     productId: v.id("products"),
@@ -68,7 +106,22 @@ export const create = mutation({
       .first();
 
     if (existingReview) {
-      throw new Error("Już dodałeś opinię do tego produktu");
+      throw new Error("Już wystawiłeś opinię dla tego produktu");
+    }
+
+    // Check if user has purchased this product
+    const orders = await ctx.db
+      .query("orders")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const hasPurchased = orders.some((order) => 
+      (order.status === "paid" || order.status === "shipped" || order.status === "delivered") &&
+      order.items.some((item) => item.productId === args.productId)
+    );
+
+    if (!hasPurchased) {
+      throw new Error("Możesz wystawić opinię tylko dla zakupionych produktów");
     }
 
     await ctx.db.insert("reviews", {

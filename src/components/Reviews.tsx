@@ -16,10 +16,12 @@ interface ReviewsProps {
 }
 
 export function Reviews({ productId }: ReviewsProps) {
-  const { isAuthenticated, user } = useAuth();
   const reviews = useQuery(api.reviews.list, { productId });
+  const canReviewData = useQuery(api.reviews.canReview, { productId });
   const createReview = useMutation(api.reviews.create);
+  const { isAuthenticated } = useAuth();
   const deleteReview = useMutation(api.reviews.deleteReview);
+  const currentUser = useQuery(api.users.currentUser);
 
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -27,19 +29,34 @@ export function Reviews({ productId }: ReviewsProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!isAuthenticated) {
-      toast.error("Zaloguj się, aby dodać opinię");
+      toast.error("Musisz być zalogowany, aby dodać opinię");
+      return;
+    }
+
+    if (!canReviewData?.canReview) {
+      toast.error(canReviewData?.reason || "Nie możesz wystawić opinii dla tego produktu");
+      return;
+    }
+
+    if (comment.trim().length < 10) {
+      toast.error("Opinia musi mieć co najmniej 10 znaków");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await createReview({ productId, rating, comment });
-      toast.success("Opinia dodana pomyślnie");
+      await createReview({
+        productId,
+        rating,
+        comment: comment.trim(),
+      });
+      toast.success("Opinia została dodana");
       setComment("");
       setRating(5);
     } catch (error: any) {
-      toast.error(error.message || "Błąd podczas dodawania opinii");
+      toast.error(error.message || "Nie udało się dodać opinii");
     } finally {
       setIsSubmitting(false);
     }
@@ -143,7 +160,7 @@ export function Reviews({ productId }: ReviewsProps) {
                     </p>
                   </div>
                 </div>
-                {(user?._id === review.userId || user?.role === "admin") && (
+                {currentUser && (currentUser._id === review.userId || currentUser.role === "admin") && (
                   <Button
                     variant="ghost"
                     size="icon"
