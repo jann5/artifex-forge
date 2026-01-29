@@ -31,7 +31,8 @@ export default defineSchema({
   faq: defineTable({
     question: v.string(),
     answer: v.string(),
-  }),
+    order: v.optional(v.number()),
+  }).index("by_order", ["order"]),
 
   products: defineTable({
     name: v.string(),

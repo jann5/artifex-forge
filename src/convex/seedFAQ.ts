@@ -96,8 +96,11 @@ export const seedFAQs = mutation({
       }
     ];
 
-    for (const faq of faqs) {
-      await ctx.db.insert("faq", faq);
+    for (let i = 0; i < faqs.length; i++) {
+      await ctx.db.insert("faq", {
+        ...faqs[i],
+        order: i
+      });
     }
 
     return { message: "FAQs seeded successfully", count: faqs.length };
