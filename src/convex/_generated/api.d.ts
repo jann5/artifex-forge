@@ -26,6 +26,7 @@ import type * as get_site_url from "../get_site_url.js";
 import type * as http from "../http.js";
 import type * as notifications from "../notifications.js";
 import type * as orders from "../orders.js";
+import type * as portfolio from "../portfolio.js";
 import type * as products from "../products.js";
 import type * as recent from "../recent.js";
 import type * as reviews from "../reviews.js";
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   notifications: typeof notifications;
   orders: typeof orders;
+  portfolio: typeof portfolio;
   products: typeof products;
   recent: typeof recent;
   reviews: typeof reviews;

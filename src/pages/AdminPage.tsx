@@ -6,11 +6,13 @@ import { ProductForm } from "@/components/admin/ProductForm";
 import { EditProductDialog } from "@/components/admin/EditProductDialog";
 import { CategoryManager } from "@/components/admin/CategoryManager";
 import { ReviewManager } from "@/components/admin/ReviewManager";
+import { PortfolioManager } from "@/components/admin/PortfolioManager";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function AdminPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -136,47 +138,56 @@ export default function AdminPage() {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Panel Administratora</h1>
         
-        <div className="grid lg:grid-cols-2 gap-8 mb-8">
-          <CategoryManager />
-          <ReviewManager />
-        </div>
-        
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <div className="bg-card border rounded-xl p-6 sticky top-24">
-              <h2 className="text-xl font-semibold mb-4">Dodaj Nowy Produkt</h2>
-              <ProductForm 
+        <Tabs defaultValue="products" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="products">Produkty</TabsTrigger>
+            <TabsTrigger value="categories">Kategorie</TabsTrigger>
+            <TabsTrigger value="reviews">Opinie</TabsTrigger>
+            <TabsTrigger value="portfolio">Realizacje</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="products">
+            <div className="space-y-6">
+              <ProductForm
                 product={newProduct}
                 images={newProduct.images}
                 isUploading={isUploading}
-                onProductChange={(updates) => setNewProduct({...newProduct, ...updates})}
+                onProductChange={(updates) => setNewProduct({ ...newProduct, ...updates })}
                 onImageUpload={(e) => handleImageUpload(e, false)}
                 onImageRemove={(idx) => setNewProduct({
-                  ...newProduct, 
+                  ...newProduct,
                   images: newProduct.images.filter((_, i) => i !== idx)
                 })}
                 onSubmit={handleCreateProduct}
                 submitLabel="Utwórz Produkt"
               />
+              
+              <div>
+                <h2 className="text-xl font-bold mb-4">Lista Produktów</h2>
+                <ProductList
+                  products={products}
+                  onEdit={(product) => {
+                    setEditingProduct(product);
+                    setIsEditing(true);
+                  }}
+                  onDelete={(id) => removeProduct({ id })}
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="lg:col-span-2">
-            <h2 className="text-xl font-semibold mb-4">Lista Produktów</h2>
-            <ProductList 
-              products={products}
-              onEdit={(product) => {
-                setEditingProduct(product);
-                setIsEditing(true);
-              }}
-              onDelete={(id) => {
-                if (confirm("Czy na pewno chcesz usunąć ten produkt?")) {
-                  removeProduct({ id });
-                }
-              }}
-            />
-          </div>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="categories">
+            <CategoryManager />
+          </TabsContent>
+
+          <TabsContent value="reviews">
+            <ReviewManager />
+          </TabsContent>
+
+          <TabsContent value="portfolio">
+            <PortfolioManager />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <EditProductDialog 

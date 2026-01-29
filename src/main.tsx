@@ -25,6 +25,8 @@ import SettingsPage from "./pages/SettingsPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import CustomOrderPage from "./pages/CustomOrderPage";
+import PortfolioPage from "./pages/PortfolioPage";
+import FAQPage from "./pages/FAQPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import NotFound from "./pages/NotFound";
 import Demo from "./demo";
@@ -142,6 +144,14 @@ const router = createBrowserRouter([
   {
     path: "/about",
     element: <AboutPage />,
+  },
+  {
+    path: "/portfolio",
+    element: <PortfolioPage />,
+  },
+  {
+    path: "/faq",
+    element: <FAQPage />,
   },
   {
     path: "/contact",

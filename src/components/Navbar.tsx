@@ -116,8 +116,14 @@ export function Navbar() {
           <Link to="/products" className="hover:text-primary transition-colors">
             Sklep
           </Link>
+          <Link to="/portfolio" className="hover:text-primary transition-colors">
+            Realizacje
+          </Link>
           <Link to="/about" className="hover:text-primary transition-colors">
             O Nas
+          </Link>
+          <Link to="/faq" className="hover:text-primary transition-colors">
+            FAQ
           </Link>
           <Link to="/contact" className="hover:text-primary transition-colors">
             Kontakt
@@ -200,11 +206,25 @@ export function Navbar() {
                   Sklep
                 </Link>
                 <Link
+                  to="/portfolio"
+                  className="text-lg font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Realizacje
+                </Link>
+                <Link
                   to="/about"
                   className="text-lg font-medium hover:text-primary transition-colors py-2"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   O Nas
+                </Link>
+                <Link
+                  to="/faq"
+                  className="text-lg font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  FAQ
                 </Link>
                 <Link
                   to="/contact"

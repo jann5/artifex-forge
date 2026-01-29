@@ -21,6 +21,13 @@ export default defineSchema({
     slug: v.string(),
   }).index("by_slug", ["slug"]),
 
+  portfolio: defineTable({
+    title: v.string(),
+    description: v.string(),
+    images: v.array(v.string()),
+    category: v.optional(v.string()),
+  }),
+
   products: defineTable({
     name: v.string(),
     description: v.string(),
