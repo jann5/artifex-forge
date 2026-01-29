@@ -123,7 +123,7 @@ export default function Landing() {
               transition={{ duration: 0.8, delay: 0.1 }}
               className="text-8xl md:text-9xl lg:text-[12rem] font-black tracking-tight mb-6"
               style={{
-                fontFamily: "'Montserrat', 'Poppins', 'Inter', sans-serif",
+                fontFamily: "'Neue Montreal', sans-serif",
                 fontWeight: 900,
                 letterSpacing: '-0.03em',
                 background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%)',
