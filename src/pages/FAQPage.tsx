@@ -8,44 +8,12 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export default function FAQPage() {
   const navigate = useNavigate();
-
-  const faqItems = [
-    {
-      question: "Jak długo trwa realizacja zamówienia?",
-      answer: "Standardowy czas realizacji to 3-5 dni roboczych. W przypadku większych lub bardziej skomplikowanych projektów czas może się wydłużyć do 7-10 dni. O dokładnym czasie poinformujemy Cię po złożeniu zamówienia."
-    },
-    {
-      question: "Jakie materiały używacie do druku 3D?",
-      answer: "Używamy wysokiej jakości filamentów PLA, PETG, ABS oraz żywic fotopolimerowych. Każdy materiał ma swoje unikalne właściwości - PLA jest ekologiczny i łatwy w obróbce, PETG jest wytrzymały i odporny na wilgoć, a ABS charakteryzuje się wysoką odpornością termiczną."
-    },
-    {
-      question: "Czy mogę zamówić produkt na indywidualne zamówienie?",
-      answer: "Tak! Specjalizujemy się w projektach niestandardowych. Skontaktuj się z nami przez formularz kontaktowy lub email, opisując swój pomysł. Nasz zespół pomoże Ci w realizacji projektu od koncepcji po finalny produkt."
-    },
-    {
-      question: "Jakie są koszty wysyłki?",
-      answer: "Koszty wysyłki zależą od wagi i rozmiaru przesyłki. Standardowa wysyłka kurierem w Polsce to 15-20 zł. Dla zamówień powyżej 200 zł oferujemy darmową wysyłkę. Dokładny koszt zobaczysz podczas finalizacji zamówienia."
-    },
-    {
-      question: "Czy mogę zwrócić produkt?",
-      answer: "Tak, masz 14 dni na zwrot produktu zgodnie z prawem konsumenckim. Produkt musi być w stanie nienaruszonym. Produkty wykonane na indywidualne zamówienie nie podlegają zwrotowi, chyba że są wadliwe."
-    },
-    {
-      question: "Jak mogę śledzić moje zamówienie?",
-      answer: "Po wysłaniu zamówienia otrzymasz email z numerem przesyłki. Możesz również śledzić status zamówienia w swoim panelu użytkownika w zakładce 'Zamówienia'."
-    },
-    {
-      question: "Czy oferujecie gwarancję na produkty?",
-      answer: "Wszystkie nasze produkty objęte są 12-miesięczną gwarancją na wady produkcyjne. W przypadku problemów skontaktuj się z nami, a my zajmiemy się sprawą jak najszybciej."
-    },
-    {
-      question: "Jakie metody płatności akceptujecie?",
-      answer: "Akceptujemy płatności kartą kredytową/debetową, BLIK, przelewy bankowe oraz płatności online przez Stripe. Wszystkie transakcje są w pełni zabezpieczone."
-    }
-  ];
+  const faqItems = useQuery(api.faq.list);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -69,22 +37,36 @@ export default function FAQPage() {
                 </p>
               </div>
 
-              <Accordion type="single" collapsible className="space-y-4">
-                {faqItems.map((item, index) => (
-                  <AccordionItem 
-                    key={index} 
-                    value={`item-${index}`}
-                    className="bg-card border rounded-lg px-6"
-                  >
-                    <AccordionTrigger className="text-left hover:no-underline py-5">
-                      <span className="font-medium text-lg">{item.question}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground pb-5">
-                      {item.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+              {faqItems === undefined ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-20 bg-muted rounded-lg animate-pulse" />
+                  ))}
+                </div>
+              ) : faqItems.length === 0 ? (
+                <div className="text-center py-12 bg-muted/30 rounded-2xl border">
+                  <p className="text-muted-foreground">
+                    Wkrótce pojawią się tutaj odpowiedzi na najczęściej zadawane pytania
+                  </p>
+                </div>
+              ) : (
+                <Accordion type="single" collapsible className="space-y-4">
+                  {faqItems.map((item, index) => (
+                    <AccordionItem 
+                      key={item._id} 
+                      value={`item-${index}`}
+                      className="bg-card border rounded-lg px-6"
+                    >
+                      <AccordionTrigger className="text-left hover:no-underline py-5">
+                        <span className="font-medium text-lg">{item.question}</span>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground pb-5">
+                        {item.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              )}
 
               <div className="mt-12 text-center bg-muted/30 rounded-2xl p-8 border">
                 <h3 className="font-bold text-xl mb-2">Nie znalazłeś odpowiedzi?</h3>

@@ -28,6 +28,11 @@ export default defineSchema({
     category: v.optional(v.string()),
   }),
 
+  faq: defineTable({
+    question: v.string(),
+    answer: v.string(),
+  }),
+
   products: defineTable({
     name: v.string(),
     description: v.string(),

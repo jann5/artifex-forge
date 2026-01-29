@@ -7,6 +7,7 @@ import { EditProductDialog } from "@/components/admin/EditProductDialog";
 import { CategoryManager } from "@/components/admin/CategoryManager";
 import { ReviewManager } from "@/components/admin/ReviewManager";
 import { PortfolioManager } from "@/components/admin/PortfolioManager";
+import { FAQManager } from "@/components/admin/FAQManager";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
@@ -139,11 +140,12 @@ export default function AdminPage() {
         <h1 className="text-3xl font-bold mb-8">Panel Administratora</h1>
         
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="products">Produkty</TabsTrigger>
             <TabsTrigger value="categories">Kategorie</TabsTrigger>
             <TabsTrigger value="reviews">Opinie</TabsTrigger>
             <TabsTrigger value="portfolio">Realizacje</TabsTrigger>
+            <TabsTrigger value="faq">FAQ</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -186,6 +188,10 @@ export default function AdminPage() {
 
           <TabsContent value="portfolio">
             <PortfolioManager />
+          </TabsContent>
+
+          <TabsContent value="faq">
+            <FAQManager />
           </TabsContent>
         </Tabs>
       </div>
