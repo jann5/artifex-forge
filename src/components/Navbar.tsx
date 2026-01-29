@@ -105,18 +105,7 @@ export function Navbar() {
             alt="Essentia Logo" 
             className="h-10 w-10 object-contain"
           />
-          <span 
-            className="text-3xl font-bold tracking-widest"
-            style={{ 
-              fontFamily: "'Montserrat', 'Inter', sans-serif",
-              fontWeight: 800,
-              letterSpacing: '0.15em',
-              background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #0ea5e9 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
+          <span className="text-2xl font-bold text-foreground">
             ESSENTIA
           </span>
         </Link>
@@ -202,18 +191,7 @@ export function Navbar() {
                       alt="Essentia Logo" 
                       className="h-10 w-10 object-contain"
                     />
-                    <span 
-                      className="text-3xl font-bold tracking-widest"
-                      style={{ 
-                        fontFamily: "'Montserrat', 'Inter', sans-serif",
-                        fontWeight: 800,
-                        letterSpacing: '0.15em',
-                        background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #0ea5e9 100%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
+                    <span className="text-2xl font-bold text-foreground">
                       ESSENTIA
                     </span>
                   </div>
