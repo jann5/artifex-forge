@@ -374,7 +374,7 @@ export default function Landing() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-24 bg-white mt-16">
+      <section className="py-24 bg-white mt-32">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4">
             <motion.div
