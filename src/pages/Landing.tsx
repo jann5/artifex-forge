@@ -93,7 +93,7 @@ export default function Landing() {
       </Dialog>
 
       {/* Hero Section with Procedural Ground Background */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white">
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white pt-16">
         {/* Procedural Ground Background - Full screen */}
         <div className="absolute inset-0 overflow-hidden">
           <ProceduralGroundBackground />
@@ -228,7 +228,7 @@ export default function Landing() {
       </section>
 
       {/* Features Grid - Clean & Minimal */}
-      <section className="py-24 relative bg-white">
+      <section className="py-24 relative bg-white mt-4">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -374,7 +374,7 @@ export default function Landing() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-white mt-4">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4">
             <motion.div
