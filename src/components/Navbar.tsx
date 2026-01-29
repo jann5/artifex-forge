@@ -105,7 +105,7 @@ export function Navbar() {
             alt="Essentia Logo" 
             className="h-10 w-10 object-contain"
           />
-          <span className="text-2xl font-black text-black">
+          <span className="text-2xl font-black text-black uppercase" style={{ fontFamily: "'Proxy_Mono_Beta', monospace" }}>
             ESSENTIA
           </span>
         </Link>
@@ -191,7 +191,7 @@ export function Navbar() {
                       alt="Essentia Logo" 
                       className="h-10 w-10 object-contain"
                     />
-                    <span className="text-2xl font-bold text-foreground">
+                    <span className="text-2xl font-bold text-foreground uppercase" style={{ fontFamily: "'Proxy_Mono_Beta', monospace" }}>
                       ESSENTIA
                     </span>
                   </div>

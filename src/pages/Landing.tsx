@@ -458,7 +458,7 @@ export default function Landing() {
                   alt="Essentia Logo" 
                   className="h-10 w-10 object-contain"
                 />
-                <span className="text-2xl font-black text-black">
+                <span className="text-2xl font-black text-black uppercase" style={{ fontFamily: "'Proxy_Mono_Beta', monospace" }}>
                   ESSENTIA
                 </span>
               </div>
