@@ -52,6 +52,54 @@ export const seedFAQs = mutation({
       {
         question: "Jakie formy płatności akceptujecie?",
         answer: "Akceptujemy płatności kartą kredytową/debetową, BLIK, przelewy bankowe oraz płatności online przez Stripe. Wszystkie transakcje są w pełni zabezpieczone."
+      },
+      {
+        question: "Czy produkty są odporne na warunki atmosferyczne?",
+        answer: "Zależy od materiału. PLA jest odpowiedni do użytku wewnętrznego, PETG i ABS są bardziej odporne na wilgoć i temperaturę. Dla zastosowań zewnętrznych polecamy PETG lub ASA."
+      },
+      {
+        question: "Jaka jest minimalna wielkość zamówienia?",
+        answer: "Nie mamy minimalnej wartości zamówienia. Możesz zamówić nawet jeden produkt. Oferujemy również rabaty ilościowe przy większych zamówieniach."
+      },
+      {
+        question: "Czy mogę zobaczyć próbkę przed zamówieniem?",
+        answer: "Tak, dla większych zamówień możemy przygotować próbkę. Skontaktuj się z nami, aby omówić szczegóły i koszty."
+      },
+      {
+        question: "Jakie są możliwości kolorystyczne?",
+        answer: "Oferujemy szeroką paletę kolorów dla każdego materiału. Standardowo dostępne są kolory podstawowe, a na zamówienie możemy dostarczyć specjalne odcienie."
+      },
+      {
+        question: "Czy oferujecie obróbkę wykończeniową?",
+        answer: "Tak, oferujemy szlifowanie, malowanie, lakierowanie oraz inne formy obróbki wykończeniowej. Szczegóły i wycenę przygotujemy indywidualnie."
+      },
+      {
+        question: "Jaka jest maksymalna wielkość wydruku?",
+        answer: "Nasza drukarka Stratasys F170 ma obszar roboczy 254 x 254 x 254 mm. Większe obiekty możemy podzielić na części i złożyć."
+      },
+      {
+        question: "Czy realizujecie zamówienia hurtowe?",
+        answer: "Tak, realizujemy zamówienia hurtowe i oferujemy atrakcyjne rabaty. Skontaktuj się z nami, aby omówić szczegóły współpracy."
+      },
+      {
+        question: "Jak przygotować plik do druku 3D?",
+        answer: "Plik powinien być w formacie STL lub OBJ, z zamkniętą geometrią (manifold). Chętnie pomożemy w przygotowaniu pliku - wyślij nam swój projekt, a my go zweryfikujemy."
+      },
+      {
+        question: "Czy oferujecie wsparcie techniczne?",
+        answer: "Tak, nasz zespół chętnie doradzi w wyborze materiału, optymalizacji projektu i rozwiązaniu problemów technicznych. Skontaktuj się z nami przez formularz lub telefon."
+      },
+      {
+        question: "Jakie są tolerancje wymiarowe?",
+        answer: "Standardowa tolerancja to ±0.2mm dla wymiarów do 100mm. Dla większych wymiarów tolerancja wynosi ±0.3%. Możemy osiągnąć wyższą precyzję na specjalne zamówienie."
+      },
+      {
+        question: "Czy mogę anulować zamówienie?",
+        answer: "Zamówienie można anulować bezpłatnie przed rozpoczęciem produkcji. Po rozpoczęciu druku pobieramy opłatę manipulacyjną w wysokości 30% wartości zamówienia."
+      },
+      {
+        question: "Czy oferujecie gwarancję na produkty?",
+        answer: "Tak, wszystkie nasze produkty objęte są 12-miesięczną gwarancją na wady materiałowe i produkcyjne. Gwarancja nie obejmuje uszkodzeń mechanicznych powstałych w wyniku niewłaściwego użytkowania."
       }
     ];
 
