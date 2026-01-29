@@ -121,11 +121,15 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-7xl md:text-8xl lg:text-9xl font-black tracking-tight mb-6 text-black"
+              className="text-8xl md:text-9xl lg:text-[12rem] font-black tracking-tight mb-6"
               style={{
-                fontFamily: "'Space Grotesk', 'Outfit', 'Inter', sans-serif",
+                fontFamily: "'Montserrat', 'Poppins', 'Inter', sans-serif",
                 fontWeight: 900,
-                letterSpacing: '-0.02em',
+                letterSpacing: '-0.03em',
+                background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
               }}
             >
               ESSENTIA
@@ -454,7 +458,7 @@ export default function Landing() {
                   alt="Essentia Logo" 
                   className="h-10 w-10 object-contain"
                 />
-                <span className="text-2xl font-bold text-foreground">
+                <span className="text-2xl font-black text-black">
                   ESSENTIA
                 </span>
               </div>
