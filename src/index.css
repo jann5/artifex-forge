@@ -149,11 +149,20 @@
 @keyframes gold-shine { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
 @keyframes badge-bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 @keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes flag-wave { 0%, 100% { transform: rotate(-2deg) scale(1); } 50% { transform: rotate(2deg) scale(1.02); } }
+@keyframes patriotic-pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+@keyframes scroll-progress { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+@keyframes text-glow { 0%, 100% { text-shadow: 0 0 20px rgba(212,175,55,0.1); } 50% { text-shadow: 0 0 40px rgba(212,175,55,0.3); } }
+@keyframes eagle-breathe { 0%, 100% { opacity: 0.02; transform: scale(1); } 50% { opacity: 0.04; transform: scale(1.02); } }
 
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 .animate-badge-bounce { animation: badge-bounce 0.3s ease-in-out; }
 .animate-gradient-shift { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
+.animate-flag-wave { animation: flag-wave 4s ease-in-out infinite; }
+.animate-patriotic-pulse { animation: patriotic-pulse 3s ease-in-out infinite; }
+.animate-text-glow { animation: text-glow 4s ease-in-out infinite; }
+.animate-eagle-breathe { animation: eagle-breathe 6s ease-in-out infinite; }
 .animate-gold-shine {
   background: linear-gradient(90deg, #D4AF37, #E5C84E, #D4AF37, #B8952E, #D4AF37);
   background-size: 200% auto;
@@ -196,6 +205,74 @@
 .polish-stripe::after {
   content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
   background: linear-gradient(90deg, #FFF 0%, #FFF 50%, #C1272D 50%, #C1272D 100%);
+}
+.polish-stripe-top::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #FFF 0%, #FFF 50%, #C1272D 50%, #C1272D 100%);
+}
+.polish-stripe-vertical::after {
+  content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, #FFF 0%, #FFF 50%, #C1272D 50%, #C1272D 100%);
+}
+
+/* ═══ PATRIOTIC ACCENTS ═══ */
+.patriotic-badge {
+  background: linear-gradient(135deg, rgba(193,39,45,0.08), rgba(212,175,55,0.08));
+  border: 1px solid rgba(193,39,45,0.12);
+  backdrop-filter: blur(8px);
+}
+.patriotic-glow {
+  box-shadow: 0 0 30px rgba(193,39,45,0.08), 0 0 60px rgba(212,175,55,0.04);
+}
+.patriotic-text {
+  background: linear-gradient(135deg, #C1272D, #1B2A49, #D4AF37);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 6s ease infinite;
+}
+
+/* ═══ PREMIUM HOVER EFFECTS ═══ */
+.premium-hover {
+  transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.premium-hover:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 60px -15px rgba(27,42,73,0.12), 0 0 0 1px rgba(212,175,55,0.1);
+}
+.magnetic-hover {
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* ═══ LUXURY TRUST BADGE ═══ */
+.trust-badge {
+  position: relative;
+  overflow: hidden;
+}
+.trust-badge::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, rgba(212,175,55,0.05), transparent 30%);
+  animation: gradient-shift 8s linear infinite;
+}
+
+/* ═══ SCROLL PROGRESS BAR ═══ */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 9999;
+  background: linear-gradient(90deg, #C1272D, #D4AF37);
+  transform-origin: left;
+  animation: scroll-progress linear;
+  animation-timeline: scroll(root);
 }
 
 /* ═══ UTILITIES ═══ */

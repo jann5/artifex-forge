@@ -145,15 +145,27 @@ export function ProductCard({ id, name, price, image, category, inventory }: Pro
 
         {/* Product Info */}
         <div className="mt-4 space-y-1.5">
-          <p className="text-xs text-[#D4AF37] uppercase tracking-[0.15em] font-semibold">
-            {category}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[#D4AF37] uppercase tracking-[0.15em] font-semibold">
+              {category}
+            </p>
+            {/* Made in Poland micro-badge */}
+            <span className="inline-flex items-center gap-1 text-[10px] text-[#1B2A49]/30 tracking-wide">
+              🇵🇱 PL
+            </span>
+          </div>
           <h3 className="font-semibold text-[#1B2A49] text-base leading-tight group-hover:text-[#C1272D] transition-colors line-clamp-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             {name}
           </h3>
-          <p className="font-bold text-[#C1272D] text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
-            {formatCurrency(price)}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-[#C1272D] text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
+              {formatCurrency(price)}
+            </p>
+            {/* Authenticity indicator */}
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#D4AF37]/[0.06] text-[#D4AF37] text-[9px] font-semibold tracking-wide uppercase">
+              ✓ Certyfikat
+            </span>
+          </div>
         </div>
       </Link>
     </motion.div>
