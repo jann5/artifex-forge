@@ -2,8 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { ProductCard } from "@/components/ProductCard";
-import { ArrowRight, Box, Layers, Zap, CheckCircle, Package } from "lucide-react";
+import { ArrowRight, CheckCircle, Package } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
@@ -15,21 +14,75 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import ProceduralGroundBackground from "@/components/ui/procedural-ground-background";
 import { CookieConsent } from "@/components/CookieConsent";
 
+// ─── Premium Animation Config ─────────────────────────────────
+// Luxury easing: slow start, smooth finish — no spring, no bounce
+const ease: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+
+const reveal = {
+  hidden: { opacity: 0, y: 40 },
+  visible: (delay: number = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.9, ease, delay },
+  }),
+};
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.15 } },
+};
+
+const lineGrow = {
+  hidden: { scaleX: 0, opacity: 0 },
+  visible: {
+    scaleX: 1,
+    opacity: 1,
+    transition: { duration: 1, ease },
+  },
+};
+
+// ─── Data ──────────────────────────────────────────────────────
+const CATEGORIES = [
+  {
+    name: "Plakaty i Grafiki",
+    slug: "plakaty",
+    image:
+      "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80",
+  },
+  {
+    name: "Odzież Patriotyczna",
+    slug: "odziez",
+    image:
+      "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80",
+  },
+  {
+    name: "Limitowane Edycje",
+    slug: "limitowane",
+    image:
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80",
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// Landing — Museum-gallery aesthetic, $50k luxury feel
+// Philosophy: Maximum impact with minimum elements.
+// White space is a luxury good. Every element justifies itself.
+// ═══════════════════════════════════════════════════════════════
 export default function Landing() {
   const featuredProducts = useQuery(api.products.list, { featured: true });
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
-    offset: ["start start", "end start"]
+    offset: ["start start", "end start"],
   });
 
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.5], [0, -50]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const heroY = useTransform(scrollYProgress, [0, 0.8], [0, -60]);
 
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const subscribeToNewsletter = useMutation(api.newsletter.subscribe);
@@ -38,18 +91,14 @@ export default function Landing() {
   const canceled = searchParams.get("canceled");
 
   useEffect(() => {
-    if (success === "true") {
-      toast.success("Płatność zakończona sukcesem!");
-    }
+    if (success === "true") toast.success("Płatność zakończona sukcesem!");
     if (canceled === "true") {
       toast.error("Płatność została anulowana");
       setSearchParams({});
     }
   }, [success, canceled, setSearchParams]);
 
-  const handleCloseSuccessDialog = () => {
-    setSearchParams({});
-  };
+  const handleCloseSuccessDialog = () => setSearchParams({});
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,36 +106,42 @@ export default function Landing() {
       toast.error("Proszę wpisać adres email");
       return;
     }
-
     try {
       const result = await subscribeToNewsletter({ email: newsletterEmail });
       toast.success(result.message);
       setNewsletterEmail("");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Wystąpił błąd podczas zapisywania do newslettera");
+      toast.error(
+        error instanceof Error ? error.message : "Wystąpił błąd"
+      );
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-[#FAFAF8]">
       <Navbar />
       <CookieConsent />
-      
-      {/* Success Dialog */}
-      <Dialog open={success === "true"} onOpenChange={handleCloseSuccessDialog}>
+
+      {/* Payment Success Dialog */}
+      <Dialog
+        open={success === "true"}
+        onOpenChange={handleCloseSuccessDialog}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-              <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle className="h-10 w-10 text-green-600" />
             </div>
-            <DialogTitle className="text-center text-2xl">Płatność Zakończona Sukcesem!</DialogTitle>
+            <DialogTitle className="text-center text-2xl">
+              Płatność Zakończona Sukcesem!
+            </DialogTitle>
             <DialogDescription className="text-center">
-              Twoje zamówienie zostało przyjęte i jest przetwarzane. Możesz śledzić status zamówienia w panelu zamówień.
+              Twoje zamówienie zostało przyjęte i jest przetwarzane.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 mt-4">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="w-full"
               onClick={() => {
                 handleCloseSuccessDialog();
@@ -96,9 +151,9 @@ export default function Landing() {
               <Package className="mr-2 h-5 w-5" />
               Śledź Zamówienie
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
+            <Button
+              size="lg"
+              variant="outline"
               className="w-full"
               onClick={() => {
                 handleCloseSuccessDialog();
@@ -111,425 +166,496 @@ export default function Landing() {
         </DialogContent>
       </Dialog>
 
-      {/* Hero Section with Procedural Ground Background */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white pt-16 -mb-px">
-        {/* Procedural Ground Background - Full screen */}
-        <div className="absolute inset-0 overflow-hidden">
-          <ProceduralGroundBackground />
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* HERO — Cinematic typographic entrance                  */}
+      {/* Dark, atmospheric, text-driven. No images, no noise.   */}
+      {/* The name IS the brand. Let it dominate.                 */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      <section
+        ref={heroRef}
+        className="relative h-screen flex items-end overflow-hidden"
+      >
+        {/* Background: layered depth without imagery */}
+        <div className="absolute inset-0 bg-[#0F1A30]">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1B2A49] via-[#0F1A30]/95 to-[#0A1020]" />
+          {/* Warm ambient glow — barely visible, adds depth */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at 75% 20%, rgba(193,39,45,0.07) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(212,175,55,0.04) 0%, transparent 50%)",
+            }}
+          />
+          {/* Film grain — the hallmark of premium digital design */}
+          <div
+            className="absolute inset-0 opacity-[0.015]"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+            }}
+          />
         </div>
-        
-        {/* Gradient Overlay for smooth transition */}
-        <div
-          className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
-          style={{
-            height: '200px',
-            background: 'linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 30%, transparent 100%)',
-          }}
-        />
-        
-        <motion.div 
-          style={{ opacity, y }}
-          className="container mx-auto px-4 relative z-10"
+
+        <motion.div
+          style={{ opacity: heroOpacity, y: heroY }}
+          className="container mx-auto px-6 md:px-8 relative z-10 pb-20 md:pb-28"
         >
-          <div className="text-center max-w-5xl mx-auto">
-            {/* Badge */}
+          <div className="max-w-4xl">
+            {/* Gold accent line — draws attention, signals luxury */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 mb-8"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-              </span>
-              <span className="text-sm font-medium text-primary">Profesjonalny Druk 3D</span>
-            </motion.div>
-
-            {/* Main Heading - Polish Typography */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-8xl md:text-9xl lg:text-[12rem] font-black tracking-tight mb-6 uppercase"
-              style={{
-                fontFamily: "'Proxy_Mono_Beta', monospace",
-                fontWeight: 900,
-                letterSpacing: '-0.03em',
-                background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: 1, opacity: 1 }}
+              transition={{
+                duration: 1.2,
+                ease: [0.25, 0.1, 0.25, 1],
+                delay: 0.2,
               }}
-            >
-              ESSENTIA
-            </motion.h1>
+              className="w-16 h-px bg-[#D4AF37] mb-8 origin-left"
+            />
 
-            {/* Subheading - Polish */}
-            <motion.p 
+            {/* Kicker — small, restrained, gold */}
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="text-xl md:text-2xl text-muted-foreground mb-12 font-light max-w-3xl mx-auto leading-relaxed"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-              }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="text-[#D4AF37] text-[11px] tracking-[0.35em] uppercase font-medium mb-6"
             >
-              Kompleksowa agencja dla wszystkich projektów cyfrowych i kreatywnych
+              Oficjalna Kolekcja Prezydencka · 2025
             </motion.p>
 
-            {/* Feature Pills */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
+            {/* Title — MASSIVE, the entire brand in one word */}
+            <motion.h1
+              initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.8 }}
-              className="flex flex-wrap justify-center gap-3 mb-12"
+              transition={{
+                duration: 1.2,
+                ease: [0.25, 0.1, 0.25, 1],
+                delay: 0.3,
+              }}
+              className="text-[15vw] sm:text-[12vw] md:text-[9vw] lg:text-[7vw] font-bold text-white leading-[0.92] tracking-[-0.03em] mb-6"
+              style={{ fontFamily: "var(--font-display)" }}
             >
-              {["Precyzja Przemysłowa", "Stratasys F170", "Materiały Inżynieryjne"].map((feature, i) => (
-                <span 
-                  key={i}
-                  className="px-4 py-2 rounded-full bg-muted/50 text-sm font-medium text-foreground/80 border border-border/50"
-                >
-                  {feature}
-                </span>
-              ))}
-            </motion.div>
+              Nawrocki
+            </motion.h1>
 
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
+            {/* Subtitle — light, understated */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              transition={{
+                duration: 0.9,
+                ease: [0.25, 0.1, 0.25, 1],
+                delay: 0.7,
+              }}
+              className="text-white/40 text-base md:text-lg font-light tracking-wide max-w-md leading-relaxed"
             >
-              <Button 
-                size="lg" 
-                className="h-14 px-10 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group" 
-                asChild
+              Limitowana kolekcja pamiątek upamiętniających
+              historyczną prezydencję
+            </motion.p>
+
+            {/* CTA — text link, not a button. Premium restraint. */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1.1 }}
+              className="mt-14"
+            >
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-3 text-white/40 hover:text-white transition-all duration-500 group"
               >
-                <Link to="/products">
-                  Zobacz Kolekcję 
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="h-14 px-10 text-lg border-2 hover:bg-muted/50 transition-all duration-300" 
-                asChild
-              >
-                <Link to="/about">
-                  Poznaj Nas
-                </Link>
-              </Button>
+                <span className="text-[11px] tracking-[0.25em] uppercase font-medium">
+                  Odkryj Kolekcję
+                </span>
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1.5 transition-transform duration-500" />
+              </Link>
             </motion.div>
           </div>
         </motion.div>
 
-        {/* Scroll Indicator */}
+        {/* Scroll indicator — vertical text + animated gold pulse */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.6 }}
-          className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20"
+          transition={{ delay: 1.8, duration: 0.8 }}
+          className="absolute bottom-8 right-8 z-20 hidden md:flex flex-col items-center gap-3"
         >
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <span className="text-xs uppercase tracking-wider font-medium">Przewiń</span>
-            <div className="w-6 h-10 border-2 border-border rounded-full flex items-start justify-center p-2">
-              <motion.div
-                animate={{ y: [0, 12, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-1.5 h-1.5 bg-primary rounded-full"
-              />
-            </div>
+          <span
+            className="text-white/20 text-[10px] tracking-[0.2em] uppercase font-medium"
+            style={{ writingMode: "vertical-rl" }}
+          >
+            Scroll
+          </span>
+          <div className="w-px h-12 bg-white/10 overflow-hidden">
+            <motion.div
+              animate={{ y: ["-100%", "100%"] }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="w-full h-full bg-[#D4AF37]/60"
+            />
           </div>
         </motion.div>
       </section>
 
-      {/* Features Grid - Clean & Minimal */}
-      <section className="py-24 relative bg-white">
-        <div className="container mx-auto px-4">
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* MANIFESTO — One powerful quote, nothing more            */}
+      {/* The emptiness around the text IS the design.            */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      <section className="py-28 md:py-40 bg-[#FAFAF8]">
+        <div className="container mx-auto px-6 md:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Dlaczego My?</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Łączymy najnowszą technologię z rzemieślniczą precyzją
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                icon: Box,
-                title: "Materiały Premium",
-                description: "Używamy tylko najwyższej jakości filamentów i żywic dla trwałości i wykończenia.",
-              },
-              {
-                icon: Layers,
-                title: "Precyzyjny Druk",
-                description: "Kalibrowane do mikrona. Każda warstwa jest sprawdzana pod kątem perfekcji.",
-              },
-              {
-                icon: Zap,
-                title: "Szybka Wysyłka",
-                description: "Z naszej drukarni do Twoich drzwi w rekordowym czasie.",
-              }
-            ].map((feature, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15, duration: 0.6 }}
-                className="p-8 rounded-2xl bg-card border hover:shadow-lg transition-all duration-300"
-              >
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary/10 mb-6">
-                  <feature.icon className="h-7 w-7 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Professional Equipment Section - NEW */}
-      <section className="py-24 bg-muted/30 relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7 }}
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-                <Package className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Profesjonalny Sprzęt</span>
-              </div>
-              
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                Stratasys F170
-              </h2>
-              
-              <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
-                Wykorzystujemy profesjonalną drukarkę przemysłową <span className="font-semibold text-foreground">Stratasys F170</span> – 
-                standard w produkcji komercyjnej i prototypowaniu.
-              </p>
-              
-              <div className="space-y-4 mb-8">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold mb-1">Precyzja Przemysłowa</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Technologia FDM z dokładnością warstwy do 0.127mm zapewnia wyjątkową jakość wykończenia
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold mb-1">Materiały Inżynieryjne</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Obsługa zaawansowanych materiałów jak ABS-M30, ASA, PC-ABS dla maksymalnej wytrzymałości
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold mb-1">Niezawodność 24/7</h4>
-                    <p className="text-sm text-muted-foreground">
-                      System zamkniętej komory i automatyczna kalibracja gwarantują powtarzalność produkcji
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/about">
-                  Dowiedz się więcej <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7 }}
-              className="relative"
-            >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <img 
-                  src="https://harmless-tapir-303.convex.cloud/api/storage/66c47355-3562-4bd0-ba2c-e6fda75ab2b1"
-                  alt="Stratasys F170 Professional 3D Printer"
-                  className="w-full h-auto"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6">
-                  <p className="text-white font-semibold text-lg">Stratasys F170</p>
-                  <p className="text-white/80 text-sm">Profesjonalna drukarka przemysłowa FDM</p>
-                </div>
-              </div>
-              
-              {/* Decorative elements */}
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
-              <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-secondary/20 rounded-full blur-2xl" />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-4xl md:text-5xl font-bold mb-3">Wyróżnione Produkty</h2>
-              <p className="text-xl text-muted-foreground">Wyselekcjonowane wybory dla Twojej przestrzeni.</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <Button variant="ghost" size="lg" asChild>
-                <Link to="/products" className="text-lg">
-                  Zobacz Wszystkie <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </motion.div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts ? (
-              featuredProducts.map((product, i) => (
-                <motion.div
-                  key={product._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, duration: 0.5 }}
-                >
-                  <ProductCard
-                    id={product._id}
-                    name={product.name}
-                    price={product.price}
-                    image={product.images[0] || "https://placehold.co/400x500/f3f4f6/1f2937?text=Produkt"}
-                    category={product.category}
-                    inventory={product.inventory}
-                  />
-                </motion.div>
-              ))
-            ) : (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="space-y-4">
-                  <div className="aspect-[4/5] bg-muted rounded-lg animate-pulse" />
-                  <div className="h-4 bg-muted rounded w-2/3 animate-pulse" />
-                  <div className="h-4 bg-muted rounded w-1/3 animate-pulse" />
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden bg-white">
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
             className="max-w-3xl mx-auto text-center"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Gotowy na Coś Wyjątkowego?
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8">
-              Dołącz do tysięcy zadowolonych klientów, którzy już odkryli magię druku 3D.
-            </p>
-            <Button size="lg" className="h-16 px-12 text-lg shadow-lg hover:shadow-xl transition-all" asChild>
-              <Link to="/products">
-                Rozpocznij Zakupy <ArrowRight className="ml-2 h-6 w-6" />
-              </Link>
-            </Button>
+            <motion.div
+              variants={lineGrow}
+              className="w-12 h-px bg-[#D4AF37] mx-auto mb-14 origin-center"
+            />
+            <motion.blockquote
+              custom={0.1}
+              variants={reveal}
+              className="text-[1.6rem] md:text-[2rem] lg:text-[2.35rem] text-[#1B2A49] leading-[1.55] font-light tracking-[-0.01em]"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              „Służba Polsce i prawdzie historycznej to nie
+              przywilej&nbsp;— to obowiązek każdego obywatela."
+            </motion.blockquote>
+            <motion.div custom={0.35} variants={reveal} className="mt-12">
+              <p className="text-[#1B2A49]/35 text-xs tracking-[0.2em] uppercase font-medium">
+                Karol Nawrocki
+              </p>
+              <p className="text-[#1B2A49]/20 text-[11px] tracking-[0.1em] mt-1.5">
+                Prezydent Rzeczypospolitej Polskiej
+              </p>
+            </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-16 border-t bg-white mt-auto">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-12">
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* COLLECTION — Curated products, gallery aesthetic        */}
+      {/* 4 items only. Large images. Name + price. That's it.    */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      <section className="py-20 md:py-28 bg-[#FAFAF8]">
+        <div className="container mx-auto px-6 md:px-8">
+          {/* Section header */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="flex items-end justify-between mb-14 md:mb-16"
+          >
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <img 
-                  src="https://harmless-tapir-303.convex.cloud/api/storage/30dff0c3-bcda-4a67-94df-27c80a556658" 
-                  alt="Essentia Logo" 
-                  className="h-10 w-10 object-contain"
-                />
-                <span className="text-2xl font-black text-black uppercase" style={{ fontFamily: "'Proxy_Mono_Beta', monospace" }}>
-                  ESSENTIA
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Redefiniujemy cyfrową produkcję z nutą luksusu.
-              </p>
+              <motion.div
+                variants={lineGrow}
+                className="w-8 h-px bg-[#D4AF37] mb-6 origin-left"
+              />
+              <motion.h2
+                custom={0.1}
+                variants={reveal}
+                className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1B2A49] tracking-[-0.02em]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Wybrana Kolekcja
+              </motion.h2>
             </div>
-            <div>
-              <h4 className="font-bold mb-4 text-lg">Sklep</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link to="/products" className="hover:text-foreground transition-colors">Wszystkie Produkty</Link></li>
-                <li><Link to="/products?category=art" className="hover:text-foreground transition-colors">Sztuka</Link></li>
-                <li><Link to="/products?category=decor" className="hover:text-foreground transition-colors">Dekoracje</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4 text-lg">Firma</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link to="/about" className="hover:text-foreground transition-colors">O Nas</Link></li>
-                <li><Link to="/contact" className="hover:text-foreground transition-colors">Kontakt</Link></li>
-                <li><Link to="/contact#faq-section" className="hover:text-foreground transition-colors">FAQ</Link></li>
-                <li><Link to="/privacy" className="hover:text-foreground transition-colors">Polityka Prywatności</Link></li>
-                <li><Link to="/terms" className="hover:text-foreground transition-colors">Regulamin</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4 text-lg">Newsletter</h4>
-              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+            <motion.div custom={0.2} variants={reveal}>
+              <Link
+                to="/products"
+                className="hidden md:inline-flex items-center gap-2 text-[#1B2A49]/30 hover:text-[#1B2A49] transition-colors duration-500 text-sm tracking-wide"
+              >
+                Wszystkie Produkty
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </motion.div>
+          </motion.div>
+
+          {/* Product grid — museum gallery layout */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={stagger}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-5 md:gap-8"
+          >
+            {featuredProducts
+              ? featuredProducts.slice(0, 4).map((product) => (
+                  <motion.div key={product._id} variants={reveal}>
+                    <Link
+                      to={`/products/${product._id}`}
+                      className="group block"
+                    >
+                      <div className="relative aspect-[3/4] overflow-hidden bg-[#EFEEEB] mb-4">
+                        <img
+                          src={
+                            product.images[0] ||
+                            "https://placehold.co/600x800/EFEEEB/1B2A49?text="
+                          }
+                          alt={product.name}
+                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-[#1B2A49]/0 group-hover:bg-[#1B2A49]/5 transition-colors duration-500" />
+                      </div>
+                      <h3 className="text-[13px] font-medium text-[#1B2A49] tracking-wide leading-snug">
+                        {product.name}
+                      </h3>
+                      <p className="text-[13px] text-[#1B2A49]/35 mt-1.5">
+                        {product.price.toLocaleString("pl-PL")} zł
+                      </p>
+                    </Link>
+                  </motion.div>
+                ))
+              : Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="aspect-[3/4] bg-[#EFEEEB] mb-4" />
+                    <div className="h-3.5 bg-[#EFEEEB] rounded w-3/4 mb-2" />
+                    <div className="h-3 bg-[#EFEEEB] rounded w-1/4" />
+                  </div>
+                ))}
+          </motion.div>
+
+          {/* Mobile "view all" link */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-10 text-center md:hidden"
+          >
+            <Link
+              to="/products"
+              className="inline-flex items-center gap-2 text-[#1B2A49]/40 text-sm tracking-wide"
+            >
+              Wszystkie Produkty <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* CATEGORIES — Three clean portals, nothing extra         */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      <section className="py-16 md:py-24 bg-[#FAFAF8]">
+        <div className="container mx-auto px-6 md:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="grid md:grid-cols-3 gap-4 md:gap-5"
+          >
+            {CATEGORIES.map((cat) => (
+              <motion.div key={cat.slug} variants={reveal}>
+                <Link
+                  to={`/products?category=${cat.slug}`}
+                  className="group block relative aspect-[4/5] md:aspect-[3/4] overflow-hidden"
+                >
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.05]"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-[#1B2A49]/40 group-hover:bg-[#1B2A49]/55 transition-colors duration-700" />
+                  <div className="absolute inset-0 flex items-end p-6 md:p-8">
+                    <div>
+                      <h3
+                        className="text-white text-lg md:text-xl font-medium tracking-wide"
+                        style={{ fontFamily: "var(--font-display)" }}
+                      >
+                        {cat.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-2.5 text-white/40 group-hover:text-white/70 transition-colors duration-500">
+                        <span className="text-[10px] tracking-[0.25em] uppercase font-medium">
+                          Przeglądaj
+                        </span>
+                        <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform duration-500" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* FOOTER — Newsletter + minimal links                    */}
+      {/* Dark bookend mirrors the hero. Newsletter integrated.  */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      <footer className="bg-[#0F1A30] text-white mt-auto">
+        {/* Newsletter strip */}
+        <div className="border-b border-white/[0.06]">
+          <div className="container mx-auto px-6 md:px-8 py-16 md:py-20">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="max-w-xl"
+            >
+              <motion.p
+                custom={0}
+                variants={reveal}
+                className="text-[#D4AF37] text-[10px] tracking-[0.35em] uppercase font-medium mb-4"
+              >
+                Newsletter
+              </motion.p>
+              <motion.h3
+                custom={0.1}
+                variants={reveal}
+                className="text-xl md:text-2xl font-light text-white/80 mb-8 leading-relaxed"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Bądź pierwszy, który odkryje
+                <br className="hidden sm:block" />
+                nowe limitowane edycje
+              </motion.h3>
+              <motion.form
+                custom={0.2}
+                variants={reveal}
+                onSubmit={handleNewsletterSubmit}
+                className="flex gap-4 max-w-sm"
+              >
                 <input
                   type="email"
-                  placeholder="Wpisz swój email"
+                  placeholder="Adres email"
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
-                  className="flex-1 h-10 rounded-md border bg-background px-3 text-sm focus:ring-2 focus:ring-primary transition-all"
+                  className="flex-1 h-11 bg-transparent border-b border-white/15 focus:border-[#D4AF37] px-0 text-sm text-white placeholder:text-white/20 focus:outline-none transition-colors duration-500"
                 />
-                <Button type="submit" size="sm" className="h-10">Zapisz się</Button>
-              </form>
+                <button
+                  type="submit"
+                  className="text-white/30 hover:text-white transition-colors duration-500"
+                  aria-label="Zapisz się"
+                >
+                  <ArrowRight className="h-5 w-5" />
+                </button>
+              </motion.form>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Links & brand */}
+        <div className="container mx-auto px-6 md:px-8 py-12">
+          <div className="flex flex-col md:flex-row justify-between gap-12">
+            {/* Brand mark */}
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="h-7 w-7 rounded-[3px] bg-[#C1272D] flex items-center justify-center">
+                <span
+                  className="text-white font-bold text-xs"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  N
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-white/70 text-xs font-medium tracking-[0.2em] uppercase">
+                  Nawrocki
+                </span>
+                <span className="text-[#D4AF37]/50 text-[9px] font-medium">
+                  2025
+                </span>
+              </div>
+            </Link>
+
+            {/* Navigation columns */}
+            <div className="flex gap-16 text-[13px]">
+              <div>
+                <h4 className="text-white/15 text-[10px] tracking-[0.25em] uppercase mb-4 font-medium">
+                  Sklep
+                </h4>
+                <ul className="space-y-2.5">
+                  <li>
+                    <Link
+                      to="/products"
+                      className="text-white/35 hover:text-white/70 transition-colors duration-300"
+                    >
+                      Kolekcja
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/products?category=plakaty"
+                      className="text-white/35 hover:text-white/70 transition-colors duration-300"
+                    >
+                      Plakaty
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/products?category=odziez"
+                      className="text-white/35 hover:text-white/70 transition-colors duration-300"
+                    >
+                      Odzież
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/products?category=limitowane"
+                      className="text-white/35 hover:text-white/70 transition-colors duration-300"
+                    >
+                      Limitowane
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white/15 text-[10px] tracking-[0.25em] uppercase mb-4 font-medium">
+                  Info
+                </h4>
+                <ul className="space-y-2.5">
+                  <li>
+                    <Link
+                      to="/about"
+                      className="text-white/35 hover:text-white/70 transition-colors duration-300"
+                    >
+                      O Kolekcji
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/contact"
+                      className="text-white/35 hover:text-white/70 transition-colors duration-300"
+                    >
+                      Kontakt
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/faq"
+                      className="text-white/35 hover:text-white/70 transition-colors duration-300"
+                    >
+                      FAQ
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/privacy"
+                      className="text-white/35 hover:text-white/70 transition-colors duration-300"
+                    >
+                      Prywatność
+                    </Link>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ESSENTIA. Wszelkie prawa zastrzeżone.
+
+          {/* Copyright bar */}
+          <div className="mt-16 pt-8 border-t border-white/[0.06] flex flex-col md:flex-row justify-between items-center gap-3">
+            <p className="text-[11px] text-white/15 tracking-wide">
+              © {new Date().getFullYear()} Nawrocki 2025. Wszelkie prawa
+              zastrzeżone.
+            </p>
+            <p className="text-[11px] text-white/15 tracking-wide flex items-center gap-1.5">
+              Made in Poland{" "}
+              <span className="text-sm leading-none">🇵🇱</span>
+            </p>
           </div>
         </div>
       </footer>

@@ -36,7 +36,29 @@ console.log("================================================");
 console.log("DEBUG: VITE_CONVEX_URL is:", import.meta.env.VITE_CONVEX_URL);
 console.log("================================================");
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+const convexUrl = import.meta.env.VITE_CONVEX_URL;
+const convex = convexUrl ? new ConvexReactClient(convexUrl) : null;
+
+function MissingConvexConfig() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="max-w-md w-full bg-card border rounded-lg p-6 shadow-lg">
+        <h1 className="text-xl font-bold text-destructive mb-4">Brak konfiguracji Convex</h1>
+        <p className="text-sm text-muted-foreground mb-4">
+          Ustaw <span className="font-mono">VITE_CONVEX_URL</span> w pliku <span className="font-mono">.env.local</span>,
+          a następnie uruchom ponownie serwer dev.
+        </p>
+        <pre className="bg-muted p-4 rounded text-xs overflow-auto mb-4">{`CONVEX_DEPLOYMENT=your-deployment\nVITE_CONVEX_URL=your-convex-url`}</pre>
+        <button
+          onClick={() => window.location.reload()}
+          className="w-full bg-primary text-primary-foreground h-10 rounded-md font-medium"
+        >
+          Odśwież stronę
+        </button>
+      </div>
+    </div>
+  );
+}
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean, error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -174,10 +196,14 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
-      <ConvexAuthProvider client={convex}>
-        <RouterProvider router={router} />
-        <Toaster />
-      </ConvexAuthProvider>
+      {convex ? (
+        <ConvexAuthProvider client={convex}>
+          <RouterProvider router={router} />
+          <Toaster />
+        </ConvexAuthProvider>
+      ) : (
+        <MissingConvexConfig />
+      )}
     </ErrorBoundary>
   </StrictMode>,
 );
