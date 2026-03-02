@@ -47,16 +47,7 @@ export function NotebookNavbar() {
           >
             Home
           </button>
-          <button
-            onClick={() => navigate("/faq")}
-            style={{
-              background: "none", border: "none",
-              fontFamily: F, fontSize: 10, cursor: "pointer",
-              color: "var(--fg)", padding: 0, textDecoration: "none",
-            }}
-          >
-            FAQ
-          </button>
+
         </div>
 
         {/* Right */}
