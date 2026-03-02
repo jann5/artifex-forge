@@ -339,7 +339,7 @@ export default function SecretMenuPage() {
         <div style={{ fontSize: 11, lineHeight: 2.4 }}>
           WERYFIKACJA<span className="blink">...</span>
         </div>
-        <div style={{ fontSize: 9, opacity: 0.35 }}>KOD: "{code || "(pusty)}"</div>
+        <div style={{ fontSize: 9, opacity: 0.35 }}>KOD: &quot;{code || "(pusty)"}&quot;</div>
       </div>
     );
   }
