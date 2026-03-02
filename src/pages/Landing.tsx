@@ -1,198 +1,164 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useNavigate } from "react-router";
-import { RetroNavbar } from "@/components/retro/RetroNavbar";
+import { NotebookNavbar } from "@/components/notebook/NotebookNavbar";
 import { formatCurrency } from "@/lib/format";
 import { getStorageUrl } from "@/lib/utils";
 
-const ACCENTS = ["#00ffff", "#ff00ff", "#ffb000"] as const;
-
-/* ─── Web Audio blip ─── */
-function playBlip(freq = 880, type: OscillatorType = "square", vol = 0.08, dur = 0.045) {
+/* ─── Paper sound ─── */
+function playPaper() {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.6, ctx.currentTime + dur);
-    gain.gain.setValueAtTime(vol, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + dur);
-    osc.onended = () => ctx.close();
+    const secs = 0.07;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * secs, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (d.length * 0.3));
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.14, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + secs);
+    src.connect(g); g.connect(ctx.destination);
+    src.start(); src.onended = () => ctx.close();
   } catch {}
 }
 
-/* ─── Single product card ─── */
-function ProductCard({ product, index, accent, onSoundHover }: {
-  product: any; index: number; accent: string; onSoundHover: () => void;
+function playClick() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = "triangle"; o.frequency.setValueAtTime(700, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.07);
+    g.gain.setValueAtTime(0.1, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+    o.start(); o.stop(ctx.currentTime + 0.07); o.onended = () => ctx.close();
+  } catch {}
+}
+
+const MONO = "'IBM Plex Mono', monospace";
+const SERIF = "'Courier Prime', monospace";
+
+/* ─── Product card ─── */
+function ProductCard({ product, index, focused, soundEnabled, onClick, onAddToCart }: {
+  product: any; index: number; focused: boolean; soundEnabled: boolean;
+  onClick: () => void; onAddToCart: () => Promise<void>;
 }) {
-  const navigate = useNavigate();
-  const addToCart = useMutation(api.cart.add);
+  const imgUrl = product.images?.[0] ? getStorageUrl(product.images[0]) : null;
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const imgUrl = product.images?.[0] ? getStorageUrl(product.images[0]) : null;
+
+  const rots = ["-1deg", "0.8deg", "-0.5deg"];
 
   async function handleAdd(e: React.MouseEvent) {
     e.stopPropagation();
     if (adding || product.inventory === 0) return;
+    if (soundEnabled) playClick();
     setAdding(true);
-    playBlip(1200, "sine", 0.1, 0.06);
-    try {
-      await addToCart({ productId: product._id, quantity: 1 });
-      setAdded(true);
-      playBlip(1600, "sine", 0.08, 0.08);
-      setTimeout(() => setAdded(false), 2000);
-    } catch {}
+    try { await onAddToCart(); setAdded(true); setTimeout(() => setAdded(false), 2200); } catch {}
     setAdding(false);
   }
 
   return (
     <div
-      className="crt-window cursor-pointer flex flex-col"
+      role="button" tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => e.key === "Enter" && onClick()}
       style={{
-        border: `2px solid ${accent}`,
-        boxShadow: hovered
-          ? `0 0 28px ${accent}66, 0 0 56px ${accent}22, inset 0 0 16px ${accent}08`
-          : `0 0 8px ${accent}33`,
-        transform: hovered ? "translateY(-6px) scale(1.01)" : "translateY(0) scale(1)",
-        transition: "all 0.25s cubic-bezier(0.25,0.1,0.25,1)",
-        background: "#000",
+        background: "var(--paper)",
+        border: focused ? "4px solid var(--ink-red)" : "3px solid var(--ink)",
+        boxShadow: focused ? "8px 8px 0 var(--ink-red)" : "5px 5px 0 var(--ink)",
+        transform: focused ? `rotate(${rots[index%3]}) translate(-3px,-3px)` : `rotate(${rots[index%3]})`,
+        transition: "all 0.18s cubic-bezier(0.22,1,0.36,1)",
+        cursor: "pointer", display: "flex", flexDirection: "column",
+        outline: "none", position: "relative",
+        backgroundImage: "linear-gradient(transparent calc(100% - 1px), var(--line) 1px)",
+        backgroundSize: "100% 36px",
       }}
-      onMouseEnter={() => { setHovered(true); onSoundHover(); }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => navigate(`/products/${product._id}`)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && navigate(`/products/${product._id}`)}
     >
-      {/* title bar */}
-      <div className="dos-titlebar text-[9px]" style={{ background: accent, color: "#000" }}>
-        <span className="font-pixel">{product.name.toUpperCase().slice(0, 20)}</span>
-        <span className="opacity-50">[{String(index + 1).padStart(2, "0")}]</span>
-      </div>
+      {focused && (
+        <div style={{
+          position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
+          width: 18, height: 18, borderRadius: "50%",
+          background: "var(--ink-red)", border: "3px solid var(--ink)", zIndex: 2,
+        }} />
+      )}
 
-      {/* image */}
-      <div className="relative overflow-hidden" style={{ height: 220, background: "#0a0a0a", flexShrink: 0 }}>
+      {/* Image */}
+      <div style={{ height: 200, overflow: "hidden", borderBottom: "3px solid var(--ink)", flexShrink: 0, position: "relative" }}>
         {imgUrl ? (
-          <img
-            src={imgUrl}
-            alt={product.name}
-            className="w-full h-full object-cover"
-            style={{
-              filter: hovered
-                ? `grayscale(20%) contrast(1.1) saturate(1.2)`
-                : `grayscale(60%) contrast(1.3)`,
-              transition: "filter 0.4s",
-              transform: hovered ? "scale(1.04)" : "scale(1)",
-              transformOrigin: "center",
-            }}
-          />
+          <img src={imgUrl} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover", filter: focused ? "none" : "grayscale(20%)", transition: "filter 0.3s" }} />
         ) : (
-          <div className="w-full h-full flex items-center justify-center font-pixel text-[10px]" style={{ color: accent }}>
-            NO IMAGE
+          <div style={{ width: "100%", height: "100%", background: "var(--paper-dark)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: SERIF, fontSize: 16, color: "var(--muted-foreground)" }}>
+            brak zdjęcia
           </div>
         )}
-        {/* scanline overlay on image */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.18) 2px,rgba(0,0,0,0.18) 4px)" }}
-        />
         {product.inventory === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
-            <span className="font-pixel text-[11px]" style={{ color: "#ff0040", textShadow: "0 0 12px #ff0040" }}>OUT OF STOCK</span>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 18, color: "var(--ink-red)", border: "3px solid var(--ink-red)", padding: "6px 14px", transform: "rotate(-12deg)", display: "inline-block" }}>BRAK</span>
           </div>
         )}
         {product.inventory > 0 && product.inventory <= 5 && (
-          <div className="absolute top-2 right-2 font-pixel text-[8px] px-2 py-1" style={{ background: "#000", border: "1px solid #ff0040", color: "#ff0040" }}>
-            LAST {product.inventory}
+          <div style={{ position: "absolute", top: 8, right: 8, fontFamily: MONO, fontWeight: 700, fontSize: 11, color: "var(--ink-red)", border: "2px solid var(--ink-red)", padding: "3px 8px", background: "var(--paper)" }}>
+            OSTATNIE {product.inventory}
           </div>
         )}
       </div>
 
-      {/* info */}
-      <div className="flex-1 flex flex-col p-4 gap-3 z-10 relative">
-        <div>
-          <h2 className="font-pixel text-[11px] leading-relaxed mb-1" style={{ color: accent, textShadow: `0 0 10px ${accent}80` }}>
-            {product.name}
-          </h2>
-          <p className="font-terminal text-[12px] leading-relaxed" style={{ color: "#00cc33" }}>
-            {product.description?.slice(0, 100)}{product.description?.length > 100 ? "…" : ""}
-          </p>
-        </div>
+      {/* Content */}
+      <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+        <h2 style={{ fontFamily: MONO, fontWeight: 700, fontSize: "clamp(16px,2vw,20px)", lineHeight: 1.3, margin: 0 }}>
+          {product.name}
+        </h2>
+        <p style={{ fontFamily: SERIF, fontSize: 15, color: "var(--muted-foreground)", lineHeight: 1.6, margin: 0 }}>
+          {product.description?.slice(0, 90)}{product.description?.length > 90 ? "…" : ""}
+        </p>
 
-        <div className="flex items-center justify-between mt-auto pt-2" style={{ borderTop: `1px solid ${accent}30` }}>
-          <span className="font-pixel text-[13px]" style={{ color: "#ffb000", textShadow: "0 0 10px rgba(255,176,0,0.7)" }}>
-            {formatCurrency(product.price)}
-          </span>
-          <span className="font-terminal text-[10px]" style={{ color: product.inventory > 0 ? "#00ff41" : "#444" }}>
-            {product.inventory > 0 ? `IN STOCK: ${product.inventory}` : "UNAVAILABLE"}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: 10, borderTop: "2px dashed var(--line)" }}>
+          <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 22 }}>{formatCurrency(product.price)}</span>
+          <span style={{ fontFamily: MONO, fontSize: 12, color: product.inventory > 0 ? "var(--stamp-green)" : "var(--ink-red)", border: `2px solid ${product.inventory > 0 ? "var(--stamp-green)" : "var(--ink-red)"}`, padding: "2px 8px", textTransform: "uppercase" }}>
+            {product.inventory > 0 ? "dostępny" : "brak"}
           </span>
         </div>
 
         <button
           onClick={handleAdd}
           disabled={adding || product.inventory === 0}
-          className="w-full font-pixel text-[9px] py-3 mt-1"
           style={{
-            background: added ? accent : "transparent",
-            border: `2px solid ${accent}`,
-            color: added ? "#000" : accent,
+            width: "100%", textAlign: "center",
+            fontFamily: MONO, fontWeight: 700, fontSize: 14,
+            background: added ? "var(--ink)" : "var(--ink)",
+            color: "var(--paper)",
+            border: "3px solid var(--ink)",
+            padding: "10px 0",
+            boxShadow: added ? "none" : "4px 4px 0 var(--ink-red)",
             cursor: product.inventory === 0 ? "not-allowed" : "pointer",
             opacity: product.inventory === 0 ? 0.4 : 1,
-            transition: "all 0.15s",
-            textShadow: added ? "none" : `0 0 8px ${accent}80`,
-            boxShadow: hovered && product.inventory > 0 ? `0 0 16px ${accent}44` : "none",
+            transition: "all 0.1s",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
           }}
         >
-          {adding ? "ADDING…" : added ? "✓ ADDED TO CART" : "💾 ADD TO CART"}
+          {adding ? "DODAWANIE..." : added ? "✓ DODANO DO KOSZYKA" : "DODAJ DO KOSZYKA"}
         </button>
-
         <button
-          onClick={(e) => { e.stopPropagation(); navigate(`/products/${product._id}`); }}
-          className="w-full font-terminal text-[11px] py-2"
-          style={{ border: `1px solid ${accent}44`, color: "#00cc33", background: "transparent", cursor: "pointer" }}
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          style={{
+            width: "100%", textAlign: "center",
+            fontFamily: MONO, fontWeight: 600, fontSize: 13,
+            background: "transparent", color: "var(--ink)",
+            border: "3px solid var(--ink)",
+            padding: "8px 0",
+            boxShadow: "4px 4px 0 var(--ink)",
+            cursor: "pointer",
+            transition: "all 0.1s",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
         >
-          → VIEW DETAILS
+          SZCZEGÓŁY →
         </button>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Scroll-sound hook ─── */
-function useScrollSound(elements: React.RefObject<HTMLElement | null>[], freq: number, soundEnabled: boolean) {
-  const seen = useRef(new Set<Element>());
-  useEffect(() => {
-    if (!soundEnabled) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !seen.current.has(entry.target)) {
-            seen.current.add(entry.target);
-            playBlip(freq + Math.random() * 200, "sine", 0.06, 0.05);
-          }
-        });
-      },
-      { threshold: 0.25 }
-    );
-    elements.forEach((r) => { if (r.current) obs.observe(r.current); });
-    return () => obs.disconnect();
-  }, [elements, freq, soundEnabled]);
-}
-
-/* ─── Ticker ─── */
-function Ticker() {
-  const msg = "★ ARTIFEX FORGE — AUTORSKIE PRODUKTY ★   •   DOSTAWA INPOST / KURIER   •   BEZPIECZNA PŁATNOŚĆ STRIPE   •   KONTAKT TELEGRAM   •   ";
-  return (
-    <div className="overflow-hidden font-pixel text-[8px] py-1.5 border-b" style={{ borderColor: "#00ff4140", color: "#00ff41", background: "#00040040", textShadow: "0 0 6px rgba(0,255,65,0.5)" }}>
-      <div className="whitespace-nowrap" style={{ display: "inline-block", animation: "title-scroll 35s linear infinite" }}>
-        {msg}{msg}
       </div>
     </div>
   );
@@ -201,113 +167,207 @@ function Ticker() {
 /* ─── Main page ─── */
 export default function Landing() {
   const products = useQuery(api.products.list, {});
+  const addToCart = useMutation(api.cart.add);
   const navigate = useNavigate();
   const displayProducts = products?.slice(0, 3) ?? [];
+  const [activeIdx, setActiveIdx] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [activeTab, setActiveTab] = useState<"sklep" | "kontakt">("sklep");
 
-  const cardRefs = [
-    useRef<HTMLDivElement>(null),
-    useRef<HTMLDivElement>(null),
-    useRef<HTMLDivElement>(null),
-  ];
-
-  // enable sound after first interaction
   useEffect(() => {
-    const enable = () => setSoundEnabled(true);
-    window.addEventListener("click", enable, { once: true });
-    window.addEventListener("keydown", enable, { once: true });
-    window.addEventListener("scroll", enable, { once: true });
-    return () => { window.removeEventListener("click", enable); window.removeEventListener("keydown", enable); window.removeEventListener("scroll", enable); };
+    const on = () => setSoundEnabled(true);
+    window.addEventListener("click", on, { once: true });
+    window.addEventListener("keydown", on, { once: true });
+    return () => { window.removeEventListener("click", on); window.removeEventListener("keydown", on); };
   }, []);
 
-  useScrollSound(cardRefs, 660, soundEnabled);
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const len = displayProducts.length;
+      if (!len) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault(); if (soundEnabled) playPaper();
+        setActiveIdx(i => Math.min(len - 1, i + 1));
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault(); if (soundEnabled) playPaper();
+        setActiveIdx(i => Math.max(0, i - 1));
+      } else if (e.key === "Enter" && activeTab === "sklep") {
+        const p = displayProducts[activeIdx]; if (p) navigate(`/products/${p._id}`);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [displayProducts, activeIdx, soundEnabled, activeTab, navigate]);
 
   return (
-    <div className="min-h-screen" style={{ background: "#000", color: "#00ff41" }}>
-      <RetroNavbar />
-      <Ticker />
+    <div style={{ minHeight: "100vh", fontFamily: SERIF }}>
+      {/* Spiral binding */}
+      <div aria-hidden style={{
+        position: "fixed", left: 0, top: 0, bottom: 0, width: 30,
+        display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "flex-start", paddingTop: 68, gap: 26, zIndex: 30, pointerEvents: "none",
+      }}>
+        {Array.from({ length: 26 }).map((_, i) => (
+          <div key={i} style={{ width: 15, height: 15, borderRadius: "50%", border: "2.5px solid var(--ink)", background: "var(--paper)", flexShrink: 0 }} />
+        ))}
+      </div>
 
-      <main className="max-w-6xl mx-auto px-4 py-10">
+      <NotebookNavbar />
 
-        {/* ── HERO ── */}
-        <div className="text-center mb-12">
-          <div className="font-terminal text-[11px] mb-3" style={{ color: "#00cc33" }}>
-            <span className="animate-blink">▶</span>&nbsp;ARTIFEX.FORGE ONLINE STORE — SYSTEM READY
+      <main style={{ paddingLeft: "clamp(38px,6vw,90px)", paddingRight: "clamp(16px,4vw,48px)", maxWidth: 1100, margin: "0 auto", paddingTop: 36, paddingBottom: 72 }}>
+
+        {/* HERO */}
+        <div style={{ marginBottom: 44 }}>
+          <div style={{ fontFamily: MONO, fontSize: 12, color: "var(--muted-foreground)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.12em" }}>
+            — sklep internetowy —
           </div>
-          <h1 className="font-pixel mb-4" style={{ fontSize: "clamp(16px, 3.5vw, 32px)", color: "#00ff41", textShadow: "0 0 20px rgba(0,255,65,0.8), 0 0 40px rgba(0,255,65,0.4)", lineHeight: 1.6 }}>
-            ARTIFEX<br />FORGE
+          <h1 style={{ fontFamily: MONO, fontWeight: 700, fontSize: "clamp(32px,7vw,68px)", lineHeight: 1.1, margin: "0 0 16px", position: "relative", display: "inline-block" }}>
+            Artifex Forge
+            <svg viewBox="0 0 300 12" style={{ position: "absolute", bottom: -8, left: 0, width: "100%", overflow: "visible" }} aria-hidden>
+              <path d="M0,8 C50,2 100,12 150,6 C200,0 250,10 300,5" stroke="var(--ink-red)" strokeWidth="3" fill="none" strokeLinecap="round" />
+            </svg>
           </h1>
-          <p className="font-terminal text-base max-w-xl mx-auto" style={{ color: "#00cc33" }}>
+          <p style={{ fontFamily: SERIF, fontSize: 18, color: "var(--muted-foreground)", maxWidth: 500, marginTop: 20, marginBottom: 0, lineHeight: 1.7 }}>
             Ręcznie robione produkty wysokiej jakości.<br />
-            Zamów online — dostawa w 1–2 dni robocze.
+            Zamów online &mdash; dostawa <span style={{ background: "var(--highlight)", padding: "0 4px" }}>1–2 dni robocze</span>.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 mt-6">
-            <span className="font-terminal text-[12px] px-3 py-1" style={{ border: "1px solid #00ffff44", color: "#00ffff" }}>📦 INPOST / KURIER</span>
-            <span className="font-terminal text-[12px] px-3 py-1" style={{ border: "1px solid #ff00ff44", color: "#ff00ff" }}>🔒 STRIPE SECURE</span>
-            <span className="font-terminal text-[12px] px-3 py-1" style={{ border: "1px solid #ffb00044", color: "#ffb000" }}>⭐ SZYBKA WYSYŁKA</span>
-          </div>
-        </div>
 
-        {/* ── PRODUCTS ── */}
-        <div className="mb-4 flex items-center gap-3">
-          <div className="font-pixel text-[10px]" style={{ color: "#00ff41" }}>PRODUKTY</div>
-          <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg,#00ff4160,transparent)" }} />
-          <div className="font-terminal text-[11px]" style={{ color: "#00cc33" }}>
-            {displayProducts.length > 0 ? `${displayProducts.length} dostępne` : ""}
-          </div>
-        </div>
-
-        {products === undefined ? (
-          <div className="grid md:grid-cols-3 gap-6">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="skeleton-shimmer" style={{ height: 480, border: `2px solid ${ACCENTS[i]}22` }} />
+          {/* keyboard hint */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 10, marginTop: 20,
+            fontFamily: MONO, fontSize: 13, color: "var(--muted-foreground)",
+            border: "2px solid var(--line)", padding: "6px 14px", background: "var(--paper-dark)",
+          }}>
+            {["←", "→"].map(k => (
+              <span key={k} style={{ fontFamily: MONO, fontSize: 13, border: "2px solid var(--ink)", padding: "1px 7px", background: "var(--paper)" }}>{k}</span>
             ))}
+            <span>nawiguj strzałkami</span>
+            <span style={{ fontFamily: MONO, fontSize: 12, border: "2px solid var(--ink)", padding: "1px 7px", background: "var(--paper)" }}>ENTER</span>
+            <span>otwórz</span>
           </div>
-        ) : displayProducts.length === 0 ? (
-          <div className="text-center py-16 font-terminal" style={{ color: "#00cc33" }}>
-            <div className="font-pixel text-[10px] mb-2" style={{ color: "#ff00ff" }}>BRAK PRODUKTÓW</div>
-            <div>Sklep jest w przygotowaniu. Wróć wkrótce.</div>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-3 gap-6">
-            {displayProducts.map((p: any, i: number) => (
-              <div key={p._id} ref={cardRefs[i]}>
-                <ProductCard
-                  product={p}
-                  index={i}
-                  accent={ACCENTS[i % 3]}
-                  onSoundHover={() => soundEnabled && playBlip(800 + i * 120, "sine", 0.05, 0.04)}
-                />
+        </div>
+
+        {/* TABS */}
+        <div style={{ display: "flex", gap: 0, borderBottom: "3px solid var(--ink)" }}>
+          {(["sklep", "kontakt"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => { setActiveTab(tab); if (soundEnabled) playPaper(); }}
+              style={{
+                fontFamily: MONO, fontWeight: 700, fontSize: 14,
+                letterSpacing: "0.08em", textTransform: "uppercase",
+                background: activeTab === tab ? "var(--paper)" : "var(--paper-dark)",
+                border: "3px solid var(--ink)", borderBottom: activeTab === tab ? "3px solid var(--paper)" : "3px solid var(--ink)",
+                padding: "8px 22px", cursor: "pointer", position: "relative", bottom: "-3px",
+                transition: "background 0.1s",
+              }}
+            >
+              {tab === "sklep" ? "SKLEP" : "KONTAKT"}
+            </button>
+          ))}
+          <div style={{ flex: 1, borderBottom: "3px solid var(--ink)", marginBottom: 0 }} />
+        </div>
+
+        {/* SKLEP */}
+        {activeTab === "sklep" && (
+          <div style={{ paddingTop: 28 }}>
+            {/* Arrow nav */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+              <button
+                onClick={() => { if (soundEnabled) playPaper(); setActiveIdx(i => Math.max(0, i - 1)); }}
+                disabled={activeIdx === 0}
+                style={{ fontFamily: MONO, fontWeight: 700, fontSize: 20, background: "transparent", border: "3px solid var(--ink)", padding: "5px 16px", cursor: "pointer", opacity: activeIdx === 0 ? 0.25 : 1, boxShadow: "3px 3px 0 var(--ink)", transition: "all 0.1s", width: 56 }}
+              >←</button>
+              <span style={{ fontFamily: MONO, fontSize: 14, color: "var(--muted-foreground)", letterSpacing: "0.05em" }}>
+                PRODUKT {activeIdx + 1} / {displayProducts.length || "…"}
+              </span>
+              <button
+                onClick={() => { if (soundEnabled) playPaper(); setActiveIdx(i => Math.min((displayProducts.length || 1) - 1, i + 1)); }}
+                disabled={activeIdx >= (displayProducts.length || 1) - 1}
+                style={{ fontFamily: MONO, fontWeight: 700, fontSize: 20, background: "transparent", border: "3px solid var(--ink)", padding: "5px 16px", cursor: "pointer", opacity: activeIdx >= (displayProducts.length || 1) - 1 ? 0.25 : 1, boxShadow: "3px 3px 0 var(--ink)", transition: "all 0.1s", width: 56 }}
+              >→</button>
+            </div>
+
+            {products === undefined ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 28 }}>
+                {[0,1,2].map(i => <div key={i} style={{ height: 440, background: "var(--paper-dark)", border: "3px solid var(--line)", boxShadow: "5px 5px 0 var(--line)" }} />)}
               </div>
-            ))}
+            ) : displayProducts.length === 0 ? (
+              <div style={{ maxWidth: 360, margin: "40px auto", textAlign: "center", background: "var(--highlight)", border: "3px solid var(--ink)", padding: 28, boxShadow: "5px 5px 0 var(--ink)" }}>
+                <div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 22, marginBottom: 10 }}>Brak produktów</div>
+                <div style={{ fontFamily: SERIF, fontSize: 17 }}>Sklep jest w przygotowaniu. Wróć wkrótce!</div>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 28 }}>
+                {displayProducts.map((p: any, i: number) => (
+                  <ProductCard
+                    key={p._id} product={p} index={i} focused={i === activeIdx}
+                    soundEnabled={soundEnabled}
+                    onClick={() => navigate(`/products/${p._id}`)}
+                    onAddToCart={() => addToCart({ productId: p._id, quantity: 1 })}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── INFO STRIP ── */}
-        <div className="mt-12 grid md:grid-cols-3 gap-4">
+        {/* KONTAKT */}
+        {activeTab === "kontakt" && (
+          <div style={{ paddingTop: 28, maxWidth: 580 }}>
+            <div style={{ background: "var(--highlight)", border: "3px solid var(--ink)", padding: "20px 24px", boxShadow: "5px 5px 0 var(--ink)", marginBottom: 28 }}>
+              <h2 style={{ fontFamily: MONO, fontWeight: 700, fontSize: 26, margin: "0 0 10px" }}>Kontakt</h2>
+              <p style={{ fontFamily: SERIF, fontSize: 17, lineHeight: 1.7, margin: 0, color: "var(--muted-foreground)" }}>
+                Masz pytanie? Chcesz coś specjalnego? Odpisujemy szybko!
+              </p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {[
+                { icon: "💬", label: "TELEGRAM", val: "@artifexforge", url: "https://t.me/artifexforge" },
+                { icon: "📧", label: "EMAIL",    val: "kontakt@artifexforge.pl", url: "mailto:kontakt@artifexforge.pl" },
+              ].map((row, i) => (
+                <div key={i} style={{ background: "var(--paper)", border: "3px solid var(--ink)", padding: "16px 20px", boxShadow: "4px 4px 0 var(--ink)", display: "flex", alignItems: "center", gap: 16, transform: i === 0 ? "rotate(-0.5deg)" : "rotate(0.5deg)" }}>
+                  <span style={{ fontSize: 30, flexShrink: 0 }}>{row.icon}</span>
+                  <div>
+                    <div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 14, letterSpacing: "0.08em", marginBottom: 4 }}>{row.label}</div>
+                    <a href={row.url} style={{ fontFamily: SERIF, fontSize: 17, color: "var(--ink-blue)" }}>{row.val}</a>
+                  </div>
+                </div>
+              ))}
+              <div style={{ background: "var(--paper)", border: "3px solid var(--ink)", padding: "16px 24px", boxShadow: "4px 4px 0 var(--ink)" }}>
+                <h3 style={{ fontFamily: MONO, fontWeight: 700, fontSize: 16, margin: "0 0 12px", letterSpacing: "0.08em" }}>📦 DOSTAWA</h3>
+                <ul style={{ fontFamily: SERIF, fontSize: 17, margin: 0, padding: "0 0 0 18px", lineHeight: 2.2, color: "var(--muted-foreground)" }}>
+                  <li>InPost Paczkomat — <span style={{ background: "var(--highlight)", padding: "0 4px" }}>1–2 dni</span></li>
+                  <li>Kurier DPD — 1 dzień roboczy</li>
+                  <li>Stripe — BLIK, karta, przelew, Apple Pay</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* INFO ROW */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 48, paddingTop: 24, borderTop: "3px solid var(--line)" }}>
           {[
-            { icon: "📦", label: "Dostawa", val: "INPOST Paczkomat lub Kurier DPD — 1-2 dni", a: "#00ffff" },
-            { icon: "🔒", label: "Płatność", val: "Stripe — karty, BLIK, przelewy, Apple Pay", a: "#ff00ff" },
-            { icon: "💬", label: "Kontakt", val: "Telegram — odpowiedź w ciągu 24h", a: "#ffb000" },
-          ].map((item, i) => (
-            <div key={i} className="p-5 text-center" style={{ border: `1px solid ${item.a}33`, background: `${item.a}06` }}>
-              <div className="text-3xl mb-3">{item.icon}</div>
-              <div className="font-pixel text-[9px] mb-2" style={{ color: item.a }}>{item.label}</div>
-              <div className="font-terminal text-[12px]" style={{ color: "#00cc33" }}>{item.val}</div>
+            "📦  InPost / Kurier DPD",
+            "🔒  Bezpieczna płatność Stripe",
+            "⭐  Ręcznie robione",
+          ].map((t, i) => (
+            <div key={i} style={{ fontFamily: MONO, fontSize: 13, fontWeight: i === 1 ? 600 : 400, border: "2px solid var(--ink)", padding: "7px 16px", background: i === 1 ? "var(--highlight)" : "transparent", letterSpacing: "0.03em" }}>
+              {t}
             </div>
           ))}
         </div>
 
-        {/* ── FOOTER ── */}
-        <div className="mt-12 pt-6 text-center" style={{ borderTop: "1px solid #00ff4120" }}>
-          <div className="font-terminal text-[11px] flex flex-wrap justify-center gap-x-6 gap-y-2" style={{ color: "#005500" }}>
-            {[["Polityka prywatności","/privacy"],["Kontakt","/contact"],["FAQ","/faq"],["Moje zamówienia","/orders"],["Logowanie","/auth"]].map(([l,h]) => (
-              <a key={h} href={h} className="hover:text-phosphor transition-colors">{l}</a>
+        {/* FOOTER */}
+        <div style={{ marginTop: 40, textAlign: "center", fontFamily: MONO, fontSize: 12, color: "var(--muted-foreground)", letterSpacing: "0.08em" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px 24px", marginBottom: 8 }}>
+            {[["POLITYKA PRYWATNOŚCI","/privacy"],["FAQ","/faq"],["ZAMÓWIENIA","/orders"],["LOGOWANIE","/auth"]].map(([l,h]) => (
+              <a key={h} href={h} style={{ color: "var(--ink-blue)", textTransform: "uppercase", fontSize: 11 }}>{l}</a>
             ))}
           </div>
-          <div className="font-terminal text-[10px] mt-3 opacity-30">ARTIFEX FORGE © {new Date().getFullYear()}</div>
+          <div>ARTIFEX FORGE &copy; {new Date().getFullYear()}</div>
         </div>
-
       </main>
     </div>
   );
