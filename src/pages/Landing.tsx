@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useNavigate } from "react-router";
@@ -6,23 +6,80 @@ import { NotebookNavbar } from "@/components/notebook/NotebookNavbar";
 import { formatCurrency } from "@/lib/format";
 import { getStorageUrl } from "@/lib/utils";
 
-const M = "'IBM Plex Mono', monospace";
+const F = "'Press Start 2P', monospace";
 
-function playClick() {
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.type = "square";
-    o.frequency.setValueAtTime(880, ctx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.04);
-    g.gain.setValueAtTime(0.06, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
-    o.start(); o.stop(ctx.currentTime + 0.04); o.onended = () => ctx.close();
-  } catch {}
+/* ── Typewriter hook ── */
+function useTypewriter(text: string, speed = 40, startImmediately = true) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+  const [started, setStarted] = useState(startImmediately);
+
+  useEffect(() => {
+    if (!started) return;
+    setDisplayed("");
+    setDone(false);
+    let i = 0;
+    const iv = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) { clearInterval(iv); setDone(true); }
+    }, speed);
+    return () => clearInterval(iv);
+  }, [text, speed, started]);
+
+  return { displayed, done, start: () => setStarted(true) };
 }
 
-/* ── Product Card ── */
+/* ── Splash screen ── */
+function Splash({ onDone }: { onDone: () => void }) {
+  const { displayed, done } = useTypewriter("ARTIFEX FORGE.", 80);
+  const [showPrompt, setShowPrompt] = useState(false);
+
+  useEffect(() => {
+    if (done) {
+      const t = setTimeout(() => setShowPrompt(true), 400);
+      return () => clearTimeout(t);
+    }
+  }, [done]);
+
+  useEffect(() => {
+    function handle(e: KeyboardEvent) {
+      if (e.key === "Enter" || e.key === "ArrowDown" || e.key === " ") {
+        e.preventDefault();
+        onDone();
+      }
+    }
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
+  }, [onDone]);
+
+  return (
+    <div
+      onClick={onDone}
+      style={{
+        position: "fixed", inset: 0, zIndex: 100,
+        background: "var(--bg)",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        cursor: "pointer",
+        fontFamily: F,
+      }}
+    >
+      <h1 style={{ fontSize: "clamp(18px, 4vw, 32px)", letterSpacing: "0.05em", textAlign: "center" }}>
+        {displayed}<span className="blink" style={{ color: "var(--fg)" }}>_</span>
+      </h1>
+      {showPrompt && (
+        <div style={{ marginTop: 40, textAlign: "center", fontSize: 10, lineHeight: 2.4 }}>
+          <div>PRESS ↓ TO CONTINUE</div>
+          <div className="bounce-arrow" style={{ fontSize: 14, marginTop: 8 }}>▼</div>
+          <div style={{ marginTop: 8, opacity: 0.5 }}>[ENTER OR TAP]</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Product card (window-box style) ── */
 function ProductCard({ product, index, focused, onClick, onAddToCart }: {
   product: any; index: number; focused: boolean;
   onClick: () => void; onAddToCart: () => Promise<void>;
@@ -30,127 +87,98 @@ function ProductCard({ product, index, focused, onClick, onAddToCart }: {
   const imgUrl = product.images?.[0] ? getStorageUrl(product.images[0]) : null;
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   async function handleAdd(e: React.MouseEvent) {
     e.stopPropagation();
     if (adding || product.inventory === 0) return;
-    playClick();
     setAdding(true);
-    try { await onAddToCart(); setAdded(true); setTimeout(() => setAdded(false), 1400); } catch {}
+    try { await onAddToCart(); setAdded(true); setTimeout(() => setAdded(false), 1800); } catch {}
     setAdding(false);
   }
-
-  const inv = hovered || focused;
 
   return (
     <div
       role="button" tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
-        background: inv ? "#000" : "#fff",
-        color: inv ? "#fff" : "#000",
-        padding: 24,
-        display: "flex", flexDirection: "column", gap: 16,
-        cursor: "pointer", outline: "none",
-        transition: "all 0.2s",
+        background: "var(--bg)",
+        border: focused ? "4px solid var(--fg)" : "3px solid var(--fg)",
+        boxShadow: focused ? "8px 8px 0 var(--fg)" : "6px 6px 0 var(--fg)",
+        padding: 0,
         position: "relative",
-        minHeight: 420,
-        fontFamily: M,
+        cursor: "pointer",
+        outline: "none",
+        fontFamily: F,
+        transition: "box-shadow 0.15s, border-width 0.15s",
       }}
     >
-      {/* Index + Status */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 11, letterSpacing: "0.2em", opacity: 0.4, fontWeight: 700 }}>
-          {String(index + 1).padStart(3, "0")}
-        </span>
-        <span style={{
-          fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700,
-          color: product.inventory > 0 ? (inv ? "#0f0" : "#000") : "#ff0000",
-          border: "2px solid",
-          borderColor: product.inventory > 0 ? (inv ? "#0f0" : "#000") : "#ff0000",
-          padding: "2px 8px",
-        }}>
-          {product.inventory > 0 ? "IN STOCK" : "SOLD OUT"}
-        </span>
-      </div>
+      {/* Inner border (blankshirt double-border) */}
+      <div style={{
+        position: "absolute", inset: 5,
+        border: "2px solid var(--fg)",
+        pointerEvents: "none", zIndex: 1,
+      }} />
 
       {/* Image */}
       {imgUrl ? (
-        <div style={{ width: "100%", aspectRatio: "4/3", overflow: "hidden", border: inv ? "4px solid #fff" : "4px solid #000" }}>
-          <img src={imgUrl} alt={product.name} loading="lazy" style={{
-            width: "100%", height: "100%", objectFit: "cover",
-            filter: inv ? "none" : "grayscale(100%) contrast(1.1)",
-            transition: "filter 0.3s",
-          }} />
+        <div style={{ padding: "16px 16px 0", position: "relative", zIndex: 2 }}>
+          <div style={{ border: "2px solid var(--fg)", overflow: "hidden" }}>
+            <img src={imgUrl} alt={product.name} loading="lazy" style={{
+              width: "100%", aspectRatio: "1/1", objectFit: "cover",
+              filter: "grayscale(30%) sepia(20%)",
+              display: "block",
+            }} />
+          </div>
         </div>
       ) : (
         <div style={{
-          width: "100%", aspectRatio: "4/3",
-          border: inv ? "4px solid #fff" : "4px solid #000",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 11, letterSpacing: "0.15em", opacity: 0.3, fontWeight: 700,
+          margin: "16px 16px 0", border: "2px solid var(--fg)",
+          aspectRatio: "1/1", display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 9, opacity: 0.4, position: "relative", zIndex: 2,
         }}>NO IMAGE</div>
       )}
 
-      {/* Name + Desc */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-        <h3 style={{ fontSize: "clamp(16px, 2.2vw, 24px)", lineHeight: 1.2, textTransform: "uppercase", letterSpacing: "-0.02em" }}>
+      {/* Content */}
+      <div style={{ padding: "14px 18px 18px", position: "relative", zIndex: 2 }}>
+        <h3 style={{ fontSize: "clamp(11px, 1.5vw, 14px)", lineHeight: 1.8, marginBottom: 6, textTransform: "uppercase" }}>
           {product.name}
         </h3>
+
         {product.description && (
-          <p style={{ fontSize: 12, opacity: 0.5, lineHeight: 1.5, margin: 0 }}>
-            {product.description.slice(0, 80)}{product.description.length > 80 ? "..." : ""}
+          <p style={{ fontSize: 9, opacity: 0.5, lineHeight: 2, margin: "0 0 10px" }}>
+            {product.description.slice(0, 60)}{product.description.length > 60 ? "..." : ""}
           </p>
         )}
-      </div>
 
-      {/* Price */}
-      <div style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 700, lineHeight: 1, letterSpacing: "-0.03em" }}>
-        {formatCurrency(product.price)}
-      </div>
+        <div style={{ fontSize: "clamp(14px, 2vw, 20px)", marginBottom: 12 }}>
+          {formatCurrency(product.price)}
+        </div>
 
-      {/* Buttons */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-        <button
-          onClick={handleAdd}
-          disabled={adding || product.inventory === 0}
-          style={{
-            width: "100%", padding: "14px 0",
-            background: added ? "#ff0000" : (inv ? "#fff" : "#000"),
-            color: added ? "#fff" : (inv ? "#000" : "#fff"),
-            border: "4px solid",
-            borderColor: inv ? "#fff" : "#000",
-            fontSize: 12, fontWeight: 700, letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            cursor: product.inventory === 0 ? "not-allowed" : "pointer",
-            opacity: product.inventory === 0 ? 0.3 : 1,
-            transition: "all 0.12s",
-            fontFamily: M,
-          }}
-        >
-          {adding ? "..." : added ? "DODANO" : "DODAJ DO KOSZYKA"}
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onClick(); }}
-          style={{
-            width: "100%", padding: "10px 0",
-            background: "transparent",
-            color: inv ? "#fff" : "#000",
-            border: "4px solid",
-            borderColor: inv ? "#fff" : "#000",
-            borderTop: "none",
-            fontSize: 11, fontWeight: 700, letterSpacing: "0.14em",
-            textTransform: "uppercase", cursor: "pointer",
-            transition: "all 0.12s",
-            fontFamily: M,
-          }}
-        >
-          SZCZEGOLY
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          <button
+            onClick={handleAdd}
+            disabled={adding || product.inventory === 0}
+            className="pixel-btn"
+            style={{ width: "100%", textAlign: "center", fontSize: 9 }}
+          >
+            {adding ? "..." : added ? "DODANO!" : product.inventory === 0 ? "BRAK" : "KUP"}
+          </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); onClick(); }}
+            className="pixel-btn-outline"
+            style={{ width: "100%", textAlign: "center", fontSize: 9, borderTop: "none" }}
+          >
+            SZCZEGOLY
+          </button>
+        </div>
+
+        {product.inventory > 0 && product.inventory <= 5 && (
+          <div style={{ fontSize: 8, color: "var(--accent)", marginTop: 8, textAlign: "center" }}>
+            OSTATNIE {product.inventory} SZT.
+          </div>
+        )}
       </div>
     </div>
   );
@@ -163,16 +191,32 @@ export default function Landing() {
   const navigate = useNavigate();
   const allProducts = products ?? [];
   const [activeIdx, setActiveIdx] = useState(0);
-  const [time, setTime] = useState(new Date());
+  const [showSplash, setShowSplash] = useState(true);
+  const [msg, setMsg] = useState("");
+  const mainRef = useRef<HTMLDivElement>(null);
 
-  // Live clock
+  // Skip splash if returning
   useEffect(() => {
-    const t = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(t);
+    if (sessionStorage.getItem("af_splash_done")) {
+      setShowSplash(false);
+    }
   }, []);
+
+  const handleSplashDone = useCallback(() => {
+    setShowSplash(false);
+    sessionStorage.setItem("af_splash_done", "1");
+  }, []);
+
+  // Typewriter for the shop description
+  const { displayed: desc, done: descDone } = useTypewriter(
+    "reczna robota. zamow online.\n-> wybierz produkt -> dodaj do koszyka ->\ntwoje zamowienie bedzie gotowe w 1-2 dni.",
+    25,
+    !showSplash,
+  );
 
   // Arrow key nav
   useEffect(() => {
+    if (showSplash) return;
     function onKey(e: KeyboardEvent) {
       const len = allProducts.length;
       if (!len) return;
@@ -189,134 +233,162 @@ export default function Landing() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [allProducts, activeIdx, navigate]);
+  }, [allProducts, activeIdx, navigate, showSplash]);
 
-  const marqueeText = "ARTIFEX FORGE \u2014 RECZNA ROBOTA \u2014 SKLEP INTERNETOWY \u2014 ZAMOW TERAZ \u2014 ";
+  // Random messages
+  useEffect(() => {
+    const msgs = [
+      "nowy drop wkrotce...",
+      "kazdy produkt jest unikalny.",
+      "darmowa dostawa od 200 zl.",
+      "recznie robione we wroclawiu.",
+      "stripe. blik. karta. apple pay.",
+    ];
+    let i = 0;
+    const iv = setInterval(() => {
+      i = (i + 1) % msgs.length;
+      setMsg(msgs[i]);
+    }, 5000);
+    setMsg(msgs[0]);
+    return () => clearInterval(iv);
+  }, []);
+
+  if (showSplash) return <Splash onDone={handleSplashDone} />;
 
   return (
-    <div style={{ minHeight: "100vh", fontFamily: M }}>
+    <div ref={mainRef} style={{ minHeight: "100vh", fontFamily: F }}>
       <NotebookNavbar />
 
-      {/* MARQUEE */}
-      <div className="marquee-wrap">
-        <div className="marquee-track">
-          <span>{marqueeText.repeat(10)}</span>
-        </div>
-      </div>
-
-      {/* HERO */}
+      {/* HERO — centered like blankshirt */}
       <section style={{
-        padding: "clamp(48px, 12vh, 140px) clamp(20px, 5vw, 80px)",
-        borderBottom: "4px solid #000",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        textAlign: "center",
+        minHeight: "50vh",
+        padding: "60px 24px 40px",
       }}>
-        <h1 style={{
-          fontSize: "clamp(52px, 15vw, 220px)",
-          lineHeight: 0.88,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "-0.05em",
-          margin: 0,
-        }}>
-          ARTIFEX<br/>FORGE<span className="cursor-blink" style={{ color: "#ff0000" }}>_</span>
+        <h1 style={{ fontSize: "clamp(16px, 3.5vw, 28px)", marginBottom: 32 }}>
+          artifex forge.
         </h1>
-        <div style={{
-          marginTop: "clamp(24px, 4vh, 48px)",
-          display: "flex", flexWrap: "wrap", gap: "6px 20px",
-          fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase",
-          opacity: 0.4, fontWeight: 500,
+
+        {/* Description in a window box */}
+        <div className="window-box" style={{
+          maxWidth: 560, width: "100%", textAlign: "left",
+          fontSize: 11, lineHeight: 2.2,
         }}>
-          <span>HANDMADE GOODS</span>
-          <span>/</span>
-          <span>WROCLAW, PL</span>
-          <span>/</span>
-          <span>51.1079N 17.0385E</span>
-          <span>/</span>
-          <span>{time.toLocaleTimeString("pl-PL", { hour12: false })}</span>
+          <pre style={{
+            fontFamily: F, fontSize: 11, margin: 0,
+            whiteSpace: "pre-wrap", wordBreak: "break-word",
+          }}>
+            {desc}<span className="blink">■</span>
+          </pre>
         </div>
       </section>
 
-      {/* PRODUCTS SECTION HEADER */}
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "14px clamp(20px, 5vw, 80px)",
-        borderBottom: "4px solid #000",
-        fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700,
-      }}>
-        <span>01 — PRODUKTY</span>
-        <span style={{ opacity: 0.4, fontWeight: 500 }}>{allProducts.length} ITEMS</span>
-      </div>
+      {/* PRODUCTS */}
+      {allProducts.length > 0 && (
+        <section style={{ padding: "0 clamp(20px, 5vw, 80px) 60px" }}>
+          {/* Section header */}
+          <div className="window-box" style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "12px 20px",
+            maxWidth: 900, margin: "0 auto 32px",
+          }}>
+            <span style={{ fontSize: 11 }}>PRODUKTY</span>
+            <span style={{ fontSize: 9, opacity: 0.4 }}>{allProducts.length} ITEMS</span>
+          </div>
 
-      {/* PRODUCTS GRID */}
-      {products === undefined ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 4, background: "#000" }}>
-          {[0, 1, 2].map(i => (
-            <div key={i} style={{ background: "#f0f0f0", height: 500 }}>
-              <div style={{ padding: 24, fontSize: 11, letterSpacing: "0.15em", opacity: 0.3 }}>LOADING...</div>
-            </div>
-          ))}
-        </div>
-      ) : allProducts.length === 0 ? (
-        <div style={{ padding: "100px 40px", textAlign: "center" }}>
-          <div style={{ fontSize: 32, fontWeight: 700, marginBottom: 12, letterSpacing: "-0.03em" }}>BRAK PRODUKTOW</div>
-          <div style={{ fontSize: 13, opacity: 0.4, letterSpacing: "0.1em" }}>SKLEP W PRZYGOTOWANIU</div>
-        </div>
-      ) : (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-          gap: 4,
-          background: "#000",
-        }}>
-          {allProducts.map((p: any, i: number) => (
-            <ProductCard
-              key={p._id} product={p} index={i} focused={i === activeIdx}
-              onClick={() => navigate(`/products/${p._id}`)}
-              onAddToCart={() => addToCart({ productId: p._id, quantity: 1 })}
-            />
-          ))}
+          {/* Grid */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: 28,
+            maxWidth: 900,
+            margin: "0 auto",
+          }}>
+            {allProducts.map((p: any, i: number) => (
+              <ProductCard
+                key={p._id} product={p} index={i} focused={i === activeIdx}
+                onClick={() => navigate(`/products/${p._id}`)}
+                onAddToCart={() => addToCart({ productId: p._id, quantity: 1 })}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {products === undefined && (
+        <div style={{ textAlign: "center", padding: "80px 24px" }}>
+          <div style={{ fontSize: 11 }}>LOADING<span className="blink">...</span></div>
         </div>
       )}
 
-      {/* INFO BAR — inverted */}
+      {products && allProducts.length === 0 && (
+        <div style={{ textAlign: "center", padding: "80px 24px" }}>
+          <div className="window-box" style={{ display: "inline-block", maxWidth: 380 }}>
+            <div style={{ fontSize: 12, marginBottom: 8 }}>BRAK PRODUKTOW</div>
+            <div style={{ fontSize: 9, opacity: 0.5 }}>sklep w przygotowaniu.<br/>wroc wkrotce.</div>
+          </div>
+        </div>
+      )}
+
+      {/* INFO SECTION — blankshirt style boxes */}
       <section style={{
-        background: "#000", color: "#fff",
-        padding: "clamp(28px, 5vh, 56px) clamp(20px, 5vw, 80px)",
-        display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 28,
-        borderTop: "4px solid #000",
+        padding: "40px clamp(20px, 5vw, 80px) 60px",
+        maxWidth: 900, margin: "0 auto",
+      }}>
+        <div className="window-box" style={{
+          padding: "16px 20px",
+          fontSize: 10, lineHeight: 2.2,
+          marginBottom: 20,
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "4px 20px" }}>
+            <span>📦 INPOST / KURIER DPD</span>
+            <span>💳 STRIPE / BLIK / KARTA</span>
+            <span>✋ RECZNA ROBOTA</span>
+          </div>
+        </div>
+
+        {/* Rotating message */}
+        <div style={{
+          textAlign: "center", fontSize: 9, opacity: 0.4,
+          lineHeight: 2, minHeight: 20,
+        }}>
+          {msg}<span className="blink">_</span>
+        </div>
+      </section>
+
+      {/* CONTACT */}
+      <section style={{
+        padding: "0 clamp(20px, 5vw, 80px) 60px",
+        maxWidth: 900, margin: "0 auto",
+        display: "flex", flexDirection: "column", gap: 16,
       }}>
         {[
-          ["INPOST PACZKOMAT", "Dostawa 1-2 dni"],
-          ["STRIPE PAYMENTS", "BLIK / Karta / Apple Pay"],
-          ["RECZNA ROBOTA", "Kazdy produkt unikalny"],
-          ["DARMOWY ZWROT", "14 dni na zwrot"],
-        ].map(([title, desc], i) => (
-          <div key={i}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 4 }}>{title}</div>
-            <div style={{ fontSize: 11, opacity: 0.4 }}>{desc}</div>
+          { label: "TELEGRAM", value: "@artifexforge", href: "https://t.me/artifexforge" },
+          { label: "EMAIL", value: "kontakt@artifexforge.pl", href: "mailto:kontakt@artifexforge.pl" },
+        ].map((c, i) => (
+          <div key={i} className="window-box" style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <span style={{ fontSize: 10 }}>{c.label}</span>
+            <a href={c.href} style={{ fontSize: 10, color: "var(--fg)" }}>{c.value}</a>
           </div>
         ))}
       </section>
 
       {/* FOOTER */}
       <footer style={{
-        borderTop: "4px solid #000",
-        padding: "20px clamp(20px, 5vw, 80px)",
-        display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center",
-        gap: "8px 40px",
-        fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
+        textAlign: "center",
+        padding: "24px",
+        fontSize: 9,
+        opacity: 0.4,
+        lineHeight: 2.4,
       }}>
-        <span style={{ fontWeight: 700 }}>&copy; {new Date().getFullYear()} ARTIFEX FORGE</span>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 20px" }}>
-          {[
-            ["PRYWATNOSC", "/privacy"],
-            ["FAQ", "/faq"],
-            ["ZAMOWIENIA", "/orders"],
-            ["KONTAKT", "/contact"],
-          ].map(([label, href]) => (
-            <a key={href} href={href} style={{ color: "#000", textDecoration: "none", fontWeight: 500 }}>{label}</a>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px 20px", marginBottom: 8 }}>
+          {[["PRYWATNOSC", "/privacy"], ["FAQ", "/faq"], ["ZAMOWIENIA", "/orders"]].map(([l, h]) => (
+            <a key={h} href={h} style={{ color: "var(--fg)", textDecoration: "none" }}>{l}</a>
           ))}
         </div>
-        <span style={{ opacity: 0.3 }}>V3.0</span>
+        <div>© {new Date().getFullYear()} ARTIFEX FORGE</div>
       </footer>
     </div>
   );
