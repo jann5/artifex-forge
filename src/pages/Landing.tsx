@@ -74,13 +74,13 @@ function IntelligenceQuestion({ onSelect }: { onSelect: (level: "low" | "medium"
       <BackBtn onClick={() => window.history.back()} />
       <div className="window-box" style={{ maxWidth: 440, width: "calc(100% - 40px)", textAlign: "center" }}>
         <h2 style={{ fontSize: "clamp(11px, 2vw, 14px)", marginBottom: 20, lineHeight: 1.8 }}>
-          KIM JESTES?
+          JAK MADRY JESTES?
         </h2>
         <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
-          {(["Ciemniak", "Sredniak", "Geniusz"] as const).map(level => (
+          {(["Troche", "Srednio", "Bardzo"] as const).map(level => (
             <button
               key={level}
-              onClick={() => onSelect((level === "Ciemniak" ? "low" : level === "Sredniak" ? "medium" : "high") as "low" | "medium" | "high")}
+              onClick={() => onSelect((level === "Troche" ? "low" : level === "Srednio" ? "medium" : "high") as "low" | "medium" | "high")}
               className="pixel-btn-outline"
               style={{ fontSize: 10, padding: "8px 20px" }}
             >
