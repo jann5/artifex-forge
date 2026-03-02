@@ -52,9 +52,9 @@ function Splash({ onDone }: { onDone: () => void }) {
       </h1>
       {showPrompt && (
         <div style={{ marginTop: 40, textAlign: "center", fontSize: 10, lineHeight: 2.4 }}>
-          <div>PRESS ↓ TO CONTINUE</div>
+          <div>NACISNIJ ↓ ABY KONTYNUOWAC</div>
           <div className="bounce-arrow" style={{ fontSize: 14, marginTop: 4 }}>▼</div>
-          <div style={{ marginTop: 4, opacity: 0.5 }}>[ENTER OR TAP]</div>
+          <div style={{ marginTop: 4, opacity: 0.5 }}>[ENTER LUB TAP]</div>
         </div>
       )}
     </div>
@@ -74,13 +74,13 @@ function IntelligenceQuestion({ onSelect }: { onSelect: (level: "low" | "medium"
       <BackBtn onClick={() => window.history.back()} />
       <div className="window-box" style={{ maxWidth: 440, width: "calc(100% - 40px)", textAlign: "center" }}>
         <h2 style={{ fontSize: "clamp(11px, 2vw, 14px)", marginBottom: 20, lineHeight: 1.8 }}>
-          HOW INTELLIGENT ARE YOU?
+          JAK MADRY JESTES?
         </h2>
         <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
-          {(["Low", "Medium", "High"] as const).map(level => (
+          {(["Niski", "Sredni", "Wysoki"] as const).map(level => (
             <button
               key={level}
-              onClick={() => onSelect(level.toLowerCase() as "low" | "medium" | "high")}
+              onClick={() => onSelect((level === "Niski" ? "low" : level === "Sredni" ? "medium" : "high") as "low" | "medium" | "high")}
               className="pixel-btn-outline"
               style={{ fontSize: 10, padding: "8px 20px" }}
             >
@@ -106,7 +106,7 @@ function BackBtn({ onClick }: { onClick: () => void }) {
         fontSize: 9, padding: "6px 14px",
       }}
     >
-      ← BACK
+      ← WSTECZ
     </button>
   );
 }
@@ -254,10 +254,10 @@ function JumpGame({ onWin, onBack }: { onWin: () => void; onBack: () => void }) 
       <BackBtn onClick={onBack} />
       <div className="window-box" style={{ maxWidth: 660, width: "calc(100% - 40px)" }}>
         <h2 style={{ fontSize: 13, textAlign: "center", marginBottom: 8, lineHeight: 1.6 }}>
-          LOW INTELLIGENCE TEST:
+          TEST NISKIEJ INTELIGENCJI:
         </h2>
         <div style={{ fontSize: 9, textAlign: "center", opacity: 0.6, marginBottom: 14, lineHeight: 2 }}>
-          TAP / SPACE / ↑ TO JUMP. REACH 1250 TO UNLOCK. KEEP PLAYING IF YOU WANT.
+          TAP / SPACJA / ↑ ABY SKOCZYC. OSIAGNIJ 1250 ABY ODBLOKOWAC.
         </div>
         <canvas
           ref={canvasRef}
@@ -270,14 +270,14 @@ function JumpGame({ onWin, onBack }: { onWin: () => void; onBack: () => void }) 
         </div>
         {gameOver && !won && (
           <div style={{ textAlign: "center", marginTop: 8 }}>
-            <div style={{ fontSize: 14, marginBottom: 8 }}>GAME OVER</div>
-            <button onClick={reset} className="pixel-btn-outline" style={{ fontSize: 9 }}>Retry</button>
+            <div style={{ fontSize: 14, marginBottom: 8 }}>KONIEC GRY</div>
+            <button onClick={reset} className="pixel-btn-outline" style={{ fontSize: 9 }}>Nowa gra</button>
           </div>
         )}
         {won && (
           <div style={{ textAlign: "center", marginTop: 12 }}>
-            <div style={{ fontSize: 11, marginBottom: 8, color: "var(--accent)" }}>UNLOCKED!</div>
-            <button onClick={onWin} className="pixel-btn" style={{ fontSize: 10 }}>ENTER SHOP</button>
+            <div style={{ fontSize: 11, marginBottom: 8, color: "var(--accent)" }}>ODBLOKOWANO!</div>
+            <button onClick={onWin} className="pixel-btn" style={{ fontSize: 10 }}>WEJDZ DO SKLEPU</button>
           </div>
         )}
       </div>
@@ -356,10 +356,10 @@ function Minesweeper({ onWin, onBack }: { onWin: () => void; onBack: () => void 
       <BackBtn onClick={onBack} />
       <div className="window-box" style={{ maxWidth: 520, width: "calc(100% - 40px)" }}>
         <h2 style={{ fontSize: 12, textAlign: "center", marginBottom: 12, lineHeight: 1.6 }}>
-          MINESWEEPER ({MINE_ROWS}×{MINE_COLS})
+          SAPER ({MINE_ROWS}×{MINE_COLS})
         </h2>
         <div style={{ textAlign: "center", marginBottom: 12 }}>
-          <button onClick={retry} className="pixel-btn-outline" style={{ fontSize: 9 }}>Retry</button>
+          <button onClick={retry} className="pixel-btn-outline" style={{ fontSize: 9 }}>Nowa gra</button>
         </div>
         <div style={{ display: "flex", justifyContent: "center" }}>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${MINE_COLS}, 30px)`, gap: 2 }}>
@@ -391,14 +391,14 @@ function Minesweeper({ onWin, onBack }: { onWin: () => void; onBack: () => void 
         </div>
         {gameOver && (
           <div style={{ textAlign: "center", marginTop: 12, fontSize: 12, color: "var(--accent)" }}>
-            BOOM! GAME OVER.
-            <div style={{ marginTop: 8 }}><button onClick={retry} className="pixel-btn-outline" style={{ fontSize: 9 }}>Retry</button></div>
+            BUM! KONIEC GRY.
+            <div style={{ marginTop: 8 }}><button onClick={retry} className="pixel-btn-outline" style={{ fontSize: 9 }}>Nowa gra</button></div>
           </div>
         )}
         {won && (
           <div style={{ textAlign: "center", marginTop: 12 }}>
-            <div style={{ fontSize: 11, marginBottom: 8, color: "var(--accent)" }}>CLEARED!</div>
-            <button onClick={onWin} className="pixel-btn" style={{ fontSize: 10 }}>ENTER SHOP</button>
+            <div style={{ fontSize: 11, marginBottom: 8, color: "var(--accent)" }}>OCZYSZCZONO!</div>
+            <button onClick={onWin} className="pixel-btn" style={{ fontSize: 10 }}>WEJDZ DO SKLEPU</button>
           </div>
         )}
       </div>
@@ -414,8 +414,11 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
   const [wrong, setWrong] = useState(false);
 
   function submit() {
-    const a = answer.trim().toLowerCase();
-    if (a === "c" || a === "sea") {
+    const a = answer.trim().toLowerCase()
+      .replace(/ą/g, "a").replace(/ę/g, "e").replace(/ó/g, "o")
+      .replace(/ś/g, "s").replace(/ź/g, "z").replace(/ż/g, "z")
+      .replace(/ć/g, "c").replace(/ń/g, "n").replace(/ł/g, "l");
+    if (a === "wszystkie" || a === "kazdy" || a === "kazde" || a === "12") {
       onWin();
     } else {
       setWrong(true);
@@ -434,9 +437,9 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
         maxWidth: 500, width: "calc(100% - 40px)", textAlign: "center",
         animation: wrong ? "shake 0.3s" : "none",
       }}>
-        <h2 style={{ fontSize: 12, marginBottom: 8, lineHeight: 1.6 }}>MEDIUM INTELLIGENCE RIDDLE:</h2>
+        <h2 style={{ fontSize: 12, marginBottom: 8, lineHeight: 1.6 }}>ZAGADKA:</h2>
         <div style={{ fontSize: 10, marginBottom: 16, lineHeight: 2, opacity: 0.7 }}>
-          WHAT LETTER OF THE ALPHABET HAS THE MOST WATER?
+          ILE MIESIECY W ROKU MA 28 DNI?
         </div>
         <input
           value={answer}
@@ -446,10 +449,10 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
           autoFocus
         />
         <div>
-          <button onClick={submit} className="pixel-btn-outline" style={{ fontSize: 10 }}>Submit</button>
+          <button onClick={submit} className="pixel-btn-outline" style={{ fontSize: 10 }}>Odpowiedz</button>
         </div>
         {wrong && (
-          <div style={{ marginTop: 10, fontSize: 9, color: "var(--accent)" }}>WRONG. TRY AGAIN.</div>
+          <div style={{ marginTop: 10, fontSize: 9, color: "var(--accent)" }}>ZLE. SPROBUJ JESZCZE RAZ.</div>
         )}
       </div>
     </div>
