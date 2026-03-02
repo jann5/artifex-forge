@@ -179,10 +179,11 @@ export function useTypewriter(text: string, speed: number = 50, startDelay: numb
 
 /**
  * Hook for smooth number counting with easing — premium stats display
+ * Optimized for 60fps performance
  */
 export function useSmoothCounter(
   end: number,
-  duration: number = 2500,
+  duration: number = 2000,
   options?: { prefix?: string; suffix?: string; decimals?: number }
 ) {
   const [value, setValue] = useState(0);
@@ -211,18 +212,26 @@ export function useSmoothCounter(
     if (!hasStarted) return;
 
     const startTime = performance.now();
+    let animationId: number;
+    
     const step = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Premium ease-out expo
+      // Premium ease-out expo - smooth acceleration
       const easedProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       const currentValue = easedProgress * end;
 
       setValue(options?.decimals ? parseFloat(currentValue.toFixed(options.decimals)) : Math.floor(currentValue));
 
-      if (progress < 1) requestAnimationFrame(step);
+      if (progress < 1) {
+        animationId = requestAnimationFrame(step);
+      }
     };
-    requestAnimationFrame(step);
+    
+    animationId = requestAnimationFrame(step);
+    return () => {
+      if (animationId) cancelAnimationFrame(animationId);
+    };
   }, [hasStarted, end, duration, options?.decimals]);
 
   const formatted = `${options?.prefix || ""}${value.toLocaleString("pl-PL")}${options?.suffix || ""}`;
@@ -363,7 +372,7 @@ export const staggerItem = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: [0.4, 0, 0.2, 1],
+      ease: [0.4, 0, 0.2, 1] as [number, number, number, number],
     },
   },
 };

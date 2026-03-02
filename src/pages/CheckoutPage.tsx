@@ -1,6 +1,11 @@
+import React from "react";
 import { Navbar } from "@/components/Navbar";
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+// Retro modem animation imports
+import { TerminalWindow } from "@/components/retro/TerminalWindow";
+import { TypeWriter } from "@/components/retro/TypeWriter";
+import { BlinkingCursor } from "@/components/retro/BlinkingCursor";
 import { Id } from "@/convex/_generated/dataModel";
 import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -21,7 +26,42 @@ import { Label } from "@/components/ui/label";
 import { getStorageUrl } from "@/lib/utils";
 import { getDeliveryEstimate, formatDeliveryDate } from "@/lib/delivery";
 
+// ─── Retro Modem Connect Overlay ────────────────────────────────
+function ModemConnect({ onDone }: { onDone: () => void }) {
+  const lines = [
+    "ATDT +48-STRIPE-PAY",
+    "",
+    "DIALING...",
+    "RING",
+    "RING",
+    "CONNECT 2400",
+    "",
+    "STRIPE PAYMENT GATEWAY v3.2",
+    "SECURE CONNECTION ESTABLISHED",
+    "256-BIT SSL ENCRYPTION ACTIVE",
+    "",
+    "LOADING CHECKOUT SESSION...",
+    "OK",
+  ];
+  return (
+    <div className="min-h-screen bg-black font-terminal flex items-center justify-center px-4">
+      <TerminalWindow title="STRIPE.EXE — SECURE PAYMENT TERMINAL" className="w-full max-w-lg">
+        <TypeWriter
+          lines={lines}
+          speed={35}
+          lineDelay={200}
+          className="text-[13px] text-phosphor"
+          onDone={() => setTimeout(onDone, 800)}
+        />
+      </TerminalWindow>
+    </div>
+  );
+}
+
 export default function CheckoutPage() {
+  const [modemDone, setModemDone] = React.useState(false);
+  if (!modemDone) return <ModemConnect onDone={() => setModemDone(true)} />;
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const customOrderId = searchParams.get("customOrder") as Id<"customOrders"> | null;
