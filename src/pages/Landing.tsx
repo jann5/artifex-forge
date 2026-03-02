@@ -74,13 +74,13 @@ function IntelligenceQuestion({ onSelect }: { onSelect: (level: "low" | "medium"
       <BackBtn onClick={() => window.history.back()} />
       <div className="window-box" style={{ maxWidth: 440, width: "calc(100% - 40px)", textAlign: "center" }}>
         <h2 style={{ fontSize: "clamp(11px, 2vw, 14px)", marginBottom: 20, lineHeight: 1.8 }}>
-          JAK MADRY JESTES?
+          KIM JESTES?
         </h2>
         <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
-          {(["Niski", "Sredni", "Wysoki"] as const).map(level => (
+          {(["Ciemniak", "Sredniak", "Geniusz"] as const).map(level => (
             <button
               key={level}
-              onClick={() => onSelect((level === "Niski" ? "low" : level === "Sredni" ? "medium" : "high") as "low" | "medium" | "high")}
+              onClick={() => onSelect((level === "Ciemniak" ? "low" : level === "Sredniak" ? "medium" : "high") as "low" | "medium" | "high")}
               className="pixel-btn-outline"
               style={{ fontSize: 10, padding: "8px 20px" }}
             >
@@ -374,8 +374,8 @@ function Minesweeper({ onWin, onBack }: { onWin: () => void; onBack: () => void 
                 }}
                 style={{
                   width: 30, height: 30,
-                  background: cell.revealed ? BG : "var(--secondary)",
-                  border: cell.revealed ? "1px solid var(--muted-foreground)" : "3px solid var(--fg)",
+                  background: cell.revealed ? BG : "#8a8578",
+                  border: cell.revealed ? "1px solid #999" : "3px solid var(--fg)",
                   fontFamily: F, fontSize: 9,
                   cursor: "pointer",
                   color: cell.adjacent === 1 ? "blue" : cell.adjacent === 2 ? "green" : cell.adjacent >= 3 ? "red" : FG,
@@ -418,7 +418,7 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
       .replace(/ą/g, "a").replace(/ę/g, "e").replace(/ó/g, "o")
       .replace(/ś/g, "s").replace(/ź/g, "z").replace(/ż/g, "z")
       .replace(/ć/g, "c").replace(/ń/g, "n").replace(/ł/g, "l");
-    if (a === "wszystkie" || a === "kazdy" || a === "kazde" || a === "12") {
+    if (a === "m" || a === "litera m") {
       onWin();
     } else {
       setWrong(true);
@@ -439,7 +439,7 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
       }}>
         <h2 style={{ fontSize: 12, marginBottom: 8, lineHeight: 1.6 }}>ZAGADKA:</h2>
         <div style={{ fontSize: 10, marginBottom: 16, lineHeight: 2, opacity: 0.7 }}>
-          ILE MIESIECY W ROKU MA 28 DNI?
+          CO POJAWIA SIE RAZ W MINUCIE, DWIE RAZY W MOMENCIE, A NIGDY W TYSIAC LATACH?
         </div>
         <input
           value={answer}

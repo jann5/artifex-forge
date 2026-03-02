@@ -1038,39 +1038,11 @@ ${list}`);
             case "NAME":
               await ctx.runMutation(internal.telegram_db.updateSession, {
                 chatId,
-                step: "CHOOSE_DESCRIPTION_TYPE",
+                step: "DESCRIPTION",
                 updates: { name: text }
               });
-              
-              const descKeyboard = {
-                keyboard: [
-                  [{ text: "✍️ Ręcznie" }, { text: "✨ AI (ulepsz opis)" }]
-                ],
-                one_time_keyboard: true,
-                resize_keyboard: true
-              };
-              
-              await sendMessage(chatId, "📝 Jak chcesz dodać opis?", descKeyboard);
+              await sendMessage(chatId, "📝 Podaj opis produktu:");
               break;
-
-            case "CHOOSE_DESCRIPTION_TYPE":
-               if (text === "✨ AI (ulepsz opis)") {
-                  await ctx.runMutation(internal.telegram_db.updateSession, {
-                    chatId,
-                    step: "DESCRIPTION_FOR_AI",
-                    updates: {}
-                  });
-                  await sendMessage(chatId, "📝 Wpisz podstawowy opis produktu, a AI go ulepszy i rozbuduje:", { remove_keyboard: true });
-               } else {
-                  // Default to manual
-                  await ctx.runMutation(internal.telegram_db.updateSession, {
-                    chatId,
-                    step: "DESCRIPTION",
-                    updates: {}
-                  });
-                  await sendMessage(chatId, "📝 Podaj opis produktu:", { remove_keyboard: true });
-               }
-               break;
 
             case "DESCRIPTION_FOR_AI":
               await sendMessage(chatId, "🤖 Ulepszam opis... Proszę czekać.");
@@ -1084,55 +1056,22 @@ ${list}`);
 
               await ctx.runMutation(internal.telegram_db.updateSession, {
                 chatId,
-                step: "CATEGORY",
+                step: "PRICE",
                 updates: { 
                   description: improvedDescription
                 }
               });
 
-              const categoryKeyboardAI = {
-                keyboard: [
-                  [{ text: "art" }, { text: "decor" }],
-                  [{ text: "functional" }, { text: "gadgets" }],
-                  [{ text: "other" }]
-                ],
-                one_time_keyboard: true,
-                resize_keyboard: true
-              };
-
-              await sendMessage(chatId, `✨ *Ulepszony opis:*\n${improvedDescription}\n\n📂 Wybierz kategorię:`, categoryKeyboardAI);
+              await sendMessage(chatId, `✨ *Ulepszony opis:*\n${improvedDescription}\n\n💰 Podaj cenę (PLN):`);
               break;
 
             case "DESCRIPTION":
               await ctx.runMutation(internal.telegram_db.updateSession, {
                 chatId,
-                step: "CATEGORY",
+                step: "PRICE",
                 updates: { description: text }
               });
-              
-              const categoryKeyboardManual = {
-                keyboard: [
-                  [{ text: "art" }, { text: "decor" }],
-                  [{ text: "functional" }, { text: "gadgets" }],
-                  [{ text: "other" }]
-                ],
-                one_time_keyboard: true,
-                resize_keyboard: true
-              };
-              
-              await sendMessage(chatId, "📂 Wybierz kategorię:", categoryKeyboardManual);
-              break;
-
-            case "CATEGORY":
-              await ctx.runMutation(internal.telegram_db.updateSession, {
-                chatId,
-                step: "PRICE",
-                updates: { category: text.toLowerCase() }
-              });
-              
-              // Remove keyboard by sending a new one or removing it
-              const removeKeyboard = { remove_keyboard: true };
-              await sendMessage(chatId, "💰 Podaj cenę (PLN):", removeKeyboard);
+              await sendMessage(chatId, "💰 Podaj cenę (PLN):");
               break;
 
             case "PRICE":
@@ -1232,24 +1171,14 @@ ${list}`);
 
                   await ctx.runMutation(internal.telegram_db.updateSession, {
                     chatId,
-                    step: "CATEGORY",
+                    step: "PRICE",
                     updates: { 
                       description: description,
                       images: [storageId] // Add this image as the first image
                     }
                   });
 
-                  const categoryKeyboard = {
-                    keyboard: [
-                      [{ text: "art" }, { text: "decor" }],
-                      [{ text: "functional" }, { text: "gadgets" }],
-                      [{ text: "other" }]
-                    ],
-                    one_time_keyboard: true,
-                    resize_keyboard: true
-                  };
-
-                  await sendMessage(chatId, `✨ *Wygenerowany opis:*\n${description}\n\n📂 Wybierz kategorię:`, categoryKeyboard);
+                  await sendMessage(chatId, `✨ *Wygenerowany opis:*\n${description}\n\n💰 Podaj cenę (PLN):`);
 
                 } else {
                   // Standard Image Upload Flow
@@ -1281,7 +1210,7 @@ ${list}`);
           await ctx.runMutation(api.products.create, {
             name: p.name!,
             description: p.description!,
-            category: p.category!,
+            category: "inne",
             price: p.price!,
             inventory: p.inventory!,
             images: p.images!,
