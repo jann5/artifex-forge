@@ -1,16 +1,16 @@
 {
-  "name": "ESSENTIA",
-  "short_name": "ESSENTIA",
-  "description": "ESSENTIA - Profesjonalny Druk 3D",
+  "name": "Artifex Forge",
+  "short_name": "AF",
+  "description": "Artifex Forge — reczna robota.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#ede8d0",
+  "theme_color": "#1a1a1a",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
