@@ -114,7 +114,8 @@ export function NotebookNavbar() {
             <ShirtIcon />
           </IconBtn>
           <NavLink onClick={() => navigate("/")}>Home</NavLink>
-          <NavLink onClick={() => navigate("/contact")}>[secret menu]</NavLink>
+          <NavLink onClick={() => navigate("/contact")}>Contact</NavLink>
+          <NavLink onClick={() => navigate("/secret")}>[secret menu]</NavLink>
         </div>
 
         {/* RIGHT — icon buttons */}

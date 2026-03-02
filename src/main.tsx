@@ -24,6 +24,7 @@ import RecentPage from "./pages/RecentPage";
 import SettingsPage from "./pages/SettingsPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import SecretMenuPage from "./pages/SecretMenuPage";
 import CustomOrderPage from "./pages/CustomOrderPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import FAQPage from "./pages/FAQPage";
@@ -178,6 +179,10 @@ const router = createBrowserRouter([
   {
     path: "/contact",
     element: <ContactPage />,
+  },
+  {
+    path: "/secret",
+    element: <SecretMenuPage />,
   },
   {
     path: "/privacy",
