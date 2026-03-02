@@ -418,7 +418,7 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
       .replace(/ą/g, "a").replace(/ę/g, "e").replace(/ó/g, "o")
       .replace(/ś/g, "s").replace(/ź/g, "z").replace(/ż/g, "z")
       .replace(/ć/g, "c").replace(/ń/g, "n").replace(/ł/g, "l");
-    if (a === "c" || a === "litera c") {
+    if (a === "c" || a === "sea" || a === "litera c") {
       onWin();
     } else {
       setWrong(true);
@@ -439,7 +439,7 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
       }}>
         <h2 style={{ fontSize: 12, marginBottom: 8, lineHeight: 1.6 }}>ZAGADKA:</h2>
         <div style={{ fontSize: 10, marginBottom: 16, lineHeight: 2, opacity: 0.7 }}>
-          CO POJAWIA SIE RAZ W CISZY, DWIE RAZY W CIOCIE, A NIGDY W RODZINIE?
+          JAKIE ANGIELSKIE SLOWO OZNACZAJACE MORZE JEST TEZ LITERA ALFABETU?
         </div>
         <input
           value={answer}
