@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { NotebookCartDrawer } from "./NotebookCartDrawer";
 import { useNavigate } from "react-router";
 
+const M = "'IBM Plex Mono', monospace";
+
 export function NotebookNavbar() {
   const { isAuthenticated } = useAuth();
   const cart = useQuery(api.cart.get);
@@ -12,92 +14,67 @@ export function NotebookNavbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const navigate = useNavigate();
 
+  const linkStyle: React.CSSProperties = {
+    background: "none",
+    border: "none",
+    borderLeft: "4px solid #000",
+    height: 56,
+    padding: "0 20px",
+    fontFamily: M,
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    cursor: "pointer",
+    color: "#000",
+    transition: "all 0.12s",
+  };
+
   return (
     <>
-      <nav
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-          background: "var(--ink)",
-          borderBottom: "4px solid var(--ink)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 24px",
-          gap: 16,
-          // little torn paper bottom edge
-        }}
-      >
-        {/* Logo */}
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 50,
+        background: "#fff",
+        borderBottom: "4px solid #000",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 clamp(20px, 5vw, 80px)",
+        height: 56,
+        fontFamily: M,
+      }}>
         <button
           onClick={() => navigate("/")}
           style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "clamp(18px, 3vw, 26px)",
-            color: "var(--paper)",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            letterSpacing: "0.02em",
+            background: "none", border: "none",
+            fontFamily: M, fontSize: 16, fontWeight: 700,
+            letterSpacing: "0.06em", textTransform: "uppercase",
+            cursor: "pointer", color: "#000",
           }}
         >
-          Artifex Forge
+          ARTIFEX FORGE
         </button>
 
-        {/* Right side */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {isAuthenticated && (
-            <button
-              onClick={() => navigate("/orders")}
-              style={{ fontFamily: "'Courier Prime', monospace", fontSize: 18, background: "transparent", border: "none", color: "var(--paper)", cursor: "pointer", textDecoration: "underline" }}
-            >
-              zamówienia
+        <div style={{ display: "flex", alignItems: "center", gap: 0, height: 56 }}>
+          {isAuthenticated ? (
+            <button onClick={() => navigate("/orders")} style={linkStyle}>
+              ZAMOWIENIA
             </button>
-          )}
-          {!isAuthenticated && (
-            <button
-              onClick={() => navigate("/auth")}
-              style={{ fontFamily: "'Courier Prime', monospace", fontSize: 18, background: "transparent", border: "none", color: "var(--paper)", cursor: "pointer", textDecoration: "underline" }}
-            >
-              zaloguj
+          ) : (
+            <button onClick={() => navigate("/auth")} style={linkStyle}>
+              ZALOGUJ
             </button>
           )}
 
-          {/* Cart button */}
           <button
             onClick={() => setCartOpen(true)}
             style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: 18,
-              background: "var(--paper)",
-              border: "2px solid var(--paper)",
-              color: "var(--ink)",
-              padding: "6px 16px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              boxShadow: "3px 3px 0 var(--ink-red)",
-              transition: "all 0.1s",
+              ...linkStyle,
+              background: cartCount > 0 ? "#000" : "transparent",
+              color: cartCount > 0 ? "#fff" : "#000",
             }}
           >
-            🛒
+            KOSZYK
             {cartCount > 0 && (
-              <span
-                style={{
-                  background: "var(--ink-red)",
-                  color: "#fff",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: 14,
-                  padding: "1px 7px",
-                  borderRadius: 999,
-                  minWidth: 22,
-                  textAlign: "center",
-                }}
-              >
-                {cartCount}
-              </span>
+              <span style={{ color: "#ff0000", marginLeft: 6 }}>[{cartCount}]</span>
             )}
           </button>
         </div>
