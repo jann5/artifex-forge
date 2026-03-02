@@ -1,287 +1,312 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useNavigate } from "react-router";
 import { RetroNavbar } from "@/components/retro/RetroNavbar";
-import { TerminalWindow } from "@/components/retro/TerminalWindow";
-import { DirectoryListing, DirEntry } from "@/components/retro/DirectoryListing";
-import { BlinkingCursor } from "@/components/retro/BlinkingCursor";
-import { GlitchText } from "@/components/retro/GlitchText";
-import { BootSequence } from "@/components/retro/LoadingBar";
 import { formatCurrency } from "@/lib/format";
 import { getStorageUrl } from "@/lib/utils";
 
-const PRODUCT_ARTS = [
-  `  ╔══════════╗\n  ║  ▓▓▓▓▓▓ ║\n  ║  ▓ P1 ▓ ║\n  ║  ▓▓▓▓▓▓ ║\n  ╚══════════╝`,
-  `  ╔══════════╗\n  ║  ████████║\n  ║  █ P2  █║\n  ║  ████████║\n  ╚══════════╝`,
-  `  ╔══════════╗\n  ║  ░░░░░░ ║\n  ║  ░ P3 ░ ║\n  ║  ░░░░░░ ║\n  ╚══════════╝`,
-];
+const ACCENTS = ["#00ffff", "#ff00ff", "#ffb000"] as const;
 
-const PRODUCT_ACCENTS = ["#00ffff", "#ff00ff", "#ffb000"] as const;
-
-const today = new Date().toLocaleDateString("pl-PL", {
-  day: "2-digit", month: "2-digit", year: "numeric",
-});
-
-function BootScreen({ onDone }: { onDone: () => void }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#000" }}>
-      <TerminalWindow title="ARTIFEX.FORGE — STARTUP.EXE" className="w-full max-w-lg mx-4">
-        <BootSequence onDone={onDone} />
-      </TerminalWindow>
-    </div>
-  );
+/* ─── Web Audio blip ─── */
+function playBlip(freq = 880, type: OscillatorType = "square", vol = 0.08, dur = 0.045) {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.6, ctx.currentTime + dur);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur);
+    osc.onended = () => ctx.close();
+  } catch {}
 }
 
-function ProductTerminalCard({ product, index, onClick }: { product: any; index: number; onClick: () => void }) {
-  const accent = PRODUCT_ACCENTS[index % 3];
-  const art = PRODUCT_ARTS[index % 3];
+/* ─── Single product card ─── */
+function ProductCard({ product, index, accent, onSoundHover }: {
+  product: any; index: number; accent: string; onSoundHover: () => void;
+}) {
+  const navigate = useNavigate();
+  const addToCart = useMutation(api.cart.add);
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const dirName = product.name.replace(/\s+/g, "_").toUpperCase().slice(0, 14);
+  const imgUrl = product.images?.[0] ? getStorageUrl(product.images[0]) : null;
+
+  async function handleAdd(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (adding || product.inventory === 0) return;
+    setAdding(true);
+    playBlip(1200, "sine", 0.1, 0.06);
+    try {
+      await addToCart({ productId: product._id, quantity: 1 });
+      setAdded(true);
+      playBlip(1600, "sine", 0.08, 0.08);
+      setTimeout(() => setAdded(false), 2000);
+    } catch {}
+    setAdding(false);
+  }
 
   return (
     <div
-      className="crt-window cursor-pointer"
+      className="crt-window cursor-pointer flex flex-col"
       style={{
         border: `2px solid ${accent}`,
-        boxShadow: hovered ? `0 0 30px ${accent}88, 0 0 60px ${accent}44` : `0 0 10px ${accent}44`,
-        transform: hovered ? "translateY(-4px)" : "translateY(0)",
-        transition: "transform 0.2s, box-shadow 0.2s",
+        boxShadow: hovered
+          ? `0 0 28px ${accent}66, 0 0 56px ${accent}22, inset 0 0 16px ${accent}08`
+          : `0 0 8px ${accent}33`,
+        transform: hovered ? "translateY(-6px) scale(1.01)" : "translateY(0) scale(1)",
+        transition: "all 0.25s cubic-bezier(0.25,0.1,0.25,1)",
+        background: "#000",
       }}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => { setHovered(true); onSoundHover(); }}
       onMouseLeave={() => setHovered(false)}
-      onClick={onClick}
+      onClick={() => navigate(`/products/${product._id}`)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      onKeyDown={(e) => e.key === "Enter" && navigate(`/products/${product._id}`)}
     >
+      {/* title bar */}
       <div className="dos-titlebar text-[9px]" style={{ background: accent, color: "#000" }}>
-        <span>C:\PRODUCTS\{dirName}\</span>
-        <span className="opacity-60">[{index + 1}/3]</span>
+        <span className="font-pixel">{product.name.toUpperCase().slice(0, 20)}</span>
+        <span className="opacity-50">[{String(index + 1).padStart(2, "0")}]</span>
       </div>
 
-      <div className="p-4 z-10 relative">
-        <div className="flex gap-4 mb-4">
-          <div className="flex-shrink-0">
-            {product.images?.[0] ? (
-              <div style={{ width: 80, height: 80, border: `1px solid ${accent}`, overflow: "hidden", filter: "grayscale(100%) contrast(1.4)", imageRendering: "pixelated" as const }}>
-                <img src={getStorageUrl(product.images[0]) ?? ""} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              </div>
-            ) : (
-              <pre className="ascii-art text-[9px]" style={{ color: accent, textShadow: `0 0 6px ${accent}80` }}>{art}</pre>
-            )}
+      {/* image */}
+      <div className="relative overflow-hidden" style={{ height: 220, background: "#0a0a0a", flexShrink: 0 }}>
+        {imgUrl ? (
+          <img
+            src={imgUrl}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            style={{
+              filter: hovered
+                ? `grayscale(20%) contrast(1.1) saturate(1.2)`
+                : `grayscale(60%) contrast(1.3)`,
+              transition: "filter 0.4s",
+              transform: hovered ? "scale(1.04)" : "scale(1)",
+              transformOrigin: "center",
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center font-pixel text-[10px]" style={{ color: accent }}>
+            NO IMAGE
           </div>
-          <div className="flex-1 font-terminal text-xs space-y-1">
-            <div style={{ color: accent, textShadow: `0 0 8px ${accent}80` }}>
-              <span className="font-pixel text-[9px]">{product.name}</span>
-            </div>
-            <div className="text-dim text-[10px] line-clamp-2">{product.description.slice(0, 80)}{product.description.length > 80 ? "..." : ""}</div>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="font-pixel text-[10px]" style={{ color: "#ffb000" }}>{formatCurrency(product.price)}</span>
-              {product.inventory <= 5 && product.inventory > 0 && <span className="text-[9px] font-pixel" style={{ color: "#ff0040" }}>LOW: {product.inventory}</span>}
-              {product.inventory === 0 && <span className="text-[9px] font-pixel" style={{ color: "#ff0000" }}>OUT OF STOCK</span>}
-            </div>
+        )}
+        {/* scanline overlay on image */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.18) 2px,rgba(0,0,0,0.18) 4px)" }}
+        />
+        {product.inventory === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
+            <span className="font-pixel text-[11px]" style={{ color: "#ff0040", textShadow: "0 0 12px #ff0040" }}>OUT OF STOCK</span>
           </div>
+        )}
+        {product.inventory > 0 && product.inventory <= 5 && (
+          <div className="absolute top-2 right-2 font-pixel text-[8px] px-2 py-1" style={{ background: "#000", border: "1px solid #ff0040", color: "#ff0040" }}>
+            LAST {product.inventory}
+          </div>
+        )}
+      </div>
+
+      {/* info */}
+      <div className="flex-1 flex flex-col p-4 gap-3 z-10 relative">
+        <div>
+          <h2 className="font-pixel text-[11px] leading-relaxed mb-1" style={{ color: accent, textShadow: `0 0 10px ${accent}80` }}>
+            {product.name}
+          </h2>
+          <p className="font-terminal text-[12px] leading-relaxed" style={{ color: "#00cc33" }}>
+            {product.description?.slice(0, 100)}{product.description?.length > 100 ? "…" : ""}
+          </p>
         </div>
 
-        <div className="border-t pt-3 font-terminal text-[11px]" style={{ borderColor: `${accent}30` }}>
-          {[
-            { name: "README.TXT", type: "FILE" as const, size: `${Math.floor(product.description.length * 1.5)} bytes` },
-            { name: "SPECS.TXT",  type: "FILE" as const, size: "512 bytes" },
-            { name: "PRICE.TXT",  type: "FILE" as const, size: "42 bytes" },
-            { name: "BUY.NOW",    type: "EXE"  as const, size: "1 byte" },
-          ].map((entry, i) => (
-            <div
-              key={i}
-              className={`flex items-center gap-2 py-0.5 ${entry.type === "EXE" ? "cursor-pointer hover:bg-green-900/20" : ""}`}
-              onClick={entry.type === "EXE" ? (e) => { e.stopPropagation(); onClick(); } : undefined}
-            >
-              <span className="w-10 text-[10px]" style={{ color: entry.type === "EXE" ? "#ff00ff" : accent }}>
-                {entry.type === "EXE" ? "[EXE]" : "     "}
-              </span>
-              <span className="uppercase font-pixel text-[9px] flex-1" style={{ color: entry.type === "EXE" ? "#ff00ff" : "#00ff41", textShadow: entry.type === "EXE" ? "0 0 8px rgba(255,0,255,0.6)" : "0 0 6px rgba(0,255,65,0.4)" }}>
-                {entry.name}
-              </span>
-              <span className="text-dim text-[10px]">{entry.size}</span>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mt-auto pt-2" style={{ borderTop: `1px solid ${accent}30` }}>
+          <span className="font-pixel text-[13px]" style={{ color: "#ffb000", textShadow: "0 0 10px rgba(255,176,0,0.7)" }}>
+            {formatCurrency(product.price)}
+          </span>
+          <span className="font-terminal text-[10px]" style={{ color: product.inventory > 0 ? "#00ff41" : "#444" }}>
+            {product.inventory > 0 ? `IN STOCK: ${product.inventory}` : "UNAVAILABLE"}
+          </span>
         </div>
 
-        <div className="mt-3 flex items-center gap-1 text-[11px]" style={{ color: accent }}>
-          <span>C:\PRODUCTS\{dirName}&gt;</span>
-          {hovered && <BlinkingCursor char="▮" />}
-        </div>
+        <button
+          onClick={handleAdd}
+          disabled={adding || product.inventory === 0}
+          className="w-full font-pixel text-[9px] py-3 mt-1"
+          style={{
+            background: added ? accent : "transparent",
+            border: `2px solid ${accent}`,
+            color: added ? "#000" : accent,
+            cursor: product.inventory === 0 ? "not-allowed" : "pointer",
+            opacity: product.inventory === 0 ? 0.4 : 1,
+            transition: "all 0.15s",
+            textShadow: added ? "none" : `0 0 8px ${accent}80`,
+            boxShadow: hovered && product.inventory > 0 ? `0 0 16px ${accent}44` : "none",
+          }}
+        >
+          {adding ? "ADDING…" : added ? "✓ ADDED TO CART" : "💾 ADD TO CART"}
+        </button>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); navigate(`/products/${product._id}`); }}
+          className="w-full font-terminal text-[11px] py-2"
+          style={{ border: `1px solid ${accent}44`, color: "#00cc33", background: "transparent", cursor: "pointer" }}
+        >
+          → VIEW DETAILS
+        </button>
       </div>
     </div>
   );
 }
 
-function RetroTicker() {
-  const msg = "*** ARTIFEX FORGE — SKLEP ONLINE ***  >>> DOSTAWA KURIEREM / INPOST <<<  *** BEZPIECZNA PŁATNOŚĆ STRIPE ***  >>> PRESS ANY KEY TO CONTINUE... <<<  *** NO CARRIER ***  >>> DIAL-UP SPEED: 56K <<<";
+/* ─── Scroll-sound hook ─── */
+function useScrollSound(elements: React.RefObject<HTMLElement | null>[], freq: number, soundEnabled: boolean) {
+  const seen = useRef(new Set<Element>());
+  useEffect(() => {
+    if (!soundEnabled) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !seen.current.has(entry.target)) {
+            seen.current.add(entry.target);
+            playBlip(freq + Math.random() * 200, "sine", 0.06, 0.05);
+          }
+        });
+      },
+      { threshold: 0.25 }
+    );
+    elements.forEach((r) => { if (r.current) obs.observe(r.current); });
+    return () => obs.disconnect();
+  }, [elements, freq, soundEnabled]);
+}
+
+/* ─── Ticker ─── */
+function Ticker() {
+  const msg = "★ ARTIFEX FORGE — AUTORSKIE PRODUKTY ★   •   DOSTAWA INPOST / KURIER   •   BEZPIECZNA PŁATNOŚĆ STRIPE   •   KONTAKT TELEGRAM   •   ";
   return (
-    <div className="overflow-hidden font-pixel text-[9px] py-1.5 border-y" style={{ background: "#000", borderColor: "#00ff41", color: "#00ff41", textShadow: "0 0 6px rgba(0,255,65,0.6)" }}>
-      <div className="whitespace-nowrap" style={{ display: "inline-block", animation: "title-scroll 30s linear infinite" }}>
-        {msg}&nbsp;&nbsp;&nbsp;{msg}
+    <div className="overflow-hidden font-pixel text-[8px] py-1.5 border-b" style={{ borderColor: "#00ff4140", color: "#00ff41", background: "#00040040", textShadow: "0 0 6px rgba(0,255,65,0.5)" }}>
+      <div className="whitespace-nowrap" style={{ display: "inline-block", animation: "title-scroll 35s linear infinite" }}>
+        {msg}{msg}
       </div>
     </div>
   );
 }
 
-function SystemStats({ count }: { count: number }) {
-  const [time, setTime] = useState(new Date());
-  useEffect(() => { const id = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(id); }, []);
-  return (
-    <div className="font-terminal text-[10px] text-dim flex flex-wrap gap-x-6 gap-y-1 px-1">
-      <span>SYS: ARTIFEX v1.0</span>
-      <span>MEM: 640K</span>
-      <span>FILES: {count}</span>
-      <span>TIME: {time.toLocaleTimeString("pl-PL")}</span>
-      <span>STATUS: <span className="text-phosphor animate-blink">ONLINE ■</span></span>
-    </div>
-  );
-}
-
+/* ─── Main page ─── */
 export default function Landing() {
   const products = useQuery(api.products.list, {});
   const navigate = useNavigate();
-  const [booted, setBooted] = useState(false);
-  const productRef = useRef<HTMLDivElement>(null);
   const displayProducts = products?.slice(0, 3) ?? [];
+  const [soundEnabled, setSoundEnabled] = useState(false);
 
-  if (!booted) return <BootScreen onDone={() => setBooted(true)} />;
+  const cardRefs = [
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+  ];
+
+  // enable sound after first interaction
+  useEffect(() => {
+    const enable = () => setSoundEnabled(true);
+    window.addEventListener("click", enable, { once: true });
+    window.addEventListener("keydown", enable, { once: true });
+    window.addEventListener("scroll", enable, { once: true });
+    return () => { window.removeEventListener("click", enable); window.removeEventListener("keydown", enable); window.removeEventListener("scroll", enable); };
+  }, []);
+
+  useScrollSound(cardRefs, 660, soundEnabled);
 
   return (
-    <div className="min-h-screen bg-black text-phosphor font-terminal">
+    <div className="min-h-screen" style={{ background: "#000", color: "#00ff41" }}>
       <RetroNavbar />
-      <RetroTicker />
+      <Ticker />
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
+      <main className="max-w-6xl mx-auto px-4 py-10">
 
-        {/* ── HEADER ── */}
-        <TerminalWindow title="ARTIFEX.FORGE — MAIN.MENU" className="mb-6">
-          <div className="text-center py-4">
-            <pre className="ascii-art inline-block text-left mb-4" style={{ color: "#00ff41", fontSize: "clamp(6px, 1.2vw, 11px)" }}>
-{`  ▄▄▄    ▄▄▄  ▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄  ▄▄   ▄▄
- █   █  █   █    █      █      █         █         █  █ █  █
- █▄▄▄█  █▄▄▄█    █      █▄▄▄   ▀▀▀▀█    ▀▀▀▀█      █  █▄█  █
- █   █  █   █    █      █         █         █      █       █
- █   █  █   █    █      █▄▄▄▄▄▄   █    ▄▄▄▄▄▄      █       █
-  ▀▀▀    ▀▀▀     ▀       ▀▀▀▀▀▀▀  ▀▀▀  ▀▀▀▀▀▀▀      ▀▀▀▀▀▀▀
-
- ▄▄▄▄▄▄▄  ▄▄▄▄▄▄   ▄▄▄▄▄▄   ▄▄▄▄▄▄  ▄▄▄▄▄▄▄
- █       █       █ █      █ █      █ █
- █▄▄▄▄▄  █   ▄   █ █▄▄▄▄▄▀  █  ▄▄▄  █▄▄▄▄▄
- █       █   █   █ █   █  █ █  █  █ █
- █       █   █   █ █   █  ▄ █  █▄▄█ █
- █▄▄▄▄▄▄▄ ▀▄▄▄▄▄▀  ▀▄▄▄▄▄▀   ▀▄▄▄▄▄▀ █`}
-            </pre>
-            <div className="font-pixel text-[9px] text-dim mb-1">v1.0 — SYSTEM ONLINE — {today}</div>
-            <div className="font-terminal text-xs text-dim">Sklep z produktami | {displayProducts.length} Products | Fast Shipping</div>
+        {/* ── HERO ── */}
+        <div className="text-center mb-12">
+          <div className="font-terminal text-[11px] mb-3" style={{ color: "#00cc33" }}>
+            <span className="animate-blink">▶</span>&nbsp;ARTIFEX.FORGE ONLINE STORE — SYSTEM READY
           </div>
-        </TerminalWindow>
-
-        {/* ── DOS DIRECTORY ── */}
-        <TerminalWindow title={`DIR C:\\PRODUCTS\\ [${displayProducts.length} ITEM(S)]`} className="mb-6">
-          <SystemStats count={displayProducts.length} />
-          <div className="mt-3">
-            {products === undefined ? (
-              <div className="font-terminal text-xs text-dim py-4">
-                <div className="flex items-center gap-2"><span>&gt; READING DISK...</span><BlinkingCursor /></div>
-                <div className="loading-bar-track mt-3"><div className="loading-bar-fill" /></div>
-              </div>
-            ) : (
-              <DirectoryListing
-                path="C:\PRODUCTS"
-                promptPath="C:\PRODUCTS"
-                entries={[
-                  { name: "<PARENT>", type: "DIR", date: "01-01-1985", time: "00:00" },
-                  ...displayProducts.map((p: any, i: number) => ({
-                    name: p.name.replace(/\s+/g, "_").toUpperCase().slice(0, 14),
-                    type: "DIR" as const,
-                    date: today,
-                    time: `00:0${i + 1}`,
-                    accent: PRODUCT_ACCENTS[i % 3],
-                    onClick: () => navigate(`/products/${p._id}`),
-                  })),
-                ]}
-              />
-            )}
+          <h1 className="font-pixel mb-4" style={{ fontSize: "clamp(16px, 3.5vw, 32px)", color: "#00ff41", textShadow: "0 0 20px rgba(0,255,65,0.8), 0 0 40px rgba(0,255,65,0.4)", lineHeight: 1.6 }}>
+            ARTIFEX<br />FORGE
+          </h1>
+          <p className="font-terminal text-base max-w-xl mx-auto" style={{ color: "#00cc33" }}>
+            Ręcznie robione produkty wysokiej jakości.<br />
+            Zamów online — dostawa w 1–2 dni robocze.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-6">
+            <span className="font-terminal text-[12px] px-3 py-1" style={{ border: "1px solid #00ffff44", color: "#00ffff" }}>📦 INPOST / KURIER</span>
+            <span className="font-terminal text-[12px] px-3 py-1" style={{ border: "1px solid #ff00ff44", color: "#ff00ff" }}>🔒 STRIPE SECURE</span>
+            <span className="font-terminal text-[12px] px-3 py-1" style={{ border: "1px solid #ffb00044", color: "#ffb000" }}>⭐ SZYBKA WYSYŁKA</span>
           </div>
-        </TerminalWindow>
-
-        {/* ── PRODUCT CARDS ── */}
-        <div ref={productRef} className="mb-6">
-          <div className="font-pixel text-[9px] text-dim mb-3 flex items-center gap-2">
-            <span>&gt; LOADING PRODUCT FILES...</span>
-            <BlinkingCursor char="_" />
-          </div>
-          {products === undefined ? (
-            <div className="grid md:grid-cols-3 gap-4">
-              {[0,1,2].map(i => <div key={i} className="skeleton-shimmer" style={{ border: `2px solid ${PRODUCT_ACCENTS[i]}33`, height: 320 }} />)}
-            </div>
-          ) : displayProducts.length === 0 ? (
-            <TerminalWindow title="ERROR 404" accent="magenta">
-              <div className="font-terminal text-center py-8">
-                <div className="font-pixel text-[10px] text-magenta mb-2">DISK EMPTY — NO FILES</div>
-                <div className="text-xs text-dim">Produkty nie zostały jeszcze dodane przez administratora.</div>
-              </div>
-            </TerminalWindow>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-4">
-              {displayProducts.map((p: any, i: number) => (
-                <ProductTerminalCard key={p._id} product={p} index={i} onClick={() => navigate(`/products/${p._id}`)} />
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* ── INFO ROW ── */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
+        {/* ── PRODUCTS ── */}
+        <div className="mb-4 flex items-center gap-3">
+          <div className="font-pixel text-[10px]" style={{ color: "#00ff41" }}>PRODUKTY</div>
+          <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg,#00ff4160,transparent)" }} />
+          <div className="font-terminal text-[11px]" style={{ color: "#00cc33" }}>
+            {displayProducts.length > 0 ? `${displayProducts.length} dostępne` : ""}
+          </div>
+        </div>
+
+        {products === undefined ? (
+          <div className="grid md:grid-cols-3 gap-6">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="skeleton-shimmer" style={{ height: 480, border: `2px solid ${ACCENTS[i]}22` }} />
+            ))}
+          </div>
+        ) : displayProducts.length === 0 ? (
+          <div className="text-center py-16 font-terminal" style={{ color: "#00cc33" }}>
+            <div className="font-pixel text-[10px] mb-2" style={{ color: "#ff00ff" }}>BRAK PRODUKTÓW</div>
+            <div>Sklep jest w przygotowaniu. Wróć wkrótce.</div>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6">
+            {displayProducts.map((p: any, i: number) => (
+              <div key={p._id} ref={cardRefs[i]}>
+                <ProductCard
+                  product={p}
+                  index={i}
+                  accent={ACCENTS[i % 3]}
+                  onSoundHover={() => soundEnabled && playBlip(800 + i * 120, "sine", 0.05, 0.04)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── INFO STRIP ── */}
+        <div className="mt-12 grid md:grid-cols-3 gap-4">
           {[
-            { icon: "📦", title: "DELIVERY.SYS", l1: "INPOST PACZKOMAT", l2: "KURIER 1-2 DNI", a: "#00ffff" },
-            { icon: "🔒", title: "SECURE.DLL",  l1: "STRIPE PAYMENTS", l2: "256-BIT SSL",     a: "#ff00ff" },
-            { icon: "⭐", title: "SUPPORT.EXE", l1: "TELEGRAM BOT",    l2: "RESPONSE <24H",   a: "#ffb000" },
+            { icon: "📦", label: "Dostawa", val: "INPOST Paczkomat lub Kurier DPD — 1-2 dni", a: "#00ffff" },
+            { icon: "🔒", label: "Płatność", val: "Stripe — karty, BLIK, przelewy, Apple Pay", a: "#ff00ff" },
+            { icon: "💬", label: "Kontakt", val: "Telegram — odpowiedź w ciągu 24h", a: "#ffb000" },
           ].map((item, i) => (
-            <div key={i} className="crt-window p-4 text-center" style={{ border: `1px solid ${item.a}44` }}>
-              <div className="text-2xl mb-2">{item.icon}</div>
-              <div className="font-pixel text-[9px] mb-2" style={{ color: item.a }}>{item.title}</div>
-              <div className="font-terminal text-xs text-dim">{item.l1}<br />{item.l2}</div>
+            <div key={i} className="p-5 text-center" style={{ border: `1px solid ${item.a}33`, background: `${item.a}06` }}>
+              <div className="text-3xl mb-3">{item.icon}</div>
+              <div className="font-pixel text-[9px] mb-2" style={{ color: item.a }}>{item.label}</div>
+              <div className="font-terminal text-[12px]" style={{ color: "#00cc33" }}>{item.val}</div>
             </div>
           ))}
         </div>
 
-        {/* ── FAKE REVIEWS ── */}
-        <TerminalWindow title="REVIEWS.LOG — USER FEEDBACK" className="mb-6" accent="amber">
-          <div className="space-y-3">
-            {[
-              { user: "user_4829",       stars: 5, text: "PRODUKT DZIAŁA PERFEKCYJNIE. POLECAM!", date: "2025-11-12" },
-              { user: "sys_admin_7742",  stars: 5, text: "JAKOŚĆ 10/10, DOSTAWA EKSPRESOWA.",      date: "2025-12-01" },
-              { user: "ghost_byte_91",   stars: 4, text: "BARDZO DOBRY TOWAR. 3 RAZY ZAMAWIAŁEM.", date: "2026-01-15" },
-            ].map((r, i) => (
-              <div key={i} className="border-b py-2 font-terminal text-xs" style={{ borderColor: "rgba(255,176,0,0.15)" }}>
-                <div className="flex items-center gap-3 mb-1">
-                  <span className="text-amber text-[10px]">&gt; {r.user}</span>
-                  <span className="text-[10px]" style={{ color: "#ff00ff" }}>{"★".repeat(r.stars)}{"☆".repeat(5-r.stars)}</span>
-                  <span className="text-dim text-[10px]">{r.date}</span>
-                </div>
-                <div className="text-dim pl-4">{r.text}</div>
-              </div>
+        {/* ── FOOTER ── */}
+        <div className="mt-12 pt-6 text-center" style={{ borderTop: "1px solid #00ff4120" }}>
+          <div className="font-terminal text-[11px] flex flex-wrap justify-center gap-x-6 gap-y-2" style={{ color: "#005500" }}>
+            {[["Polityka prywatności","/privacy"],["Kontakt","/contact"],["FAQ","/faq"],["Moje zamówienia","/orders"],["Logowanie","/auth"]].map(([l,h]) => (
+              <a key={h} href={h} className="hover:text-phosphor transition-colors">{l}</a>
             ))}
           </div>
-        </TerminalWindow>
-
-        {/* ── FOOTER ── */}
-        <TerminalWindow title="SYSTEM.INI — README" accent="cyan">
-          <div className="font-terminal text-[11px] text-dim text-center space-y-2">
-            <div className="font-pixel text-[8px] text-cyan mb-3">ARTIFEX FORGE &copy; 1985-{new Date().getFullYear()}. ALL RIGHTS RESERVED.</div>
-            <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-[10px]">
-              {[["PP.TXT","/privacy"],["CONTACT.SYS","/contact"],["README.FAQ","/faq"],["MY_ORDERS","/orders"],["LOGIN.EXE","/auth"]].map(([l,h]) => (
-                <a key={h} href={h} className="hover:text-phosphor transition-colors">{l}</a>
-              ))}
-            </div>
-            <div className="text-[9px] mt-2 opacity-40">POWERED BY CONVEX &amp; STRIPE · 640K OUGHT TO BE ENOUGH</div>
-          </div>
-        </TerminalWindow>
+          <div className="font-terminal text-[10px] mt-3 opacity-30">ARTIFEX FORGE © {new Date().getFullYear()}</div>
+        </div>
 
       </main>
     </div>
