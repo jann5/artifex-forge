@@ -439,7 +439,7 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
       }}>
         <h2 style={{ fontSize: 12, marginBottom: 8, lineHeight: 1.6 }}>ZAGADKA:</h2>
         <div style={{ fontSize: 10, marginBottom: 16, lineHeight: 2, opacity: 0.7 }}>
-          JAKIE ANGIELSKIE SLOWO OZNACZAJACE MORZE JEST TEZ LITERA ALFABETU?
+          KTORA LITERA ANGIELSKIEGO ALFABETU MA W SOBIE NAJWIECEJ WODY?
         </div>
         <input
           value={answer}
