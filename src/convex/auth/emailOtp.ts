@@ -16,7 +16,8 @@ export const emailOtp = Email({
   async sendVerificationRequest({ identifier: email, token }) {
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
-      console.error("RESEND_API_KEY not configured");
+      // Dev fallback: log the OTP to Convex function logs (visible in dashboard)
+      console.log(`\n========== OTP CODE ==========\nEmail: ${email}\nCode: ${token}\n==============================\n`);
       return;
     }
 
