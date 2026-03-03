@@ -151,12 +151,61 @@ export default function AdminPage() {
   const removeProduct = useMutation(api.products.remove);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("af_admin") === "1");
+  const [pwInput, setPwInput] = useState("");
+  const [pwWrong, setPwWrong] = useState(false);
   const [tab, setTab] = useState<Tab>("add");
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft());
   const [isUploading, setIsUploading] = useState(false);
   const [addUploading, setAddUploading] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editDraft, setEditDraft] = useState<ProductDraft>(emptyDraft());
+
+  // Password gate
+  if (!unlocked) {
+    return (
+      <div style={{ minHeight: "100vh", background: BG, fontFamily: F, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
+        <NotebookNavbar />
+        <div className="window-box" style={{ maxWidth: 340, width: "calc(100% - 40px)", textAlign: "center", padding: "28px 28px", marginTop: 60, animation: pwWrong ? "shake 0.3s" : "none" }}>
+          <div style={{ fontSize: 11, marginBottom: 20, lineHeight: 1.8 }}>HASLO DOSTEPU</div>
+          <input
+            type="password"
+            value={pwInput}
+            onChange={e => setPwInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") {
+                if (pwInput.trim().toLowerCase() === "essentia") {
+                  sessionStorage.setItem("af_admin", "1");
+                  setUnlocked(true);
+                } else {
+                  setPwWrong(true);
+                  setPwInput("");
+                  setTimeout(() => setPwWrong(false), 800);
+                }
+              }
+            }}
+            autoFocus
+            style={{ fontFamily: F, fontSize: 10, background: BG, color: FG, border: `2px solid ${FG}`, padding: "8px 12px", width: "100%", boxSizing: "border-box", marginBottom: 14, textAlign: "center", outline: "none" }}
+            placeholder="••••••••"
+          />
+          <button
+            onClick={() => {
+              if (pwInput.trim().toLowerCase() === "essentia") {
+                sessionStorage.setItem("af_admin", "1");
+                setUnlocked(true);
+              } else {
+                setPwWrong(true);
+                setPwInput("");
+                setTimeout(() => setPwWrong(false), 800);
+              }
+            }}
+            style={{ fontFamily: F, fontSize: 9, padding: "8px 20px", background: FG, color: BG, border: "none", cursor: "pointer" }}
+          >WEJDZ</button>
+          {pwWrong && <div style={{ color: ACCENT, fontSize: 9, marginTop: 12 }}>ZLE HASLO</div>}
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) return null;
   if (!isAuthenticated || user?.role !== "admin") {

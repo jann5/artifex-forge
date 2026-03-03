@@ -108,7 +108,19 @@ function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolea
             cursor: "pointer", textAlign: "left", lineHeight: 1.8,
           }}
         >
-          Other sign in options
+          Sign in
+        </button>
+        <button
+          onClick={() => go("/auth")}
+          style={{
+            width: "100%", padding: "10px 14px",
+            background: "none", color: "var(--fg)",
+            border: "3px solid var(--fg)", fontFamily: F, fontSize: 9,
+            cursor: "pointer", textAlign: "left", lineHeight: 1.8,
+            marginTop: 0,
+          }}
+        >
+          Log in
         </button>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>

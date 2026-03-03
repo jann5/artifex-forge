@@ -616,7 +616,7 @@ function Shop() {
       <section style={{ padding: "40px clamp(20px, 5vw, 60px) 60px", maxWidth: 900, margin: "0 auto" }}>
         <div className="window-box" style={{ padding: "14px 20px", fontSize: 10, lineHeight: 2.2, background: "var(--input)" }}>
           <pre style={{ fontFamily: F, fontSize: 10, margin: 0, whiteSpace: "pre-wrap" }}>
-here's what we offer while you're here.{"\n"}handmade goods, fast delivery.{"\n"}hang in there friend{"\n"}<span className="blink">■</span>
+oto co u nas znajdziesz.{"\n"}wyroby reczne, szybka dostawa.{"\n"}trzymaj sie{"\n"}<span className="blink">■</span>
           </pre>
         </div>
       </section>
