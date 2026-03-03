@@ -208,15 +208,7 @@ export default function AdminPage() {
   }
 
   if (isLoading) return null;
-  if (!isAuthenticated || user?.role !== "admin") {
-    return (
-      <div style={{ minHeight: "100vh", background: BG, fontFamily: F, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
-        <NotebookNavbar />
-        <p style={{ fontSize: 11, marginTop: 80, color: ACCENT }}>BRAK DOSTEPU</p>
-        <p style={{ fontSize: 9, opacity: 0.6, textAlign: "center" }}>Wymagane uprawnienia administratora.</p>
-      </div>
-    );
-  }
+  // password gate above is sufficient — no role check needed
 
   async function uploadImages(files: FileList, isEdit: boolean) {
     if (isEdit) setIsUploading(true); else setAddUploading(true);

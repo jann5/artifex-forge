@@ -14,10 +14,11 @@ export const emailOtp = Email({
     return generateRandomString(random, alphabet, 6);
   },
   async sendVerificationRequest({ identifier: email, token }) {
+    // Always log to Convex dashboard for debugging
+    console.log(`\n========== KOD OTP ==========\nEmail: ${email}\nKod: ${token}\n=============================\n`);
+
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
-      // Dev fallback: log the OTP to Convex function logs (visible in dashboard)
-      console.log(`\n========== OTP CODE ==========\nEmail: ${email}\nCode: ${token}\n==============================\n`);
       return;
     }
 

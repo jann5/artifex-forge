@@ -95,7 +95,7 @@ function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolea
       <div style={{ position: "absolute", inset: 5, border: "2px solid var(--fg)", pointerEvents: "none" }} />
 
       <div style={{ fontSize: 12, marginBottom: 14, paddingBottom: 10, borderBottom: "2px solid var(--fg)" }}>
-        Account
+        Konto
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -108,7 +108,7 @@ function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolea
             cursor: "pointer", textAlign: "left", lineHeight: 1.8,
           }}
         >
-          Sign in
+          Zaloguj sie
         </button>
         <button
           onClick={() => go("/auth")}
@@ -120,7 +120,7 @@ function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolea
             marginTop: 0,
           }}
         >
-          Log in
+          Zarejestruj sie
         </button>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>
@@ -138,7 +138,7 @@ function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolea
               <line x1="7" y1="8" x2="13" y2="8"/>
               <line x1="7" y1="12" x2="11" y2="12"/>
             </svg>
-            Orders
+            Zamowienia
           </button>
 
           <button
@@ -154,7 +154,7 @@ function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolea
               <circle cx="10" cy="6" r="4"/>
               <path d="M2 19 C2 14.5 5 12 10 12 C15 12 18 14.5 18 19"/>
             </svg>
-            Profile
+            Profil
           </button>
         </div>
       </div>
@@ -188,8 +188,8 @@ export function NotebookNavbar() {
             <img src="/logo.svg" alt="Artifex Forge" width={34} height={34}
               style={{ display: "block", imageRendering: "auto" }} />
           </button>
-          <NavLink onClick={() => navigate("/")}>Home</NavLink>
-          <NavLink onClick={() => navigate("/contact")}>Contact</NavLink>
+          <NavLink onClick={() => navigate("/")}>Glowna</NavLink>
+          <NavLink onClick={() => navigate("/contact")}>Kontakt</NavLink>
           <NavLink onClick={() => navigate("/secret")}>[secret menu]</NavLink>
         </div>
 
