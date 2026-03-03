@@ -1,14 +1,16 @@
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { formatCurrency } from "@/lib/format";
-import { motion } from "framer-motion";
-import { Heart, ShoppingBag, Eye } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getStorageUrl } from "@/lib/utils";
+
+const F = "'Press Start 2P', monospace";
+const BG = "#ede8d0";
+const FG = "#1a1a1a";
+const ACCENT = "#cc0000";
 
 interface ProductCardProps {
   id: Id<"products">;
@@ -20,154 +22,108 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ id, name, price, image, category, inventory }: ProductCardProps) {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const toggleFavorite = useMutation(api.favorites.toggle);
   const addToCart = useMutation(api.cart.add);
-  const isFavorite = useQuery(api.favorites.isFavorite, { productId: id });
-
-  const handleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      toast.error("Zaloguj się, aby dodać do ulubionych");
-      return;
-    }
-
-    try {
-      const added = await toggleFavorite({ productId: id });
-      toast.success(added ? "Dodano do ulubionych" : "Usunięto z ulubionych");
-    } catch (error) {
-      toast.error("Wystąpił błąd");
-    }
-  };
-
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      toast.error("Zaloguj się, aby dodać do koszyka");
-      return;
-    }
-
-    try {
-      await addToCart({ productId: id, quantity: 1 });
-      toast.success("Dodano do kolekcji");
-    } catch (error: any) {
-      toast.error(error.message || "Nie udało się dodać");
-    }
-  };
 
   const imageUrl = getStorageUrl(image);
   const isOutOfStock = inventory !== undefined && inventory === 0;
   const isLowStock = inventory !== undefined && inventory > 0 && inventory <= 5;
 
+  async function handleAddToCart(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!isAuthenticated) { navigate("/auth"); return; }
+    try {
+      await addToCart({ productId: id, quantity: 1 });
+      toast.success("Dodano do koszyka");
+    } catch (err: any) {
+      toast.error(err.message || "Blad");
+    }
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="group relative"
+    <div
+      onClick={() => navigate(`/products/${id}`)}
+      style={{
+        cursor: "pointer",
+        border: `3px solid ${FG}`,
+        boxShadow: `5px 5px 0 ${FG}`,
+        background: BG,
+        fontFamily: F,
+        display: "flex",
+        flexDirection: "column",
+        transition: "box-shadow 0.1s, transform 0.1s",
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow = `3px 3px 0 ${FG}`;
+        (e.currentTarget as HTMLDivElement).style.transform = "translate(2px,2px)";
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow = `5px 5px 0 ${FG}`;
+        (e.currentTarget as HTMLDivElement).style.transform = "none";
+      }}
     >
-      <Link to={`/products/${id}`} className="block">
-        {/* Image Container */}
-        <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-[#F8F9FA] relative card-luxury">
+      {/* Image */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "#d8d4bc", overflow: "hidden", borderBottom: `2px solid ${FG}` }}>
+        {imageUrl ? (
           <img
             src={imageUrl}
             alt={name}
             loading="lazy"
-            className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 ${isOutOfStock ? "grayscale" : ""}`}
-            onError={(e) => {
-              const target = e.currentTarget;
-              target.src = 'https://placehold.co/600x750/1B2A49/D4AF37?text=Produkt';
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center",
+              imageRendering: "auto",
+              display: "block",
             }}
           />
-          
-          {/* Gradient overlay on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#1B2A49]/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
-          {/* Out of stock overlay */}
-          {isOutOfStock && (
-            <div className="absolute inset-0 bg-[#1B2A49]/60 flex items-center justify-center z-10">
-              <span className="text-white font-bold text-sm uppercase tracking-[0.2em] border-2 border-white/80 px-4 py-1.5 rounded-full">
-                Wyprzedane
-              </span>
-            </div>
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "#888", fontFamily: F }}>
+            BRAK<br/>ZDJECIA
+          </div>
+        )}
+
+        {isOutOfStock && (
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <span style={{ fontFamily: F, fontSize: 9, color: "#fff", border: "2px solid #fff", padding: "4px 8px" }}>WYPRZEDANE</span>
+          </div>
+        )}
+        {isLowStock && !isOutOfStock && (
+          <div style={{
+            position: "absolute", top: 6, left: 6,
+            background: ACCENT, color: "#fff",
+            fontFamily: F, fontSize: 7, padding: "3px 6px",
+          }}>
+            OSTATNIE {inventory} SZT.
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div style={{ padding: "10px 12px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ fontSize: 7, color: "#888" }}>{category.toUpperCase()}</div>
+        <div style={{ fontSize: 9, lineHeight: 1.7, flex: 1 }}>{name}</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4, gap: 8 }}>
+          <span style={{ fontSize: 10, color: ACCENT }}>{formatCurrency(price)}</span>
+          {!isOutOfStock && (
+            <button
+              onClick={handleAddToCart}
+              style={{
+                fontFamily: F, fontSize: 7, padding: "5px 10px",
+                background: FG, color: BG,
+                border: "none", cursor: "pointer",
+                flexShrink: 0,
+              }}
+            >+ KOSZYK</button>
           )}
-
-          {/* Low stock badge */}
-          {isLowStock && !isOutOfStock && (
-            <div className="absolute top-3 left-3 z-10">
-              <span className="px-3 py-1 rounded-full bg-[#C1272D] text-white text-xs font-semibold tracking-wide">
-                Ostatnie {inventory} szt.
-              </span>
-            </div>
-          )}
-          
-          {/* Favorite button */}
-          <div className="absolute top-3 right-3 z-10">
-            <Button
-              variant="secondary"
-              size="icon"
-              className={`h-9 w-9 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm transition-all ${
-                isFavorite ? "text-[#C1272D]" : "text-[#1B2A49]/50"
-              }`}
-              onClick={handleFavorite}
-              aria-label={isFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych"}
-            >
-              <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
-            </Button>
-          </div>
-
-          {/* Quick actions on hover */}
-          <div className="absolute bottom-4 left-4 right-4 z-10 flex gap-2 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-            {!isOutOfStock && (
-              <Button
-                size="sm"
-                className="flex-1 bg-[#C1272D] hover:bg-[#9E1F24] text-white rounded-full h-10 text-xs font-semibold tracking-wide shadow-lg"
-                onClick={handleAddToCart}
-              >
-                <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
-                Dodaj do Kolekcji
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="secondary"
-              className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg flex-shrink-0"
-              aria-label="Podgląd"
-            >
-              <Eye className="h-4 w-4 text-[#1B2A49]" />
-            </Button>
-          </div>
         </div>
-
-        {/* Product Info */}
-        <div className="mt-4 space-y-1.5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-[#D4AF37] uppercase tracking-[0.15em] font-semibold">
-              {category}
-            </p>
-            {/* Made in Poland micro-badge */}
-            <span className="inline-flex items-center gap-1 text-[10px] text-[#1B2A49]/30 tracking-wide">
-              🇵🇱 PL
-            </span>
-          </div>
-          <h3 className="font-semibold text-[#1B2A49] text-base leading-tight group-hover:text-[#C1272D] transition-colors line-clamp-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            {name}
-          </h3>
-          <div className="flex items-center justify-between">
-            <p className="font-bold text-[#C1272D] text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
-              {formatCurrency(price)}
-            </p>
-            {/* Authenticity indicator */}
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#D4AF37]/[0.06] text-[#D4AF37] text-[9px] font-semibold tracking-wide uppercase">
-              ✓ Certyfikat
-            </span>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
+      </div>
+    </div>
   );
 }
