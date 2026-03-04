@@ -14,7 +14,9 @@ export const emailOtp = Email({
     const alphabet = "0123456789";
     return generateRandomString(random, alphabet, 6);
   },
-  async sendVerificationRequest({ identifier: email, token }: { identifier: string; token: string }, ctx: any) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sendVerificationRequest: (async (params: any, ctx: any) => {
+    const { identifier: email, token } = params;
     // Always log to Convex dashboard for debugging
     console.log(`\n========== KOD OTP ==========\nEmail: ${email}\nKod: ${token}\n=============================\n`);
 
@@ -148,5 +150,6 @@ export const emailOtp = Email({
     } catch (error) {
       console.error("Failed to send verification email:", error);
     }
-  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }) as any,
 });
