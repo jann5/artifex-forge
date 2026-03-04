@@ -161,4 +161,9 @@ export default defineSchema({
     subscribedAt: v.number(),
     active: v.boolean(),
   }).index("by_email", ["email"]),
+
+  devOtps: defineTable({
+    email: v.string(),
+    code: v.string(),
+  }).index("by_email", ["email"]),
 });

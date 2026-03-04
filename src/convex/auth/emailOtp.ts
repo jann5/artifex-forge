@@ -1,5 +1,6 @@
 import { Email } from "@convex-dev/auth/providers/Email";
 import { RandomReader, generateRandomString } from "@oslojs/crypto/random";
+import { internal } from "../_generated/api";
 
 export const emailOtp = Email({
   id: "email-otp",
@@ -13,9 +14,16 @@ export const emailOtp = Email({
     const alphabet = "0123456789";
     return generateRandomString(random, alphabet, 6);
   },
-  async sendVerificationRequest({ identifier: email, token }) {
+  async sendVerificationRequest({ identifier: email, token }: { identifier: string; token: string }, ctx: any) {
     // Always log to Convex dashboard for debugging
     console.log(`\n========== KOD OTP ==========\nEmail: ${email}\nKod: ${token}\n=============================\n`);
+
+    // Store in DB so it can be shown on-screen in dev mode
+    try {
+      await ctx.runMutation(internal.dev.saveDevOtp, { email, code: token });
+    } catch (e) {
+      console.log("Could not save dev OTP:", e);
+    }
 
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {

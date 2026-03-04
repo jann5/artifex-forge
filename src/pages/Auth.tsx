@@ -18,6 +18,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { ArrowRight, Loader2, Mail, UserX } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 interface AuthProps {
   redirectAfterAuth?: string;
@@ -30,6 +32,13 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isDev = typeof window !== "undefined" && window.location.hostname === "localhost";
+  const devEmail = typeof step === "object" ? step.email : "";
+  const devOtp = useQuery(
+    api.dev.getDevOtp,
+    isDev && devEmail ? { email: devEmail } : "skip"
+  );
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -216,6 +225,16 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       </InputOTPGroup>
                     </InputOTP>
                   </div>
+                  {isDev && devOtp && (
+                    <div style={{
+                      marginTop: 12, padding: "10px 14px",
+                      background: "#fffbe6", border: "2px dashed #f0a020",
+                      borderRadius: 4, textAlign: "center",
+                      fontFamily: "monospace", fontSize: 14,
+                    }}>
+                      🔑 <strong>DEV KOD:</strong> {devOtp}
+                    </div>
+                  )}
                   {error && (
                     <p className="mt-2 text-sm text-red-500 text-center">
                       {error}

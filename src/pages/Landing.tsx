@@ -679,7 +679,7 @@ function Shop() {
       <section style={{ padding: "40px clamp(20px, 5vw, 60px) 60px", maxWidth: 900, margin: "0 auto" }}>
         <div className="window-box" style={{ padding: "14px 20px", fontSize: 10, lineHeight: 2.2, background: "var(--input)" }}>
           <pre style={{ fontFamily: F, fontSize: 10, margin: 0, whiteSpace: "pre-wrap" }}>
-oto co u nas znajdziesz.{"\n"}wyroby reczne, szybka dostawa.{"\n"}trzymaj sie{"\n"}<span className="blink">■</span>
+{`robimy rzeczy recznie.\nnie seryjnie. nie z maszyny.\nkazda sztuka jest inna — i taka powinna byc.\n\n-> wybierz produkt\n-> dodaj do koszyka\n-> gotowe w 1-2 dni robocze.`}<span className="blink">_</span>
           </pre>
         </div>
       </section>

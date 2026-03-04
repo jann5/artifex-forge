@@ -1,5 +1,22 @@
-import { internalQuery, internalMutation } from "./_generated/server";
+import { internalQuery, internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
+
+export const saveDevOtp = internalMutation({
+  args: { email: v.string(), code: v.string() },
+  handler: async (ctx, { email, code }) => {
+    const existing = await ctx.db.query("devOtps").withIndex("by_email", q => q.eq("email", email)).unique();
+    if (existing) await ctx.db.patch(existing._id, { code });
+    else await ctx.db.insert("devOtps", { email, code });
+  },
+});
+
+export const getDevOtp = query({
+  args: { email: v.string() },
+  handler: async (ctx, { email }) => {
+    const row = await ctx.db.query("devOtps").withIndex("by_email", q => q.eq("email", email)).unique();
+    return row?.code ?? null;
+  },
+});
 
 export const getSystemStats = internalQuery({
   args: {},
