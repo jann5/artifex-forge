@@ -291,60 +291,123 @@ function JumpGame({ onWin, onBack }: { onWin: () => void; onBack: () => void }) 
 const MINE_ROWS = 9, MINE_COLS = 9, MINE_COUNT = 10;
 type Cell = { mine: boolean; revealed: boolean; flagged: boolean; adjacent: number };
 
-function createBoard(): Cell[][] {
-  const board: Cell[][] = Array.from({ length: MINE_ROWS }, () =>
+/** Empty board — mines placed only after first click */
+function createEmptyBoard(): Cell[][] {
+  return Array.from({ length: MINE_ROWS }, () =>
     Array.from({ length: MINE_COLS }, () => ({ mine: false, revealed: false, flagged: false, adjacent: 0 }))
   );
+}
+
+/** Place mines avoiding the 3×3 zone around (safeR, safeC) */
+function placeMinesAround(base: Cell[][], safeR: number, safeC: number): Cell[][] {
+  const b = base.map(row => row.map(c => ({ ...c })));
+  const safe = new Set<string>();
+  for (let dr = -1; dr <= 1; dr++)
+    for (let dc = -1; dc <= 1; dc++) {
+      const nr = safeR + dr, nc = safeC + dc;
+      if (nr >= 0 && nr < MINE_ROWS && nc >= 0 && nc < MINE_COLS)
+        safe.add(`${nr},${nc}`);
+    }
   let placed = 0;
   while (placed < MINE_COUNT) {
     const r = Math.floor(Math.random() * MINE_ROWS);
     const c = Math.floor(Math.random() * MINE_COLS);
-    if (!board[r][c].mine) { board[r][c].mine = true; placed++; }
+    if (!b[r][c].mine && !safe.has(`${r},${c}`)) { b[r][c].mine = true; placed++; }
   }
   for (let r = 0; r < MINE_ROWS; r++) {
     for (let c = 0; c < MINE_COLS; c++) {
-      if (board[r][c].mine) continue;
+      if (b[r][c].mine) continue;
       let count = 0;
       for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
         const nr = r + dr, nc = c + dc;
-        if (nr >= 0 && nr < MINE_ROWS && nc >= 0 && nc < MINE_COLS && board[nr][nc].mine) count++;
+        if (nr >= 0 && nr < MINE_ROWS && nc >= 0 && nc < MINE_COLS && b[nr][nc].mine) count++;
       }
-      board[r][c].adjacent = count;
+      b[r][c].adjacent = count;
     }
   }
-  return board;
+  return b;
+}
+
+/** BFS flood-fill reveal starting at (r,c) */
+function floodReveal(b: Cell[][], r: number, c: number) {
+  const stack = [[r, c]];
+  while (stack.length) {
+    const [cr, cc] = stack.pop()!;
+    if (cr < 0 || cr >= MINE_ROWS || cc < 0 || cc >= MINE_COLS) continue;
+    if (b[cr][cc].revealed || b[cr][cc].flagged || b[cr][cc].mine) continue;
+    b[cr][cc].revealed = true;
+    if (b[cr][cc].adjacent === 0) {
+      for (let dr = -1; dr <= 1; dr++)
+        for (let dc = -1; dc <= 1; dc++)
+          if (dr !== 0 || dc !== 0) stack.push([cr + dr, cc + dc]);
+    }
+  }
 }
 
 function Minesweeper({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
-  const [board, setBoard] = useState(createBoard);
+  const [board, setBoard] = useState<Cell[][]>(createEmptyBoard);
+  const [started, setStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
 
   function reveal(r: number, c: number) {
     if (gameOver || won) return;
-    const b = board.map(row => row.map(cell => ({ ...cell })));
-    if (b[r][c].revealed || b[r][c].flagged) return;
-    if (b[r][c].mine) { setGameOver(true); b[r][c].revealed = true; setBoard(b); return; }
-    // Flood fill
-    const stack = [[r, c]];
-    while (stack.length) {
-      const [cr, cc] = stack.pop()!;
-      if (cr < 0 || cr >= MINE_ROWS || cc < 0 || cc >= MINE_COLS) continue;
-      if (b[cr][cc].revealed || b[cr][cc].mine) continue;
-      b[cr][cc].revealed = true;
-      if (b[cr][cc].adjacent === 0) {
-        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) stack.push([cr + dr, cc + dc]);
+    let b = board.map(row => row.map(cell => ({ ...cell })));
+    const cell = b[r][c];
+
+    // ── Chord click: click on revealed number ────────────────
+    if (cell.revealed && cell.adjacent > 0) {
+      let flagCount = 0;
+      for (let dr = -1; dr <= 1; dr++)
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < MINE_ROWS && nc >= 0 && nc < MINE_COLS && b[nr][nc].flagged) flagCount++;
+        }
+      if (flagCount === cell.adjacent) {
+        let blown = false;
+        for (let dr = -1; dr <= 1; dr++)
+          for (let dc = -1; dc <= 1; dc++) {
+            const nr = r + dr, nc = c + dc;
+            if (nr < 0 || nr >= MINE_ROWS || nc < 0 || nc >= MINE_COLS) continue;
+            if (b[nr][nc].flagged || b[nr][nc].revealed) continue;
+            if (b[nr][nc].mine) { b[nr][nc].revealed = true; blown = true; }
+            else floodReveal(b, nr, nc);
+          }
+        if (blown) { setGameOver(true); setBoard(b); return; }
       }
+      setBoard(b);
+      const unrevealed = b.flat().filter(c => !c.revealed && !c.mine).length;
+      if (unrevealed === 0) setWon(true);
+      return;
     }
+
+    // ── Normal click on unrevealed cell ─────────────────────
+    if (cell.revealed || cell.flagged) return;
+
+    // First click: place mines AFTER click so it's always safe
+    if (!started) {
+      b = placeMinesAround(b, r, c);
+      setStarted(true);
+    }
+
+    if (b[r][c].mine) {
+      b[r][c].revealed = true;
+      setGameOver(true);
+      setBoard(b);
+      return;
+    }
+
+    floodReveal(b, r, c);
     setBoard(b);
-    // Check win
     const unrevealed = b.flat().filter(c => !c.revealed && !c.mine).length;
     if (unrevealed === 0) setWon(true);
   }
 
   function retry() {
-    setBoard(createBoard());
-    setGameOver(false); setWon(false);
+    setBoard(createEmptyBoard());
+    setStarted(false);
+    setGameOver(false);
+    setWon(false);
   }
 
   return (

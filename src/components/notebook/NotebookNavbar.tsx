@@ -68,6 +68,31 @@ function IconBtn({ onClick, children, title }: { onClick: () => void; children: 
   );
 }
 
+/* ─── LOGOUT BUTTON ─── */
+function LogoutButton({ onClose }: { onClose: () => void }) {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  async function handle() {
+    await signOut();
+    onClose();
+    navigate("/");
+  }
+  return (
+    <button
+      onClick={handle}
+      style={{
+        width: "100%", padding: "10px 14px",
+        background: "none", color: "var(--accent)",
+        border: "3px solid var(--accent)", fontFamily: F, fontSize: 9,
+        cursor: "pointer", textAlign: "left", lineHeight: 1.8,
+        marginTop: 4,
+      }}
+    >
+      Wyloguj sie
+    </button>
+  );
+}
+
 /* ─── ACCOUNT DROPDOWN ─── */
 function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolean; onClose: () => void }) {
   const navigate = useNavigate();
@@ -99,33 +124,36 @@ function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolea
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <button
-          onClick={() => go("/auth")}
-          style={{
-            width: "100%", padding: "10px 14px",
-            background: "var(--fg)", color: "var(--bg)",
-            border: "none", fontFamily: F, fontSize: 9,
-            cursor: "pointer", textAlign: "left", lineHeight: 1.8,
-          }}
-        >
-          Zaloguj sie
-        </button>
-        <button
-          onClick={() => go("/auth")}
-          style={{
-            width: "100%", padding: "10px 14px",
-            background: "none", color: "var(--fg)",
-            border: "3px solid var(--fg)", fontFamily: F, fontSize: 9,
-            cursor: "pointer", textAlign: "left", lineHeight: 1.8,
-            marginTop: 0,
-          }}
-        >
-          Zarejestruj sie
-        </button>
+        {!isAuthenticated ? (
+          <>
+            <button
+              onClick={() => go("/auth")}
+              style={{
+                width: "100%", padding: "10px 14px",
+                background: "var(--fg)", color: "var(--bg)",
+                border: "none", fontFamily: F, fontSize: 9,
+                cursor: "pointer", textAlign: "left", lineHeight: 1.8,
+              }}
+            >
+              Zaloguj sie
+            </button>
+            <button
+              onClick={() => go("/auth")}
+              style={{
+                width: "100%", padding: "10px 14px",
+                background: "none", color: "var(--fg)",
+                border: "3px solid var(--fg)", fontFamily: F, fontSize: 9,
+                cursor: "pointer", textAlign: "left", lineHeight: 1.8,
+              }}
+            >
+              Zarejestruj sie
+            </button>
+          </>
+        ) : null}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: isAuthenticated ? 0 : 4 }}>
           <button
-            onClick={() => go(isAuthenticated ? "/orders" : "/auth")}
+            onClick={() => go("/orders")}
             style={{
               padding: "10px 10px", background: "none",
               border: "3px solid var(--fg)", fontFamily: F, fontSize: 9,
@@ -142,7 +170,7 @@ function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolea
           </button>
 
           <button
-            onClick={() => go(isAuthenticated ? "/settings" : "/auth")}
+            onClick={() => go("/settings")}
             style={{
               padding: "10px 10px", background: "none",
               border: "3px solid var(--fg)", fontFamily: F, fontSize: 9,
@@ -157,6 +185,10 @@ function AccountDropdown({ isAuthenticated, onClose }: { isAuthenticated: boolea
             Profil
           </button>
         </div>
+
+        {isAuthenticated && (
+          <LogoutButton onClose={onClose} />
+        )}
       </div>
     </div>
   );

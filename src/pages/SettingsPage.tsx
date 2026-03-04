@@ -32,7 +32,7 @@ export default function SettingsPage() {
     try {
       await updateName({ name });
       toast.success("Zapisano zmiany");
-    } catch (error) {
+    } catch {
       toast.error("Wystąpił błąd podczas zapisywania");
     } finally {
       setIsSaving(false);

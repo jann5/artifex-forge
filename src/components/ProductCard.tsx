@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { formatCurrency } from "@/lib/format";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -36,8 +36,8 @@ export function ProductCard({ id, name, price, image, category, inventory }: Pro
     try {
       await addToCart({ productId: id, quantity: 1 });
       toast.success("Dodano do koszyka");
-    } catch (err: any) {
-      toast.error(err.message || "Blad");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Blad");
     }
   }
 
@@ -107,7 +107,7 @@ export function ProductCard({ id, name, price, image, category, inventory }: Pro
 
       {/* Info */}
       <div style={{ padding: "10px 12px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ fontSize: 7, color: "#888" }}>{category.toUpperCase()}</div>
+        <div style={{ fontSize: 7, color: "#888" }}>{(category || "").toUpperCase()}</div>
         <div style={{ fontSize: 9, lineHeight: 1.7, flex: 1 }}>{name}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4, gap: 8 }}>
           <span style={{ fontSize: 10, color: ACCENT }}>{formatCurrency(price)}</span>

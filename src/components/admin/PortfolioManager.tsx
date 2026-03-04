@@ -47,7 +47,7 @@ export function PortfolioManager() {
       
       setImages([...images, ...uploadedImages]);
       toast.success("Zdjęcia zostały przesłane");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się przesłać zdjęć");
     } finally {
       setUploading(false);
@@ -66,7 +66,7 @@ export function PortfolioManager() {
           images,
           category: category || undefined,
         });
-        toast.success("Realizacja zaktualizowana");
+          toast.success("Realizacja zaktualizowana");
       } else {
         await createPortfolio({
           title,

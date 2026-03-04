@@ -12,14 +12,9 @@ function Model({ url }: { url: string }) {
     console.log("ModelViewer: Attempting to load 3D model from URL:", url);
   }, [url]);
 
-  try {
-    const { scene } = useGLTF(url);
-    console.log("ModelViewer: 3D model loaded successfully");
-    return <primitive object={scene} />;
-  } catch (error) {
-    console.error("ModelViewer: Error loading 3D model:", error);
-    throw error;
-  }
+  const { scene } = useGLTF(url);
+  console.log("ModelViewer: 3D model loaded successfully");
+  return <primitive object={scene} />;
 }
 
 export function ModelViewer({ url }: ModelViewerProps) {

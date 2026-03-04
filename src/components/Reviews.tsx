@@ -55,8 +55,8 @@ export function Reviews({ productId }: ReviewsProps) {
       toast.success("Opinia została dodana");
       setComment("");
       setRating(5);
-    } catch (error: any) {
-      toast.error(error.message || "Nie udało się dodać opinii");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Nie udało się dodać opinii");
     } finally {
       setIsSubmitting(false);
     }
@@ -66,7 +66,7 @@ export function Reviews({ productId }: ReviewsProps) {
     try {
       await deleteReview({ id });
       toast.success("Opinia usunięta");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się usunąć opinii");
     }
   };

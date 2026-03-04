@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Cookie } from "lucide-react";
+import { Cookie } from "lucide-react";
 import { Link } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 

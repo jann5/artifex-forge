@@ -19,7 +19,7 @@ export function ReviewManager() {
     try {
       await approveReview({ id });
       toast.success("Opinia zatwierdzona");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się zatwierdzić opinii");
     }
   };
@@ -30,7 +30,7 @@ export function ReviewManager() {
     try {
       await rejectReview({ id });
       toast.success("Opinia odrzucona");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się odrzucić opinii");
     }
   };

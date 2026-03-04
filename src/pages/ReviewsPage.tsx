@@ -9,16 +9,17 @@ import { pl } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router";
+import { Id } from "@/convex/_generated/dataModel";
 
 export default function ReviewsPage() {
   const reviews = useQuery(api.reviews.getByUser);
   const deleteReview = useMutation(api.reviews.deleteReview);
 
-  const handleDelete = async (id: any) => {
+  const handleDelete = async (id: Id<"reviews">) => {
     try {
       await deleteReview({ id });
       toast.success("Opinia usunięta");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się usunąć opinii");
     }
   };

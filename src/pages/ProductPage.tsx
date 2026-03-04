@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -32,8 +32,8 @@ export default function ProductPage() {
     try {
       await addToCart({ productId: product._id, quantity });
       toast.success("Dodano do koszyka");
-    } catch (e: any) {
-      toast.error(e.message ?? "Blad");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Blad");
     } finally {
       setAdding(false);
     }
@@ -66,7 +66,7 @@ export default function ProductPage() {
   const isLowStock = product.inventory > 0 && product.inventory <= 5;
   const maxQty = product.inventory;
 
-  const box: React.CSSProperties = {
+  const box: CSSProperties = {
     border: `3px solid ${FG}`,
     boxShadow: `6px 6px 0 ${FG}`,
     background: BG,
