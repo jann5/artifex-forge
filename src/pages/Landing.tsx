@@ -523,7 +523,8 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
 function Shop() {
   // Typewriter for description
   const [desc, setDesc] = useState("");
-  const fullDesc = "one product store.\n[01] blank white shirt.\nbiala koszulka. bez nadruku.";
+  const [amount, setAmount] = useState(100);
+  const fullDesc = "blank white shirt.\nplacisz, ile chcesz.\nta liczba trafia na koszulke.";
   useEffect(() => {
     let i = 0;
     const iv = setInterval(() => {
@@ -562,15 +563,38 @@ function Shop() {
 
       <section style={{ padding: "0 clamp(20px, 5vw, 60px) 60px", maxWidth: 760, margin: "0 auto" }}>
         <article className="window-box one-product-card" style={{ padding: 16 }}>
-          <img src="/blank-white-shirt.svg" alt="Blank White Shirt — biała koszulka bez nadruku" />
+          <div className="shirt-photo">
+            <img src="https://images.unsplash.com/photo-1675935726225-5543e0fba822?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=85&w=1400" alt="Model w białej koszulce bez nadruku" />
+            <span className="shirt-price-print">{amount} ZL</span>
+          </div>
           <div className="one-product-copy">
             <div style={{ fontSize: 9, opacity: 0.5, marginBottom: 12 }}>OBIEKT_01</div>
             <h2 style={{ fontSize: "clamp(12px, 2vw, 16px)", marginBottom: 16 }}>BLANK WHITE SHIRT</h2>
-            <p style={{ fontSize: 9, lineHeight: 2, margin: "0 0 18px" }}>biala koszulka. bez nadruku.</p>
-            <p style={{ fontSize: 9, lineHeight: 2, opacity: 0.5, margin: "0 0 20px" }}>cena i rozmiary — wkrotce.</p>
-            <a className="pixel-btn" href="mailto:kontakt@artifexforge.pl?subject=Artifex%20Forge%20%E2%80%94%20Blank%20White%20Shirt" style={{ fontSize: 9 }}>ZAPYTAJ O DOSTEPNOSC</a>
+            <p style={{ fontSize: 9, lineHeight: 2, margin: "0 0 18px" }}>biala koszulka. twoja liczba.</p>
+            <label className="amount-label" htmlFor="shirt-amount">ILE ZOSTAWIASZ?</label>
+            <div className="amount-control">
+              <input
+                id="shirt-amount"
+                type="number"
+                min="1"
+                step="1"
+                value={amount}
+                onChange={(event) => setAmount(Math.max(1, Number(event.target.value) || 1))}
+              />
+              <span>ZL</span>
+            </div>
+            <p style={{ fontSize: 8, lineHeight: 2, opacity: 0.5, margin: "0 0 20px" }}>kwota jest nadrukiem z przodu.</p>
+            <button className="pixel-btn" type="button" style={{ fontSize: 9 }}>ZAPLAC {amount} ZL</button>
           </div>
         </article>
+
+        <section className="amount-ranking" aria-labelledby="ranking-title">
+          <div>
+            <h2 id="ranking-title">NAJWYZSZE KWOTY</h2>
+            <p>ranking pojawi sie po pierwszej platnosci.</p>
+          </div>
+          <span>01 / --- ZL</span>
+        </section>
       </section>
 
       {/* CONTACT */}
