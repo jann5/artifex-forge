@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useNavigate } from "react-router";
 import { NotebookNavbar } from "@/components/notebook/NotebookNavbar";
-import { formatCurrency } from "@/lib/format";
-import { getStorageUrl } from "@/lib/utils";
 
 const F = "'Press Start 2P', monospace";
 const BG = "var(--bg)";
@@ -526,15 +521,9 @@ function Riddle({ onWin, onBack }: { onWin: () => void; onBack: () => void }) {
 /*  SHOP (after passing)                                  */
 /* ═══════════════════════════════════════════════════════ */
 function Shop() {
-  const products = useQuery(api.products.list, {});
-  const addToCart = useMutation(api.cart.add);
-  const navigate = useNavigate();
-  const allProducts = products ?? [];
-  const [activeIdx, setActiveIdx] = useState(0);
-
   // Typewriter for description
   const [desc, setDesc] = useState("");
-  const fullDesc = "reczna robota. zamow online.\n-> wybierz produkt -> dodaj do koszyka ->\ntwoje zamowienie bedzie gotowe w 1-2 dni.";
+  const fullDesc = "one product store.\n[01] blank white shirt.\nbiala koszulka. bez nadruku.";
   useEffect(() => {
     let i = 0;
     const iv = setInterval(() => {
@@ -544,25 +533,6 @@ function Shop() {
     }, 25);
     return () => clearInterval(iv);
   }, []);
-
-  // Arrow key nav
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const len = allProducts.length;
-      if (!len) return;
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-        e.preventDefault();
-        setActiveIdx(i => Math.min(len - 1, i + 1));
-      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        e.preventDefault();
-        setActiveIdx(i => Math.max(0, i - 1));
-      } else if (e.key === "Enter") {
-        const p = allProducts[activeIdx]; if (p) navigate(`/products/${p._id}`);
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [allProducts, activeIdx, navigate]);
 
   return (
     <div style={{ minHeight: "100vh", fontFamily: F }}>
@@ -590,98 +560,17 @@ function Shop() {
         </div>
       </section>
 
-      {/* PRODUCTS */}
-      {allProducts.length > 0 && (
-        <section style={{ padding: "0 clamp(20px, 5vw, 60px) 60px", maxWidth: 900, margin: "0 auto" }}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-            gap: 28,
-          }}>
-            {allProducts.map((p: any, i: number) => {
-              const imgUrl = p.images?.[0] ? getStorageUrl(p.images[0]) : null;
-              const focused = i === activeIdx;
-              return (
-                <div
-                  key={p._id}
-                  role="button" tabIndex={0}
-                  onClick={() => navigate(`/products/${p._id}`)}
-                  onKeyDown={e => e.key === "Enter" && navigate(`/products/${p._id}`)}
-                  style={{
-                    background: BG,
-                    border: focused ? "4px solid var(--fg)" : "3px solid var(--fg)",
-                    boxShadow: focused ? "8px 8px 0 var(--fg)" : "6px 6px 0 var(--fg)",
-                    position: "relative", cursor: "pointer", outline: "none",
-                    fontFamily: F, transition: "box-shadow 0.15s",
-                  }}
-                >
-                  <div style={{ position: "absolute", inset: 5, border: "2px solid var(--fg)", pointerEvents: "none", zIndex: 1 }} />
-
-                  {imgUrl ? (
-                    <div style={{ padding: 16, paddingBottom: 0, position: "relative", zIndex: 2 }}>
-                      <img src={imgUrl} alt={p.name} loading="lazy" style={{
-                        width: "100%", aspectRatio: "1/1", objectFit: "cover",
-                        filter: "grayscale(30%) sepia(20%)", display: "block",
-                        border: "2px solid var(--fg)",
-                      }} />
-                    </div>
-                  ) : (
-                    <div style={{
-                      margin: 16, marginBottom: 0,
-                      aspectRatio: "1/1", border: "2px solid var(--fg)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 9, opacity: 0.4, position: "relative", zIndex: 2,
-                    }}>NO IMAGE</div>
-                  )}
-
-                  <div style={{ padding: "14px 18px 18px", position: "relative", zIndex: 2 }}>
-                    <h3 style={{ fontSize: 11, lineHeight: 1.8, marginBottom: 4, textTransform: "uppercase" }}>{p.name}</h3>
-                    {p.description && (
-                      <p style={{ fontSize: 9, opacity: 0.5, lineHeight: 2, margin: "0 0 8px" }}>
-                        {p.description.slice(0, 60)}{p.description.length > 60 ? "..." : ""}
-                      </p>
-                    )}
-                    <div style={{ fontSize: 16, marginBottom: 10 }}>{formatCurrency(p.price)}</div>
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        try { await addToCart({ productId: p._id, quantity: 1 }); } catch {}
-                      }}
-                      className="pixel-btn"
-                      style={{ width: "100%", textAlign: "center", fontSize: 9 }}
-                    >
-                      {p.inventory === 0 ? "BRAK" : "KUP"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+      <section style={{ padding: "0 clamp(20px, 5vw, 60px) 60px", maxWidth: 760, margin: "0 auto" }}>
+        <article className="window-box one-product-card" style={{ padding: 16 }}>
+          <img src="/blank-white-shirt.svg" alt="Blank White Shirt — biała koszulka bez nadruku" />
+          <div className="one-product-copy">
+            <div style={{ fontSize: 9, opacity: 0.5, marginBottom: 12 }}>OBIEKT_01</div>
+            <h2 style={{ fontSize: "clamp(12px, 2vw, 16px)", marginBottom: 16 }}>BLANK WHITE SHIRT</h2>
+            <p style={{ fontSize: 9, lineHeight: 2, margin: "0 0 18px" }}>biala koszulka. bez nadruku.</p>
+            <p style={{ fontSize: 9, lineHeight: 2, opacity: 0.5, margin: "0 0 20px" }}>cena i rozmiary — wkrotce.</p>
+            <a className="pixel-btn" href="mailto:kontakt@artifexforge.pl?subject=Artifex%20Forge%20%E2%80%94%20Blank%20White%20Shirt" style={{ fontSize: 9 }}>ZAPYTAJ O DOSTEPNOSC</a>
           </div>
-        </section>
-      )}
-
-      {products === undefined && (
-        <div style={{ textAlign: "center", padding: "80px 24px", fontSize: 11 }}>
-          LOADING<span className="blink">...</span>
-        </div>
-      )}
-
-      {products && allProducts.length === 0 && (
-        <div style={{ textAlign: "center", padding: "80px 24px" }}>
-          <div className="window-box" style={{ display: "inline-block", maxWidth: 380 }}>
-            <div style={{ fontSize: 12, marginBottom: 8 }}>BRAK PRODUKTOW</div>
-            <div style={{ fontSize: 9, opacity: 0.5 }}>sklep w przygotowaniu.</div>
-          </div>
-        </div>
-      )}
-
-      {/* INFO */}
-      <section style={{ padding: "40px clamp(20px, 5vw, 60px) 60px", maxWidth: 900, margin: "0 auto" }}>
-        <div className="window-box" style={{ padding: "14px 20px", fontSize: 10, lineHeight: 2.2, background: "var(--input)" }}>
-          <pre style={{ fontFamily: F, fontSize: 10, margin: 0, whiteSpace: "pre-wrap" }}>
-{`robimy rzeczy recznie.\nnie seryjnie. nie z maszyny.\nkazda sztuka jest inna — i taka powinna byc.\n\n-> wybierz produkt\n-> dodaj do koszyka\n-> gotowe w 1-2 dni robocze.`}<span className="blink">_</span>
-          </pre>
-        </div>
+        </article>
       </section>
 
       {/* CONTACT */}

@@ -1,6 +1,7 @@
 import React, { Component, ReactNode, StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
+import { Navigate } from "react-router";
 import { ConvexReactClient } from "convex/react";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { Toaster } from "sonner";
@@ -9,7 +10,6 @@ import "./index.css";
 // Pages
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import ProductsPage from "./pages/ProductsPage";
 import ProductPage from "./pages/ProductPage";
 import AdminPage from "./pages/AdminPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
@@ -110,7 +110,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/products",
-    element: <ProductsPage />,
+    element: <Navigate to="/" replace />,
   },
   {
     path: "/products/:id",

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 760" role="img" aria-labelledby="title desc">
+  <title id="title">Blank White Shirt</title>
+  <desc id="desc">Biała koszulka bez nadruku na neutralnym tle.</desc>
+  <rect width="640" height="760" fill="#d8d3bd"/>
+  <path d="M207 143 277 96h86l70 47 126 69-63 139-69-34v323H213V317l-69 34-63-139z" fill="#fffef8" stroke="#1a1a1a" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M277 96c7 54 79 54 86 0" fill="none" stroke="#1a1a1a" stroke-width="10"/>
+  <path d="M213 317h214M277 96l-70 47M363 96l70 47" fill="none" stroke="#1a1a1a" stroke-width="7"/>
+</svg>

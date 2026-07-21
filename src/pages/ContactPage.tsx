@@ -24,7 +24,7 @@ export default function ContactPage() {
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
   const [sent, setSent] = useState(false);
-  const intro = useTypewriter("napisz do nas. odpiszemy.");
+  const intro = useTypewriter("masz pytanie o obiekt? napisz.");
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
