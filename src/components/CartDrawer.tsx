@@ -9,7 +9,6 @@ import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
-import { Badge } from "@/components/ui/badge";
 import { getStorageUrl } from "@/lib/utils";
 
 export function CartDrawer() {
@@ -28,6 +27,7 @@ export function CartDrawer() {
         : 0;
     return acc + price * item.quantity;
   }, 0) || 0;
+  const cartCount = cartItems?.reduce((acc, item) => acc + item.quantity, 0) || 0;
 
   const handleCheckout = () => {
     setIsOpen(false);
@@ -72,42 +72,40 @@ export function CartDrawer() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="flex flex-col w-full sm:max-w-lg">
-        <SheetHeader className="pb-4 border-b">
-          <SheetTitle className="flex items-center justify-between text-2xl">
-            <span className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <ShoppingCart className="h-5 w-5 text-primary" />
-              </div>
-              Twój Koszyk
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
+        <SheetHeader className="border-b px-6 py-5 pr-16">
+          <SheetTitle className="flex items-center gap-3 text-xl tracking-tight">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+              <ShoppingCart className="h-4 w-4 text-primary" />
             </span>
-            <Badge variant="secondary" className="text-base px-3 py-1">
-              {cartItems?.length || 0}
-            </Badge>
+            Twój koszyk
+            <span className="ml-auto whitespace-nowrap text-sm font-medium text-muted-foreground">
+              {cartCount} {cartCount === 1 ? "produkt" : "produkty"}
+            </span>
           </SheetTitle>
         </SheetHeader>
         
-        <ScrollArea className="flex-1 -mx-6 px-6 my-6">
+        <ScrollArea className="max-h-[48vh] px-6 py-5">
           {cartItems?.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center space-y-6 mt-10">
-              <div className="h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center">
-                <ShoppingBag className="h-10 w-10 text-muted-foreground/50" />
+            <div className="flex min-h-72 flex-col items-center justify-center space-y-5 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <ShoppingBag className="h-7 w-7 text-muted-foreground" />
               </div>
               <div className="space-y-2">
-                <p className="text-lg font-medium">Twój koszyk jest pusty</p>
-                <p className="text-sm text-muted-foreground">Dodaj produkty, aby rozpocząć zakupy</p>
+                <p className="font-medium">Koszyk jest pusty</p>
+                <p className="text-sm text-muted-foreground">Wybierz coś z kolekcji.</p>
               </div>
               <SheetClose asChild>
-                <Button size="lg" onClick={() => navigate("/products")} className="mt-4">
-                  Przeglądaj Produkty
+                <Button onClick={() => navigate("/products")}>
+                  Zobacz produkty
                 </Button>
               </SheetClose>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {cartItems?.map((item) => (
-                <div key={item._id} className="flex gap-4 p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <div className="h-24 w-24 rounded-lg bg-background overflow-hidden flex-shrink-0 border shadow-sm">
+                <div key={item._id} className="grid grid-cols-[88px_minmax(0,1fr)] gap-4 border-b border-border/70 pb-4 last:border-0 last:pb-0">
+                  <div className="h-[88px] w-[88px] overflow-hidden rounded-md bg-muted">
                     {item.product?.images?.[0] && (
                       <img 
                         src={getStorageUrl(item.product.images[0])} 
@@ -116,17 +114,17 @@ export function CartDrawer() {
                       />
                     )}
                   </div>
-                  <div className="flex-1 flex flex-col justify-between gap-3">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-base line-clamp-2 mb-1">
+                  <div className="flex min-w-0 flex-col">
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="mb-1 line-clamp-2 text-[15px] font-semibold leading-snug">
                           {item.product && 'name' in item.product 
                             ? item.product.name 
                             : item.product && 'projectName' in item.product 
                               ? item.product.projectName 
                               : 'Unknown'}
                         </h4>
-                        <p className="text-xs text-muted-foreground capitalize">
+                        <p className="text-xs capitalize text-muted-foreground">
                           {item.product && 'category' in item.product
                             ? item.product.category
                             : 'Zamówienie niestandardowe'}
@@ -134,30 +132,33 @@ export function CartDrawer() {
                       </div>
                       <button 
                         onClick={() => remove({ id: item._id })}
-                        className="h-8 w-8 rounded-full hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-all"
+                        aria-label="Usuń z koszyka"
+                        className="-mt-1 -mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-[18px] w-[18px]" />
                       </button>
                     </div>
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 bg-background border rounded-lg p-1">
+                    <div className="mt-auto flex items-end justify-between gap-4 pt-3">
+                      <div className="flex h-9 items-center rounded-md border bg-background">
                         <button 
-                          className="h-8 w-8 flex items-center justify-center hover:bg-muted rounded-md transition-colors"
+                          aria-label="Zmniejsz ilość"
+                          className="flex h-full w-9 items-center justify-center rounded-l-md transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-35"
                           onClick={() => updateQuantity({ id: item._id, quantity: item.quantity - 1 })}
                           disabled={item.quantity <= 1}
                         >
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-3.5 w-3.5" />
                         </button>
-                        <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                        <span className="w-7 text-center text-sm font-semibold">{item.quantity}</span>
                         <button 
-                          className="h-8 w-8 flex items-center justify-center hover:bg-muted rounded-md transition-colors"
+                          aria-label="Zwiększ ilość"
+                          className="flex h-full w-9 items-center justify-center rounded-r-md transition-colors hover:bg-muted"
                           onClick={() => updateQuantity({ id: item._id, quantity: item.quantity + 1 })}
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                      <p className="font-bold text-lg text-primary">
+                      <p className="whitespace-nowrap text-base font-semibold text-foreground">
                         {formatCurrency(
                           (item.product && 'price' in item.product 
                             ? item.product.price 
@@ -175,26 +176,26 @@ export function CartDrawer() {
         </ScrollArea>
 
         {cartItems && cartItems.length > 0 && (
-          <div className="space-y-6 pt-6 border-t">
-            <div className="space-y-3 p-4 rounded-xl bg-muted/30">
+          <div className="space-y-5 border-t bg-muted/20 px-6 py-5">
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Produkty</span>
-                <span className="font-medium">{formatCurrency(total)}</span>
+                <span className="text-sm text-muted-foreground">Produkty</span>
+                <span className="text-sm font-medium">{formatCurrency(total)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Dostawa</span>
-                <span className="font-medium text-green-600">Darmowa</span>
+                <span className="text-sm text-muted-foreground">Dostawa</span>
+                <span className="text-sm font-medium text-emerald-600">Darmowa</span>
               </div>
               <Separator />
               <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold">Suma</span>
-                <span className="text-2xl font-bold text-primary">{formatCurrency(total)}</span>
+                <span className="font-semibold">Suma</span>
+                <span className="text-xl font-bold text-foreground">{formatCurrency(total)}</span>
               </div>
             </div>
-            <Button className="w-full h-14 text-lg shadow-lg hover:shadow-xl transition-all" size="lg" onClick={handleCheckout}>
+            <Button className="h-12 w-full text-base" size="lg" onClick={handleCheckout}>
               Przejdź do kasy <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-center text-xs text-muted-foreground">
               Bezpieczne płatności przez Stripe
             </p>
           </div>
